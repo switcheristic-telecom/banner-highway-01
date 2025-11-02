@@ -30,6 +30,9 @@ export class NavigationController {
   scrollTimeout: NodeJS.Timeout | null;
   car: THREE.Group;
   keys: { forward: boolean; backward: boolean; left: boolean; right: boolean };
+  instructionsPanel: HTMLElement | null;
+  instructionsHidden: boolean;
+  instructionsHideThreshold: number;
 
   constructor(highwaySystem: HighwaySystem, camera: THREE.PerspectiveCamera) {
     this.highwaySystem = highwaySystem;
@@ -69,6 +72,11 @@ export class NavigationController {
 
     // Car (player) representation
     this.car = this.createCar();
+
+    // Instructions panel
+    this.instructionsPanel = document.getElementById('instructions-panel');
+    this.instructionsHidden = false;
+    this.instructionsHideThreshold = 0.01; // Hide after user has moved 15% along the path
 
     this.setupEventListeners();
   }
@@ -366,6 +374,21 @@ export class NavigationController {
     // Update car and camera positions
     this.updateCarPosition();
     this.updateCameraPosition();
+
+    // Hide instructions panel after user has moved forward
+    this.updateInstructionsVisibility();
+  }
+
+  updateInstructionsVisibility() {
+    if (
+      !this.instructionsHidden &&
+      this.currentT >= this.instructionsHideThreshold
+    ) {
+      if (this.instructionsPanel) {
+        this.instructionsPanel.classList.add('hidden');
+        this.instructionsHidden = true;
+      }
+    }
   }
 
   updateCarPosition() {

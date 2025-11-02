@@ -219,3 +219,34 @@ body {
     transform: translateY(-10px);
   }
 }
+
+#instructions-panel {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #fff;
+  padding: 15px 20px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  border: 1px solid #03a062;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 1;
+  transition: opacity 0.5s ease-out;
+}
+
+#instructions-panel.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#instructions-panel .instruction-text {
+  line-height: 1.6;
+}
+
+#instructions-panel strong {
+  color: #03a062;
+  font-weight: bold;
+}
