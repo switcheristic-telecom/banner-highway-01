@@ -37,7 +37,7 @@ export class NavigationController {
 
     // Navigation state
     this.currentBranchId = 'main';
-    this.currentT = 0.5; // Position along the spline (0 to 1)
+    this.currentT = 0.0; // Position along the spline (0 to 1)
     this.speed = 0;
     this.targetSpeed = 0;
     this.maxSpeed = 0.1;
