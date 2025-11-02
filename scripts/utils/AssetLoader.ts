@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { loadingManager } from './LoadingManager';
 
 interface Asset {
   type: 'texture' | 'video';
@@ -10,6 +11,8 @@ export class AssetLoader {
   private loadingManager: THREE.LoadingManager;
   private textureCache: Map<string, THREE.Texture>;
   private videoCache: Map<string, HTMLVideoElement>;
+  private totalAssets: number = 0;
+  private loadedAssets: number = 0;
 
   constructor() {
     this.textureLoader = new THREE.TextureLoader();
@@ -39,11 +42,19 @@ export class AssetLoader {
     ) => {
       const progress = (itemsLoaded / itemsTotal) * 100;
       console.log(`Loading progress: ${progress.toFixed(2)}%`);
+      this.updateProgress(itemsLoaded, itemsTotal);
     };
 
     this.loadingManager.onError = (_url: string) => {
       console.error(`Error loading: ${_url}`);
     };
+  }
+
+  private updateProgress(loaded: number, total: number): void {
+    this.loadedAssets = loaded;
+    this.totalAssets = total;
+    const progress = total > 0 ? (loaded / total) * 100 : 0;
+    loadingManager.updateProgress('assets', progress);
   }
 
   async loadTexture(path: string): Promise<THREE.Texture> {
@@ -67,6 +78,9 @@ export class AssetLoader {
 
           // Cache the texture
           this.textureCache.set(path, texture);
+
+          this.loadedAssets++;
+          this.updateProgress(this.loadedAssets, this.totalAssets);
 
           resolve(texture);
         },
@@ -103,6 +117,8 @@ export class AssetLoader {
 
       video.addEventListener('loadeddata', () => {
         this.videoCache.set(path, video);
+        this.loadedAssets++;
+        this.updateProgress(this.loadedAssets, this.totalAssets);
         resolve(video);
       });
 
@@ -119,6 +135,9 @@ export class AssetLoader {
   async preloadAssets(
     assetList: Asset[]
   ): Promise<(THREE.Texture | HTMLVideoElement)[]> {
+    this.totalAssets = assetList.length;
+    this.loadedAssets = 0;
+    
     const promises: Promise<THREE.Texture | HTMLVideoElement>[] = [];
 
     for (const asset of assetList) {

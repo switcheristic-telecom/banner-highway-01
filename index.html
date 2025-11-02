@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Banner Highway</title>
+    <title>Banner Highway 01</title>
     <link rel="stylesheet" href="main.css" />
 
     <!-- Three.js and dependencies via CDN -->
@@ -21,6 +21,19 @@
     </script>
   </head>
   <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="loading-container">
+        <h1 class="loading-title">Banner Highway 01</h1>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+        <div class="loading-status" id="loading-status">Initializing...</div>
+      </div>
+    </div>
+
     <div id="app">
       <canvas id="canvas"></canvas>
     </div>

@@ -112,17 +112,17 @@ body {
 }
 
 #loading-screen {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: #000;
+  background: black;
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
-  transition: opacity 0.5s;
+  transition: opacity 0.5s ease-out;
 }
 
 #loading-screen.hidden {
@@ -130,18 +130,92 @@ body {
   pointer-events: none;
 }
 
-.loading-text {
-  color: #fff;
+.loading-container {
+  text-align: center;
+  max-width: 500px;
+  padding: 40px;
+}
+
+.loading-title {
+  font-family: 'Courier New', monospace;
+  color: white;
+  font-size: 18px;
+}
+
+.progress-container {
+  margin-top: 15px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 4px;
+  background: #03a062;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: #03a062;
+  border-radius: 10px;
+  transition: width 0.3s ease-out;
+}
+
+.progress-percentage {
+  margin-top: 15px;
   font-size: 24px;
-  animation: pulse 1.5s ease-in-out infinite;
+  font-weight: bold;
+  color: #00ffff;
+  text-shadow: 0 0 10px #03a062;
+  font-family: 'Courier New', monospace;
+}
+
+.loading-status {
+  margin-top: 20px;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+  font-family: 'Courier New', monospace;
+  min-height: 20px;
 }
 
 @keyframes pulse {
   0%,
   100% {
-    opacity: 0.5;
+    opacity: 0.6;
   }
   50% {
     opacity: 1;
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    text-shadow: 0 0 20px rgba(0, 255, 255, 0.8),
+      0 0 40px rgba(0, 255, 255, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 30px rgba(0, 255, 255, 1), 0 0 60px rgba(0, 255, 255, 0.6);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
   }
 }

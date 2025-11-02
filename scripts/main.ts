@@ -4,6 +4,7 @@ import { AssetLoader } from './utils/AssetLoader';
 import { SceneManager } from './core/SceneManager';
 import { NavigationController } from './core/NavigationController';
 import { RenderPipeline } from './core/RenderPipeline';
+import { loadingManager } from './utils/LoadingManager';
 
 import { HIGHWAY_DATA } from '../constants/highway';
 import { BANNER_INFOS } from '../constants/banner';
@@ -27,30 +28,41 @@ class BannerHighwayApp {
 
   async init() {
     try {
+      loadingManager.setStatus('Initializing core systems...');
+      loadingManager.updateProgress('init', 10);
+
       // Initialize core systems
       this.sceneManager = new SceneManager(this.canvas);
       this.renderPipeline = new RenderPipeline(this.sceneManager);
       this.assetLoader = new AssetLoader();
+      loadingManager.updateProgress('init', 20);
 
       // Initialize highway system
+      loadingManager.setStatus('Loading highway system...');
       this.highwaySystem = new HighwaySystem(this.sceneManager.scene);
       await this.highwaySystem.loadHighwayData(HIGHWAY_DATA);
+      loadingManager.updateProgress('highway', 100);
 
       // Initialize banner manager
+      loadingManager.setStatus('Loading banners...');
       this.bannerManager = new BannerManager(
         this.sceneManager.scene,
         this.assetLoader
       );
       await this.bannerManager.loadBanners(BANNER_INFOS);
+      loadingManager.updateProgress('banners', 100);
 
       // Initialize navigation
+      loadingManager.setStatus('Setting up navigation...');
       this.navigationController = new NavigationController(
         this.highwaySystem,
         this.sceneManager.camera
       );
+      loadingManager.updateProgress('init', 100);
 
-      // Hide loading screen
-      this.hideLoadingScreen();
+      // Complete loading
+      loadingManager.complete();
+      setTimeout(() => this.hideLoadingScreen(), 500);
 
       // Start render loop
       this.isInitialized = true;
