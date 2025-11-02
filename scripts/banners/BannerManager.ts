@@ -62,10 +62,6 @@ export class BannerManager {
     const billboard = new Billboard(bannerInfo, this.assetLoader);
     await billboard.load();
 
-    // Layers are now set directly in Billboard.js
-    // Banner mesh: layer 2 (no dithering)
-    // Frame parts: layer 1 (with dithering)
-
     this.billboards.set(
       bannerInfo.id || `${bannerInfo.branch_id}_${bannerInfo.t}`,
       billboard

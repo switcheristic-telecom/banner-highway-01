@@ -38,7 +38,7 @@ export class HighwaySystem {
     this.group.name = 'HighwaySystem';
     this.edgeGroup = new THREE.Group();
     this.edgeGroup.name = 'EdgeLines';
-    // this.edgeGroup.visible = this.showEdge;
+    this.edgeGroup.visible = this.showEdge;
     this.blockGroup = new THREE.Group();
     this.blockGroup.name = 'Blocks';
     this.blockGroup.visible = this.showBlock;
@@ -88,18 +88,18 @@ export class HighwaySystem {
     const mesh = new HighwayMesh(spline, {
       width,
       segments,
-      blockMaterial: HIGHWAY_MESH_DEFAULT_OPTIONS.blockNMaterial,
+      blockMaterial: HIGHWAY_MESH_DEFAULT_OPTIONS.blockMaterial,
       edgeMaterial: HIGHWAY_MESH_DEFAULT_OPTIONS.edgeMaterial,
     });
 
     // Set layer for environment rendering
-    mesh.blockMesh.layers.set(1); // Environment layer
+    mesh.blockMesh.layers.set(3); // Environment layer
     mesh.blockMesh.castShadow = true;
     mesh.blockMesh.receiveShadow = true;
 
     this.meshes.set(branchData.id, mesh);
-    this.group.add(mesh.blockMesh);
-    this.group.add(mesh.edgeLinesGroup);
+    // Add block mesh to the block group
+    this.blockGroup.add(mesh.blockMesh);
     // Add edge lines to the edge group
     this.edgeGroup.add(mesh.edgeLinesGroup);
   }
@@ -143,7 +143,7 @@ export class HighwaySystem {
           toT: exit.toT || 0,
         };
 
-        marker.layers.set(15); // Environment layer
+        marker.layers.set(0); // Environment layer
         this.group.add(marker);
       }
     }

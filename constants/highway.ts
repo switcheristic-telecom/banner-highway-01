@@ -3,18 +3,18 @@ import * as THREE from 'three';
 // MARK: HIGHWAY OPTIONS
 
 export const HIGHWAY_MESH_DEFAULT_OPTIONS = {
-  width: 2,
+  width: 4,
   segments: 100,
-  blockNMaterial: new THREE.MeshStandardMaterial({
-    color: 0xffffff,
+  blockMaterial: new THREE.MeshStandardMaterial({
+    color: 0x03a062,
     roughness: 0.8,
     metalness: 0.0,
-    emissive: 0xffffff,
+    emissive: 0x03a062,
     emissiveIntensity: 0.3,
   }),
   edgeMaterial: new THREE.MeshStandardMaterial({
-    color: 0xffffff,
-    emissive: 0xffffff,
+    color: 0x03a062,
+    emissive: 0x03a062,
     emissiveIntensity: 0.5,
     side: THREE.DoubleSide,
   }),

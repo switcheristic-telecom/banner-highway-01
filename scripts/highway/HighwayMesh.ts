@@ -198,7 +198,7 @@ export class HighwayMesh {
     leftGeometry.setIndex(leftIndices);
 
     const leftMesh = new THREE.Mesh(leftGeometry, edgeMaterial);
-    leftMesh.layers.set(15); // Environment layer
+    leftMesh.layers.set(3); // Environment layer
     edgeLinesGroup.add(leftMesh);
 
     // Create right edge mesh
@@ -218,7 +218,7 @@ export class HighwayMesh {
     rightGeometry.setIndex(rightIndices);
 
     const rightMesh = new THREE.Mesh(rightGeometry, edgeMaterial.clone());
-    rightMesh.layers.set(15); // Environment layer
+    rightMesh.layers.set(3); // Environment layer
     edgeLinesGroup.add(rightMesh);
 
     return edgeLinesGroup;

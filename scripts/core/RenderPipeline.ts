@@ -52,10 +52,16 @@ export class RenderPipeline {
     const lambdaPassB = new LambdaPass(() => {
       this.camera.layers.set(2);
     });
+    const lambdaPassC = new LambdaPass(() => {
+      this.camera.layers.set(3);
+    });
 
     const clearPassA = new ClearPass();
     const clearPassB = new ClearPass();
+    const clearPassC = new ClearPass();
     clearPassA.overrideClearAlpha = 0.0;
+    clearPassB.overrideClearAlpha = 0.0;
+    clearPassC.overrideClearAlpha = 0.0;
 
     const renderPass = new RenderPass(this.scene, this.camera);
     renderPass.clear = false;
@@ -63,11 +69,30 @@ export class RenderPipeline {
     const copyPass = new CopyPass();
     copyPass.texture.format = THREE.RGBAFormat;
 
+    const copyCPass = new CopyPass();
+    copyCPass.texture.format = THREE.RGBAFormat;
+
     const passAEffect = new ScanlineEffect({
       density: 1,
     });
 
     const pixelEffect = new PixelationEffect(4);
+
+    const envBloomEffect = new BloomEffect({
+      blendFunction: BlendFunction.ADD,
+      kernelSize: KernelSize.LARGE,
+      luminanceThreshold: 0.0,
+      luminanceSmoothing: 0.1,
+      intensity: 3,
+      radius: 0.8,
+      levels: 10,
+    });
+    const envBloomEffectPass = new EffectPass(this.camera, envBloomEffect);
+    const textureEffectC = new TextureEffect({
+      blendFunction: BlendFunction.ADD,
+      texture: copyCPass.texture,
+    });
+    const blendCPass = new EffectPass(this.camera, textureEffectC);
 
     const bloomEffect = new BloomEffect({
       blendFunction: BlendFunction.ADD,
@@ -95,9 +120,16 @@ export class RenderPipeline {
     this.composer.addPass(bloomEffectPass);
     this.composer.addPass(copyPass);
 
+    this.composer.addPass(clearPassC);
+    this.composer.addPass(lambdaPassC);
+    this.composer.addPass(renderPass);
+    this.composer.addPass(envBloomEffectPass);
+    this.composer.addPass(copyCPass);
+
     this.composer.addPass(clearPassA);
     this.composer.addPass(lambdaPassA);
     this.composer.addPass(renderPass);
+    this.composer.addPass(blendCPass);
     this.composer.addPass(pixelEffectPass);
     this.composer.addPass(passAEffectPass);
 

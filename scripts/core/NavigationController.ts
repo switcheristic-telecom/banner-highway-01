@@ -75,7 +75,7 @@ export class NavigationController {
     // Shared material for all wireframe parts
     const lineMaterial = new THREE.LineBasicMaterial({
       color: 0x03a062, // Cyan color for wireframe
-      linewidth: 2,
+      linewidth: 3,
     });
 
     // Main body (chassis) - lower part
@@ -118,7 +118,7 @@ export class NavigationController {
       const wheelWireframe = new THREE.LineSegments(wheelEdges, lineMaterial);
       wheelWireframe.position.set(pos.x, wheelRadius, pos.z);
       wheelWireframe.rotation.z = Math.PI / 2; // Rotate to align with car direction
-      wheelWireframe.layers.set(1);
+      wheelWireframe.layers.set(3);
       group.add(wheelWireframe);
     });
 
