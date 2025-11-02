@@ -46,7 +46,7 @@ export interface HighwayExit {
   toT: number;
 }
 
-export const HIGHWAY_DATA = {
+export const HIGHWAY_DATA: HighwayData = {
   branches: [
     {
       id: 'main',
@@ -71,8 +71,8 @@ export const HIGHWAY_DATA = {
         { x: 408, y: 0, z: 531 },
         { x: 377, y: 0, z: 497 },
       ],
-      width: 1.2,
-      segments: 1,
+      widthFactor: 1.2,
+      segmentsFactor: 10,
     },
   ],
   exits: [],

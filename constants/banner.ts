@@ -120,7 +120,7 @@ export const BANNER_DEFS: BannerDefinition[] = [
     side: 'r',
     sizeFactor: 1.2,
     angle: 0,
-    distanceFactor: 1.0,
+    distanceFactor: 0.1,
     emmisiveFactor: 0.4,
     bannerImageFile: 'poem-1/9.jpg',
   },
@@ -212,6 +212,7 @@ export const BANNER_DEFS: BannerDefinition[] = [
     angle: 0,
     sizeFactor: 1.2,
     distanceFactor: 0.1,
+    aspectRatio: 3.9,
     bannerImageFile: 'poem-2/7.jpg',
   },
   {
@@ -244,26 +245,6 @@ export const BANNER_DEFS: BannerDefinition[] = [
     sizeFactor: 1.2,
     distanceFactor: 0.1,
     bannerImageFile: 'poem-2/10.jpg',
-  },
-  {
-    id: 'banner_main_21',
-    branch_id: 'main',
-    t: 0.1 / 2 + 1,
-    side: 'l',
-    angle: 0,
-    sizeFactor: 1.2,
-    distanceFactor: 0.1,
-    bannerImageFile: 'poem-2/11.jpg',
-  },
-  {
-    id: 'banner_main_22',
-    branch_id: 'main',
-    t: 0.21 / 2 + 1,
-    side: 'l',
-    angle: 0,
-    sizeFactor: 1.2,
-    distanceFactor: 0.1,
-    bannerImageFile: 'poem-2/12.jpg',
   },
 ];
 

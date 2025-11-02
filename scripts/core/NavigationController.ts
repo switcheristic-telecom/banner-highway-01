@@ -34,6 +34,10 @@ export class NavigationController {
   instructionsHidden: boolean;
   instructionsHideThreshold: number;
 
+  // Banner camera pivot settings
+  bannerLookThreshold: number;
+  bannerLookInterpolation: number;
+
   constructor(highwaySystem: HighwaySystem, camera: THREE.PerspectiveCamera) {
     this.highwaySystem = highwaySystem;
     this.camera = camera;
@@ -77,6 +81,10 @@ export class NavigationController {
     this.instructionsPanel = document.getElementById('instructions-panel');
     this.instructionsHidden = false;
     this.instructionsHideThreshold = 0.01; // Hide after user has moved 15% along the path
+
+    // Banner camera pivot settings
+    this.bannerLookThreshold = 0.02; // Distance threshold to start looking at banner
+    this.bannerLookInterpolation = 0.5; // Smooth interpolation factor (0-1, higher = more banner focus)
 
     this.setupEventListeners();
   }
@@ -436,9 +444,61 @@ export class NavigationController {
     // this.camera.position.lerp(targetCameraPos, 0.1);
     this.camera.position.copy(targetCameraPos);
 
-    // Look slightly ahead of the car
-    const lookTarget = lookAheadPos.clone();
-    // lookTarget.y += 1;
+    // Default look target: slightly ahead of the car
+    let lookTarget = lookAheadPos.clone();
+
+    // Check for nearby banners and pivot camera toward them
+    const app = (window as any).app;
+    if (app && app.bannerManager) {
+      const nearbyBanners = app.bannerManager.getBannersAtPosition(
+        this.currentBranchId,
+        this.currentT,
+        this.bannerLookThreshold
+      );
+
+      if (nearbyBanners.length > 0) {
+        // Find the closest banner
+        let closestBanner = nearbyBanners[0];
+        let minDistance = Math.abs(closestBanner.t - this.currentT);
+
+        for (const banner of nearbyBanners) {
+          const distance = Math.abs(banner.t - this.currentT);
+          if (distance < minDistance) {
+            minDistance = distance;
+            closestBanner = banner;
+          }
+        }
+
+        // Calculate banner position in 3D space
+        const bannerRoadPos = branch.getPoint(closestBanner.t);
+        const bannerPosition = new THREE.Vector3(
+          bannerRoadPos.x,
+          closestBanner.elevation, // Use the banner's elevation for y
+          bannerRoadPos.z
+        );
+
+        // Calculate interpolation factor based on distance to banner
+        // Closer = stronger interpolation toward banner
+        const normalizedDistance = minDistance / this.bannerLookThreshold;
+        let interpolationFactor = 1 - normalizedDistance; // 1 when at banner, 0 at threshold
+
+        // Apply smooth easing (ease-in-out cubic)
+        interpolationFactor =
+          interpolationFactor < 0.5
+            ? 4 *
+              interpolationFactor *
+              interpolationFactor *
+              interpolationFactor
+            : 1 - Math.pow(-2 * interpolationFactor + 2, 3) / 2;
+
+        // Interpolate between look-ahead position and banner position
+        lookTarget.lerp(
+          bannerPosition,
+          interpolationFactor * this.bannerLookInterpolation
+        );
+      }
+    }
+
     this.camera.lookAt(lookTarget);
   }
 
