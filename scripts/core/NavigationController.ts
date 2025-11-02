@@ -40,13 +40,13 @@ export class NavigationController {
     this.currentT = 0.0; // Position along the spline (0 to 1)
     this.speed = 0;
     this.targetSpeed = 0;
-    this.maxSpeed = 0.1;
+    this.maxSpeed = 0.02;
     this.acceleration = 0.1;
     this.deceleration = 0.1;
 
     // Linear scroll mode
     this.linearScrollMode = true; // Enable linear scrolling like a webpage
-    this.linearScrollSensitivity = 0.0002; // Direct position change per scroll unit
+    this.linearScrollSensitivity = 0.00002; // Direct position change per scroll unit
 
     // Camera settings
     this.cameraHeight = 10;
