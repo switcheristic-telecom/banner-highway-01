@@ -46,7 +46,7 @@ export class NavigationController {
 
     // Linear scroll mode
     this.linearScrollMode = true; // Enable linear scrolling like a webpage
-    this.linearScrollSensitivity = 0.0005; // Direct position change per scroll unit
+    this.linearScrollSensitivity = 0.0002; // Direct position change per scroll unit
 
     // Camera settings
     this.cameraHeight = 10;

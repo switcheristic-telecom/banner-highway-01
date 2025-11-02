@@ -76,7 +76,7 @@ export class RenderPipeline {
       density: 1,
     });
 
-    const pixelEffect = new PixelationEffect(4);
+    const pixelEffect = new PixelationEffect(2);
 
     const envBloomEffect = new BloomEffect({
       blendFunction: BlendFunction.ADD,
