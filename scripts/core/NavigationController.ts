@@ -192,14 +192,14 @@ export class NavigationController {
           e.preventDefault();
           const currentY = e.touches[0].clientY;
           const delta = touchStartY - currentY;
-          this.handleScroll(delta * 0.5); // Adjust sensitivity for single finger
+          this.handleScroll(delta * 2); // Adjust sensitivity for single finger
           touchStartY = currentY;
         } else if (e.touches.length === 2) {
           // Two finger scroll (pinch/zoom gesture)
           e.preventDefault();
           const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
           const delta = touchStartY - currentY;
-          this.handleScroll(delta * 2);
+          this.handleScroll(delta * 4);
           touchStartY = currentY;
         }
       },
