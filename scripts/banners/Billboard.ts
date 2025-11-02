@@ -51,7 +51,7 @@ export class Billboard {
     const side = this.info.side === 'r' ? 1 : -1;
     const distance = this.info.distance;
 
-    const offset = roadNormal.clone().multiplyScalar(side);
+    const offset = roadNormal.clone().multiplyScalar(side * distance);
     this.group.position.copy(roadPosition).add(offset);
 
     // Raise billboard above ground based on elevation parameter
@@ -83,6 +83,10 @@ export class Billboard {
     const frameWidth = bannerWidth + padX * 2;
     const frameHeight = bannerHeight + padY * 2;
 
+    const lineMaterial = new THREE.LineBasicMaterial({
+      color: 0x03a062, // Cyan color for wireframe
+      linewidth: 2,
+    });
     // Create frame geometry
     const frameMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff, // White frames
@@ -96,28 +100,23 @@ export class Billboard {
     const barThickness = 0.3;
 
     // Top bar
-    const topBar = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        frameWidth + barThickness,
-        barThickness,
-        barThickness
-      ),
-      frameMaterial
+    const horizontalBarGeometry = new THREE.BoxGeometry(
+      frameWidth + barThickness,
+      barThickness,
+      barThickness
     );
+    // const topBar = new THREE.Mesh(horizontalBarGeometry, frameMaterial);
+    const topBar = new THREE.LineSegments(horizontalBarGeometry, lineMaterial);
 
     topBar.position.y = frameHeight / 2;
     topBar.castShadow = true;
     topBar.layers.set(1); // Environment layer (gets dithered)
     this.group.add(topBar);
 
-    // Bottom bar
-    const bottomBar = new THREE.Mesh(
-      new THREE.BoxGeometry(
-        frameWidth + barThickness,
-        barThickness,
-        barThickness
-      ),
-      frameMaterial
+    // const bottomBar = new THREE.Mesh(horizontalBarGeometry, frameMaterial);
+    const bottomBar = new THREE.LineSegments(
+      horizontalBarGeometry,
+      lineMaterial
     );
     bottomBar.position.y = -frameHeight / 2;
     bottomBar.castShadow = true;
@@ -125,19 +124,21 @@ export class Billboard {
     this.group.add(bottomBar);
 
     // Side bars
-    const sideBar = new THREE.BoxGeometry(
+    const sideBarGeometry = new THREE.BoxGeometry(
       barThickness,
       frameHeight,
       barThickness
     );
 
-    const leftBar = new THREE.Mesh(sideBar, frameMaterial);
+    // const leftBar = new THREE.Mesh(sideBarGeometry, frameMaterial);
+    const leftBar = new THREE.LineSegments(sideBarGeometry, lineMaterial);
     leftBar.position.x = -frameWidth / 2;
     leftBar.castShadow = true;
     leftBar.layers.set(1); // Environment layer (gets dithered)
     this.group.add(leftBar);
 
-    const rightBar = new THREE.Mesh(sideBar, frameMaterial);
+    // const rightBar = new THREE.Mesh(sideBarGeometry, frameMaterial);
+    const rightBar = new THREE.LineSegments(sideBarGeometry, lineMaterial);
     rightBar.position.x = frameWidth / 2;
     rightBar.castShadow = true;
     rightBar.layers.set(1); // Environment layer (gets dithered)
@@ -152,6 +153,7 @@ export class Billboard {
       totalLegHeight,
       barThickness
     );
+
     const legMaterial = new THREE.MeshStandardMaterial({
       color: 0xffffff, // White frames
       roughness: 0.8,
@@ -160,7 +162,8 @@ export class Billboard {
       emissiveIntensity: 0.1,
     });
 
-    const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+    // const leftLeg = new THREE.Mesh(legGeometry, legMaterial);
+    const leftLeg = new THREE.LineSegments(legGeometry, lineMaterial);
     leftLeg.position.set(
       -frameWidth / 2,
       -(frameHeight / 2 + totalLegHeight / 2),
@@ -171,7 +174,8 @@ export class Billboard {
 
     this.group.add(leftLeg);
 
-    const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+    // const rightLeg = new THREE.Mesh(legGeometry, legMaterial);
+    const rightLeg = new THREE.LineSegments(legGeometry, lineMaterial);
     rightLeg.position.set(
       frameWidth / 2 - 1,
       -(frameHeight / 2 + totalLegHeight / 2),
@@ -217,7 +221,11 @@ export class Billboard {
       this.bannerMesh.scale.x = -1;
     }
 
+    // const bannerMeshClone = this.bannerMesh.clone();
+    // bannerMeshClone.layers.set(1);
+
     this.group.add(this.bannerMesh);
+    // this.group.add(bannerMeshClone);
   }
 
   async createImageMaterial(imagePath: string) {

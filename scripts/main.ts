@@ -110,6 +110,9 @@ class BannerHighwayApp {
     const deltaTime = this.sceneManager.clock.getDelta();
     const elapsedTime = this.sceneManager.clock.getElapsedTime();
 
+    // Update sky shader time for twinkling stars
+    this.sceneManager.updateSkyTime(elapsedTime);
+
     // Update navigation
     this.navigationController.update(deltaTime);
 

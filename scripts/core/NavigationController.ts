@@ -72,17 +72,57 @@ export class NavigationController {
   createCar() {
     const group = new THREE.Group();
 
-    // Simple wireframe box
-    const bodyGeometry = new THREE.BoxGeometry(2, 2, 4);
-    const edges = new THREE.EdgesGeometry(bodyGeometry);
+    // Shared material for all wireframe parts
     const lineMaterial = new THREE.LineBasicMaterial({
-      color: 0x00ffff, // Cyan color for wireframe
+      color: 0x03a062, // Cyan color for wireframe
       linewidth: 2,
     });
-    const wireframeBox = new THREE.LineSegments(edges, lineMaterial);
-    wireframeBox.position.y = 1; // Half the box height to sit on the road
-    wireframeBox.layers.set(1); // Environment layer
-    group.add(wireframeBox);
+
+    // Main body (chassis) - lower part
+    const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
+    const bodyEdges = new THREE.EdgesGeometry(bodyGeometry);
+    const bodyWireframe = new THREE.LineSegments(bodyEdges, lineMaterial);
+    bodyWireframe.position.y = 0.8; // Raised above ground to make room for wheels
+    bodyWireframe.layers.set(1);
+    group.add(bodyWireframe);
+
+    // Cabin/roof - upper part (smaller and centered)
+    const cabinGeometry = new THREE.BoxGeometry(1.6, 1, 2.5);
+    const cabinEdges = new THREE.EdgesGeometry(cabinGeometry);
+    const cabinWireframe = new THREE.LineSegments(cabinEdges, lineMaterial);
+    cabinWireframe.position.y = 1.7; // On top of the body
+    cabinWireframe.position.z = -0.3; // Slightly back from center
+    cabinWireframe.layers.set(1);
+    group.add(cabinWireframe);
+
+    // Wheels - 4 cylinders
+    const wheelRadius = 0.4;
+    const wheelWidth = 0.3;
+    const wheelGeometry = new THREE.CylinderGeometry(
+      wheelRadius,
+      wheelRadius,
+      wheelWidth,
+      4
+    );
+
+    // Wheel positions (x, z relative to car center)
+    const wheelPositions = [
+      { x: -1.1, z: 1.3 }, // Front left
+      { x: 1.1, z: 1.3 }, // Front right
+      { x: -1.1, z: -1.3 }, // Back left
+      { x: 1.1, z: -1.3 }, // Back right
+    ];
+
+    wheelPositions.forEach((pos) => {
+      const wheelEdges = new THREE.EdgesGeometry(wheelGeometry);
+      const wheelWireframe = new THREE.LineSegments(wheelEdges, lineMaterial);
+      wheelWireframe.position.set(pos.x, wheelRadius, pos.z);
+      wheelWireframe.rotation.z = Math.PI / 2; // Rotate to align with car direction
+      wheelWireframe.layers.set(1);
+      group.add(wheelWireframe);
+    });
+
+    group.scale.set(0.8, 0.8, 0.8);
 
     this.highwaySystem.scene.add(group);
     return group;

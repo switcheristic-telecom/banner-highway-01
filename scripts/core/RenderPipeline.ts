@@ -12,6 +12,8 @@ import {
   NoiseEffect,
   TextureEffect,
   DotScreenEffect,
+  PixelationEffect,
+  ScanlineEffect,
 } from 'postprocessing';
 
 import { SceneManager } from './SceneManager';
@@ -54,65 +56,52 @@ export class RenderPipeline {
     const clearPassA = new ClearPass();
     const clearPassB = new ClearPass();
     clearPassA.overrideClearAlpha = 0.0;
-    clearPassB.overrideClearAlpha = 0.0;
 
     const renderPass = new RenderPass(this.scene, this.camera);
     renderPass.clear = false;
 
-    const copyBannerPass = new CopyPass();
-    copyBannerPass.texture.format = THREE.RGBAFormat;
+    const copyPass = new CopyPass();
+    copyPass.texture.format = THREE.RGBAFormat;
 
-    const copyProcessedBannerPass = new CopyPass();
-    copyProcessedBannerPass.texture.format = THREE.RGBAFormat;
-
-    const passAEffect = new DotScreenEffect({
-      blendFunction: BlendFunction.ADD,
-      angle: 45,
-      scale: 1,
+    const passAEffect = new ScanlineEffect({
+      density: 1,
     });
+
+    const pixelEffect = new PixelationEffect(4);
 
     const bloomEffect = new BloomEffect({
       blendFunction: BlendFunction.ADD,
       kernelSize: KernelSize.LARGE,
       luminanceThreshold: 0.0,
       luminanceSmoothing: 0.1,
-      intensity: 2,
+      intensity: 3,
       radius: 0.8,
       levels: 10,
     });
 
-    const bannerTextureEffect = new TextureEffect({
-      blendFunction: BlendFunction.NORMAL,
-      texture: copyBannerPass.texture,
-    });
-
-    const processedBannerTextureEffect = new TextureEffect({
-      blendFunction: BlendFunction.SCREEN,
-      texture: copyProcessedBannerPass.texture,
+    const textureEffect = new TextureEffect({
+      blendFunction: BlendFunction.ADD,
+      texture: copyPass.texture,
     });
 
     const passAEffectPass = new EffectPass(this.camera, passAEffect);
+    const pixelEffectPass = new EffectPass(this.camera, pixelEffect);
     const bloomEffectPass = new EffectPass(this.camera, bloomEffect);
-    const blendBannerPass = new EffectPass(this.camera, bannerTextureEffect);
-    const blendProcessedBannerPass = new EffectPass(
-      this.camera,
-      processedBannerTextureEffect
-    );
+    const blendPass = new EffectPass(this.camera, textureEffect);
 
     this.composer.addPass(clearPassB);
     this.composer.addPass(lambdaPassB);
     this.composer.addPass(renderPass);
-    this.composer.addPass(copyBannerPass);
     this.composer.addPass(bloomEffectPass);
-    this.composer.addPass(copyProcessedBannerPass);
+    this.composer.addPass(copyPass);
 
     this.composer.addPass(clearPassA);
     this.composer.addPass(lambdaPassA);
     this.composer.addPass(renderPass);
+    this.composer.addPass(pixelEffectPass);
     this.composer.addPass(passAEffectPass);
 
-    this.composer.addPass(blendBannerPass);
-    // this.composer.addPass(blendProcessedBannerPass);
+    this.composer.addPass(blendPass);
   }
 
   render() {
@@ -126,6 +115,7 @@ export class RenderPipeline {
 
     // Resize render target
     this.composer.setSize(width, height);
+    this.renderer.setSize(width, height);
   }
 
   dispose() {

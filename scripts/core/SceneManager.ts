@@ -32,14 +32,14 @@ export class SceneManager {
     this.renderer = new THREE.WebGLRenderer({
       canvas: this.canvas,
       antialias: false,
-      alpha: false,
+      alpha: true,
       depth: false,
       logarithmicDepthBuffer: true,
       powerPreference: 'high-performance',
     });
 
     this.renderer.setSize(window.innerWidth, window.innerHeight);
-    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1));
+    this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -73,7 +73,7 @@ export class SceneManager {
     this.scene.add(ambientLight);
 
     // Directional light (sun) - increased for visibility
-    this.sunLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    this.sunLight = new THREE.DirectionalLight(0xffffff, 0.1);
     this.sunLight.position.set(50, 100, 50);
     this.sunLight.castShadow = true;
     this.sunLight.layers.enableAll(); // Lights affect all layers
@@ -101,18 +101,18 @@ export class SceneManager {
 
   setupFog() {
     // Fog for depth - gray to match gradient
-    this.scene.fog = new THREE.Fog(0x808080, 100, 500);
+    this.scene.fog = new THREE.Fog(0x808080, 10, 400);
   }
 
   addGroundPlane() {
     // Add a circular ground plane that will follow the car
-    const radius = 500; // Radius of the circle
+    const radius = 150; // Radius of the circle
     const segments = 12; // Number of segments for smooth circle
     const groundGeometry = new THREE.CircleGeometry(radius, segments);
     const groundMaterial = new THREE.MeshStandardMaterial({
       color: 0x000000, // Black ground
       roughness: 1.0,
-      metalness: 0.0,
+      metalness: 0.5,
       emissive: 0x000000, // No emission for ground
       emissiveIntensity: 0.0,
     });
@@ -145,6 +145,20 @@ export class SceneManager {
     }
   }
 
+  updateSkyTime(time: number) {
+    // Update the sky shader's time uniform for cloud movement
+    if (this.sky && this.sky.material instanceof THREE.ShaderMaterial) {
+      this.sky.material.uniforms.time.value = time;
+    }
+  }
+
+  setCloudQuantization(value: number) {
+    // Update cloud blockiness (higher = more blocky/pixelated)
+    if (this.sky && this.sky.material instanceof THREE.ShaderMaterial) {
+      this.sky.material.uniforms.cloudQuantization.value = value;
+    }
+  }
+
   addGradientSky() {
     // Create a large sphere for the sky
     const skyGeometry = new THREE.SphereGeometry(500, 32, 32);
@@ -157,9 +171,11 @@ export class SceneManager {
     });
 
     // Set gradient colors - white at top, gray at bottom
-    skyMaterial.uniforms.topColor.value = new THREE.Color(0x000000);
-    skyMaterial.uniforms.bottomColor.value = new THREE.Color(0x808080);
+    skyMaterial.uniforms.topColor.value = new THREE.Color(0x111111);
+    skyMaterial.uniforms.bottomColor.value = new THREE.Color(0x000000);
+    skyMaterial.uniforms.offset.value = 40;
     skyMaterial.uniforms.exponent.value = 0.4;
+    skyMaterial.uniforms.cloudQuantization.value = 50.0; // Higher = more blocky clouds
 
     this.sky = new THREE.Mesh(skyGeometry, skyMaterial);
     this.sky.layers.set(1); // Environment layer so it gets dithered
