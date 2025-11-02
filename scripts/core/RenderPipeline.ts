@@ -80,7 +80,7 @@ export class RenderPipeline {
 
     const envBloomEffect = new BloomEffect({
       blendFunction: BlendFunction.ADD,
-      kernelSize: KernelSize.LARGE,
+      kernelSize: KernelSize.VERY_SMALL,
       luminanceThreshold: 0.0,
       luminanceSmoothing: 0.1,
       intensity: 3,
@@ -99,7 +99,7 @@ export class RenderPipeline {
       kernelSize: KernelSize.LARGE,
       luminanceThreshold: 0.0,
       luminanceSmoothing: 0.1,
-      intensity: 3,
+      intensity: 2,
       radius: 0.8,
       levels: 10,
     });

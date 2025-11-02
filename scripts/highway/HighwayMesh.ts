@@ -115,6 +115,14 @@ export class HighwayMesh {
     // Material for the edge strips
     const edgeMaterial = this.edgeMaterial;
 
+    // Material for the middle edge (dimmer)
+    const middleEdgeMaterial = new THREE.MeshStandardMaterial({
+      color: 0x03a062,
+      emissive: 0x03a062,
+      emissiveIntensity: 0.0,
+      transparent: true,
+      opacity: 0.5,
+    });
     // Create geometry for left edge strip
     const leftVertices: number[] = [];
     const leftIndices: number[] = [];
@@ -126,6 +134,12 @@ export class HighwayMesh {
     const rightIndices: number[] = [];
     const rightNormals: number[] = [];
     const rightUvs: number[] = [];
+
+    // Create geometry for middle edge strip
+    const middleVertices: number[] = [];
+    const middleIndices: number[] = [];
+    const middleNormals: number[] = [];
+    const middleUvs: number[] = [];
 
     // Generate vertices along the spline
     for (let i = 0; i <= this.segments; i++) {
@@ -164,6 +178,22 @@ export class HighwayMesh {
       rightVertices.push(rightOuter.x, rightOuter.y, rightOuter.z);
       rightNormals.push(0, 1, 0, 0, 1, 0);
       rightUvs.push(0, t, 1, t);
+
+      // Middle edge strip (centered at 0)
+      const middleLeft = point
+        .clone()
+        .add(normal.clone().multiplyScalar(-lineThickness / 2));
+      const middleRight = point
+        .clone()
+        .add(normal.clone().multiplyScalar(lineThickness / 2));
+
+      middleLeft.y += 0.05;
+      middleRight.y += 0.05;
+
+      middleVertices.push(middleLeft.x, middleLeft.y, middleLeft.z);
+      middleVertices.push(middleRight.x, middleRight.y, middleRight.z);
+      middleNormals.push(0, 1, 0, 0, 1, 0);
+      middleUvs.push(0, t, 1, t);
     }
 
     // Create indices for triangle strips
@@ -179,6 +209,9 @@ export class HighwayMesh {
 
       rightIndices.push(a, b, c);
       rightIndices.push(b, d, c);
+
+      middleIndices.push(a, b, c);
+      middleIndices.push(b, d, c);
     }
 
     // Create left edge mesh
@@ -220,6 +253,26 @@ export class HighwayMesh {
     const rightMesh = new THREE.Mesh(rightGeometry, edgeMaterial.clone());
     rightMesh.layers.set(3); // Environment layer
     edgeLinesGroup.add(rightMesh);
+
+    // Create middle edge mesh
+    const middleGeometry = new THREE.BufferGeometry();
+    middleGeometry.setAttribute(
+      'position',
+      new THREE.Float32BufferAttribute(middleVertices, 3)
+    );
+    middleGeometry.setAttribute(
+      'normal',
+      new THREE.Float32BufferAttribute(middleNormals, 3)
+    );
+    middleGeometry.setAttribute(
+      'uv',
+      new THREE.Float32BufferAttribute(middleUvs, 2)
+    );
+    middleGeometry.setIndex(middleIndices);
+
+    const middleMesh = new THREE.Mesh(middleGeometry, middleEdgeMaterial);
+    middleMesh.layers.set(1); // Layer 1 as requested
+    edgeLinesGroup.add(middleMesh);
 
     return edgeLinesGroup;
   }

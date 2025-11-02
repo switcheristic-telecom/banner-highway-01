@@ -221,6 +221,31 @@ export class Billboard {
       this.bannerMesh.scale.x = -1;
     }
 
+    // Create rectangular frame outline (just the 4 edges)
+    const halfWidth = bannerWidth / 2;
+    const halfHeight = bannerHeight / 2;
+    const framePoints = [
+      new THREE.Vector3(-halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, -halfHeight, 0),
+      new THREE.Vector3(halfWidth, halfHeight, 0),
+      new THREE.Vector3(-halfWidth, halfHeight, 0),
+    ];
+    const bannerFrameGeometry = new THREE.BufferGeometry().setFromPoints(
+      framePoints
+    );
+    const bannerFrameMaterial = new THREE.LineBasicMaterial({
+      color: 0xffffff,
+      linewidth: 0.03,
+    });
+    const bannerFrame = new THREE.LineLoop(
+      bannerFrameGeometry,
+      bannerFrameMaterial
+    );
+    bannerFrame.position.z = 0.01;
+    bannerFrame.layers.set(1);
+    bannerFrame.scale.set(1.0 + 0.01, 1.0 + 0.01 * this.info.aspectRatio, 1.0);
+    this.group.add(bannerFrame);
+
     // const bannerMeshClone = this.bannerMesh.clone();
     // bannerMeshClone.layers.set(1);
 
@@ -231,13 +256,16 @@ export class Billboard {
   async createImageMaterial(imagePath: string) {
     try {
       const texture = await this.assetLoader.loadTexture(imagePath);
-      texture.minFilter = THREE.LinearMipmapLinearFilter;
-      texture.magFilter = THREE.LinearFilter;
+      texture.minFilter = THREE.NearestFilter;
+      texture.magFilter = THREE.NearestFilter;
       texture.anisotropy = 16;
 
-      return new THREE.MeshBasicMaterial({
+      return new THREE.MeshStandardMaterial({
         map: texture,
+        emissiveMap: texture,
         side: THREE.DoubleSide,
+        emissive: 0xffffff,
+        emissiveIntensity: this.info.emmisiveIntensity,
         transparent: true,
         opacity: 1.0,
       });

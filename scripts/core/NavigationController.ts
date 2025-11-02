@@ -6,6 +6,7 @@ import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 import { HighwaySystem } from '../highway/HighwaySystem';
 import { SceneManager } from './SceneManager';
 
+const CAR_X_OFFSET = -1.4;
 export class NavigationController {
   highwaySystem: HighwaySystem;
   camera: THREE.PerspectiveCamera;
@@ -140,8 +141,12 @@ export class NavigationController {
 
     group.scale.set(0.8, 0.8, 0.8);
 
-    this.highwaySystem.scene.add(group);
-    return group;
+    group.position.x = CAR_X_OFFSET;
+
+    const wrappingGroup = new THREE.Group();
+    wrappingGroup.add(group);
+    this.highwaySystem.scene.add(wrappingGroup);
+    return wrappingGroup;
   }
 
   setupEventListeners() {
