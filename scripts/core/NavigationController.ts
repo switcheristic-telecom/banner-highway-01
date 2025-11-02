@@ -40,7 +40,7 @@ export class NavigationController {
     this.currentT = 0.0; // Position along the spline (0 to 1)
     this.speed = 0;
     this.targetSpeed = 0;
-    this.maxSpeed = 0.02;
+    this.maxSpeed = 0.01;
     this.acceleration = 0.1;
     this.deceleration = 0.1;
 
