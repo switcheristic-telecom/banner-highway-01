@@ -1,4 +1,7 @@
 import * as THREE from 'three';
+import { LineSegments2 } from 'three/examples/jsm/lines/LineSegments2.js';
+import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeometry.js';
+import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 
 import { HighwaySystem } from '../highway/HighwaySystem';
 import { SceneManager } from './SceneManager';
@@ -72,16 +75,27 @@ export class NavigationController {
   createCar() {
     const group = new THREE.Group();
 
-    // Shared material for all wireframe parts
-    const lineMaterial = new THREE.LineBasicMaterial({
+    // Shared material for all wireframe parts using LineMaterial (supports linewidth)
+    const lineMaterial = new LineMaterial({
       color: 0x03a062, // Cyan color for wireframe
-      linewidth: 3,
+      linewidth: 0.03, // Line width in world units (not pixels)
+      worldUnits: true, // Use world units for line width
+      dashed: false,
     });
+
+    // Helper function to convert EdgesGeometry to LineSegmentsGeometry
+    const createLineSegmentsGeometry = (edgesGeometry: THREE.EdgesGeometry) => {
+      const positions = edgesGeometry.attributes.position.array;
+      const lineSegmentsGeometry = new LineSegmentsGeometry();
+      lineSegmentsGeometry.setPositions(Array.from(positions));
+      return lineSegmentsGeometry;
+    };
 
     // Main body (chassis) - lower part
     const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
     const bodyEdges = new THREE.EdgesGeometry(bodyGeometry);
-    const bodyWireframe = new THREE.LineSegments(bodyEdges, lineMaterial);
+    const bodyLineGeometry = createLineSegmentsGeometry(bodyEdges);
+    const bodyWireframe = new LineSegments2(bodyLineGeometry, lineMaterial);
     bodyWireframe.position.y = 0.8; // Raised above ground to make room for wheels
     bodyWireframe.layers.set(1);
     group.add(bodyWireframe);
@@ -89,7 +103,8 @@ export class NavigationController {
     // Cabin/roof - upper part (smaller and centered)
     const cabinGeometry = new THREE.BoxGeometry(1.6, 1, 2.5);
     const cabinEdges = new THREE.EdgesGeometry(cabinGeometry);
-    const cabinWireframe = new THREE.LineSegments(cabinEdges, lineMaterial);
+    const cabinLineGeometry = createLineSegmentsGeometry(cabinEdges);
+    const cabinWireframe = new LineSegments2(cabinLineGeometry, lineMaterial);
     cabinWireframe.position.y = 1.7; // On top of the body
     cabinWireframe.position.z = -0.3; // Slightly back from center
     cabinWireframe.layers.set(1);
@@ -115,7 +130,8 @@ export class NavigationController {
 
     wheelPositions.forEach((pos) => {
       const wheelEdges = new THREE.EdgesGeometry(wheelGeometry);
-      const wheelWireframe = new THREE.LineSegments(wheelEdges, lineMaterial);
+      const wheelLineGeometry = createLineSegmentsGeometry(wheelEdges);
+      const wheelWireframe = new LineSegments2(wheelLineGeometry, lineMaterial);
       wheelWireframe.position.set(pos.x, wheelRadius, pos.z);
       wheelWireframe.rotation.z = Math.PI / 2; // Rotate to align with car direction
       wheelWireframe.layers.set(3);
