@@ -56,7 +56,7 @@ export class AssetLoader {
       // Construct full path - use relative path
       const fullPath = path.startsWith('http')
         ? path
-        : `assets/banners/${path}`;
+        : `banners/${path}`;
 
       this.textureLoader.load(
         fullPath,
@@ -93,7 +93,7 @@ export class AssetLoader {
       const video = document.createElement('video');
       const fullPath = path.startsWith('http')
         ? path
-        : `assets/banners/${path}`;
+        : `banners/${path}`;
 
       video.src = fullPath;
       video.loop = true;

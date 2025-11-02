@@ -5,10 +5,12 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "start": "serve -s dist -l 3000"
   },
   "dependencies": {
     "postprocessing": "^6.37.8",
+    "serve": "^14.2.4",
     "three": "^0.181.0",
     "vite": "^7.1.12"
   },
