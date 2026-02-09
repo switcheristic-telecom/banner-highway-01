@@ -1,37 +1,43 @@
 import * as THREE from 'three';
+import type { PathNode, Vec3 } from '@/constants/highway';
+
+function toVec3(v: Vec3): THREE.Vector3 {
+  return new THREE.Vector3(v.x, v.y, v.z);
+}
 
 export class HighwaySpline {
   branchId: string;
-  points: THREE.Vector3[];
-  spline: THREE.CatmullRomCurve3;
+  nodes: PathNode[];
+  curvePath: THREE.CurvePath<THREE.Vector3>;
   length: number;
-  lengthSegments: number;
-  arcLengthDivisions: number;
 
-  constructor(points: THREE.Vector3[], branchId: string) {
+  constructor(nodes: PathNode[], branchId: string) {
     this.branchId = branchId;
-    this.points = points;
+    this.nodes = nodes;
 
-    // Create CatmullRom spline for smooth curves
-    this.spline = new THREE.CatmullRomCurve3(
-      this.points,
-      false,
-      'catmullrom',
-      0.5
-    );
+    // Build a CurvePath from chained CubicBezierCurve3 segments
+    this.curvePath = new THREE.CurvePath<THREE.Vector3>();
 
-    // Cache for performance
-    this.length = this.spline.getLength();
-    this.lengthSegments = 100;
-    this.arcLengthDivisions = 200;
+    for (let i = 0; i < nodes.length - 1; i++) {
+      const segment = new THREE.CubicBezierCurve3(
+        toVec3(nodes[i].position),
+        toVec3(nodes[i].handleOut),
+        toVec3(nodes[i + 1].handleIn),
+        toVec3(nodes[i + 1].position)
+      );
+      this.curvePath.add(segment);
+    }
+
+    // Cache length
+    this.length = this.curvePath.getLength();
   }
 
   getPoint(t: number): THREE.Vector3 {
-    return this.spline.getPoint(t);
+    return this.curvePath.getPoint(t);
   }
 
   getTangent(t: number): THREE.Vector3 {
-    return this.spline.getTangent(t);
+    return this.curvePath.getTangent(t);
   }
 
   getNormal(t: number): THREE.Vector3 {
@@ -42,18 +48,18 @@ export class HighwaySpline {
   }
 
   getPoints(divisions = 50): THREE.Vector3[] {
-    return this.spline.getPoints(divisions);
+    return this.curvePath.getPoints(divisions);
   }
 
   getSpacedPoints(divisions = 50): THREE.Vector3[] {
-    return this.spline.getSpacedPoints(divisions);
+    return this.curvePath.getSpacedPoints(divisions);
   }
 
   getLength(): number {
     return this.length;
   }
 
-  // Get the closest point on the spline to a given position
+  // Get the closest point on the curve to a given position
   getClosestPoint(position: THREE.Vector3): {
     point: THREE.Vector3 | null;
     t: number;
@@ -79,7 +85,7 @@ export class HighwaySpline {
     return { point: closestPoint, t: closestT, distance: minDistance };
   }
 
-  // Get frenet frames for proper orientation along the spline
+  // Get frenet frames for proper orientation along the curve
   getFrenetFrames(segments = 50) {
     const frames = {
       tangents: [] as THREE.Vector3[],
@@ -105,47 +111,14 @@ export class HighwaySpline {
     return frames;
   }
 
-  // Create a tube geometry from the spline (useful for visualization)
+  // Create a tube geometry from the curve (useful for visualization)
   createTubeGeometry(radius = 1, radialSegments = 8, tubularSegments = 50) {
     return new THREE.TubeGeometry(
-      this.spline,
+      this.curvePath,
       tubularSegments,
       radius,
       radialSegments,
       false
     );
-  }
-
-  // Subdivide the spline for smoother curves
-  subdivide(iterations = 1) {
-    let points = [...this.points];
-
-    for (let iter = 0; iter < iterations; iter++) {
-      const newPoints: THREE.Vector3[] = [];
-
-      for (let i = 0; i < points.length - 1; i++) {
-        newPoints.push(points[i]);
-
-        // Add midpoint
-        const midpoint = new THREE.Vector3().lerpVectors(
-          points[i],
-          points[i + 1],
-          0.5
-        );
-        newPoints.push(midpoint);
-      }
-
-      newPoints.push(points[points.length - 1]);
-      points = newPoints;
-    }
-
-    this.points = points;
-    this.spline = new THREE.CatmullRomCurve3(
-      this.points,
-      false,
-      'catmullrom',
-      0.5
-    );
-    this.length = this.spline.getLength();
   }
 }

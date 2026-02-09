@@ -1,0 +1,1009 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banner Highway Editor</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+      background: #0a0a0a;
+      color: #e0e0e0;
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Toolbar */
+    #toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      background: #141414;
+      border-bottom: 1px solid #2a2a2a;
+      height: 44px;
+    }
+
+    #toolbar button {
+      padding: 6px 14px;
+      background: #1e1e1e;
+      color: #ccc;
+      border: 1px solid #333;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    #toolbar button:hover { background: #2a2a2a; color: #fff; }
+    #toolbar button.primary { background: #03a062; color: #fff; border-color: #04b872; }
+    #toolbar button.primary:hover { background: #04b872; }
+    #toolbar button.danger { border-color: #a03030; }
+    #toolbar button.danger:hover { background: #a03030; color: #fff; }
+
+    #status {
+      margin-left: auto;
+      font-size: 11px;
+      color: #666;
+    }
+
+    /* Main layout */
+    #main {
+      display: flex;
+      height: calc(100vh - 44px);
+    }
+
+    /* Canvas area */
+    #canvas-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    /* Sidebar */
+    #sidebar {
+      width: 320px;
+      background: #111;
+      border-left: 1px solid #2a2a2a;
+      overflow-y: auto;
+      padding: 12px;
+    }
+
+    #sidebar h3 {
+      font-size: 13px;
+      color: #03a062;
+      margin-bottom: 8px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .panel {
+      margin-bottom: 16px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #222;
+    }
+
+    /* Node info */
+    #node-info { display: none; }
+    #node-info.active { display: block; }
+    #node-info label {
+      display: block;
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 2px;
+      margin-top: 8px;
+    }
+    #node-info input {
+      width: 100%;
+      padding: 4px 8px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 3px;
+      color: #ddd;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    .coord-row {
+      display: flex;
+      gap: 6px;
+    }
+    .coord-row > div { flex: 1; }
+
+    /* Banner list */
+    .banner-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 8px;
+      margin-bottom: 4px;
+      background: #1a1a1a;
+      border: 1px solid #222;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .banner-item:hover { border-color: #444; }
+    .banner-item.selected { border-color: #03a062; background: #0d1f17; }
+    .banner-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .banner-item .banner-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .banner-item .banner-t { color: #666; font-size: 10px; }
+
+    /* Banner edit form */
+    #banner-edit { display: none; }
+    #banner-edit.active { display: block; }
+    #banner-edit label {
+      display: block;
+      font-size: 11px;
+      color: #888;
+      margin-bottom: 2px;
+      margin-top: 8px;
+    }
+    #banner-edit input, #banner-edit select {
+      width: 100%;
+      padding: 4px 8px;
+      background: #1a1a1a;
+      border: 1px solid #333;
+      border-radius: 3px;
+      color: #ddd;
+      font-family: inherit;
+      font-size: 12px;
+    }
+    .form-row {
+      display: flex;
+      gap: 6px;
+    }
+    .form-row > div { flex: 1; }
+
+    #banner-edit .btn-row {
+      display: flex;
+      gap: 6px;
+      margin-top: 12px;
+    }
+    #banner-edit .btn-row button {
+      flex: 1;
+      padding: 6px;
+      background: #1e1e1e;
+      color: #ccc;
+      border: 1px solid #333;
+      border-radius: 4px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 11px;
+    }
+    #banner-edit .btn-row button.save { background: #03a062; color: #fff; border-color: #04b872; }
+
+    /* Canvas overlay info */
+    #canvas-info {
+      position: absolute;
+      bottom: 8px;
+      left: 8px;
+      font-size: 10px;
+      color: #555;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div id="toolbar">
+    <button class="primary" id="btn-save">Save All</button>
+    <button id="btn-add-node">+ Node</button>
+    <button class="danger" id="btn-delete-node">Delete Node</button>
+    <span>|</span>
+    <button id="btn-fit">Fit View</button>
+    <button id="btn-add-banner">+ Banner</button>
+    <span id="status">Loading...</span>
+  </div>
+
+  <div id="main">
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div id="canvas-info"></div>
+    </div>
+
+    <div id="sidebar">
+      <!-- Node info panel -->
+      <div class="panel" id="node-info">
+        <h3>Selected Node</h3>
+        <label>Position</label>
+        <div class="coord-row">
+          <div><input type="number" id="node-px" step="1" placeholder="x" /></div>
+          <div><input type="number" id="node-pz" step="1" placeholder="z" /></div>
+        </div>
+        <label>Handle In</label>
+        <div class="coord-row">
+          <div><input type="number" id="node-hix" step="0.5" placeholder="x" /></div>
+          <div><input type="number" id="node-hiz" step="0.5" placeholder="z" /></div>
+        </div>
+        <label>Handle Out</label>
+        <div class="coord-row">
+          <div><input type="number" id="node-hox" step="0.5" placeholder="x" /></div>
+          <div><input type="number" id="node-hoz" step="0.5" placeholder="z" /></div>
+        </div>
+      </div>
+
+      <!-- Banner list panel -->
+      <div class="panel">
+        <h3>Banners</h3>
+        <div id="banner-list"></div>
+      </div>
+
+      <!-- Banner edit panel -->
+      <div class="panel" id="banner-edit">
+        <h3>Edit Banner</h3>
+        <label>ID</label>
+        <input type="text" id="be-id" readonly />
+        <label>Position (t)</label>
+        <input type="number" id="be-t" step="0.01" min="0" max="1" />
+        <div class="form-row">
+          <div>
+            <label>Side</label>
+            <select id="be-side"><option value="l">Left</option><option value="r">Right</option></select>
+          </div>
+          <div>
+            <label>Angle</label>
+            <input type="number" id="be-angle" step="1" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div><label>Size Factor</label><input type="number" id="be-size" step="0.1" /></div>
+          <div><label>Dist Factor</label><input type="number" id="be-dist" step="0.1" /></div>
+        </div>
+        <div class="form-row">
+          <div><label>Elev Factor</label><input type="number" id="be-elev" step="0.1" /></div>
+          <div><label>Emissive</label><input type="number" id="be-emissive" step="0.1" /></div>
+        </div>
+        <label>Image File</label>
+        <input type="text" id="be-image" />
+        <div class="btn-row">
+          <button class="save" id="be-save">Save</button>
+          <button id="be-delete" style="border-color:#a03030;">Delete</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script type="module">
+// ===========================================================================
+// API Client
+// ===========================================================================
+const API = {
+  async getBranches() { return (await fetch('/api/branches')).json(); },
+  async getBranch(id) { return (await fetch(`/api/branches/${id}`)).json(); },
+  async updateBranch(id, data) {
+    return (await fetch(`/api/branches/${id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })).json();
+  },
+  async getBanners() { return (await fetch('/api/banners')).json(); },
+  async updateBanner(id, data) {
+    return (await fetch(`/api/banners/${id}`, {
+      method: 'PUT', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })).json();
+  },
+  async createBanner(data) {
+    return (await fetch('/api/banners', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })).json();
+  },
+  async deleteBanner(id) {
+    return (await fetch(`/api/banners/${id}`, { method: 'DELETE' })).json();
+  },
+};
+
+// ===========================================================================
+// Bezier Math (no Three.js dependency)
+// ===========================================================================
+function evalCubic(p0, p1, p2, p3, t) {
+  const mt = 1 - t, mt2 = mt * mt, t2 = t * t;
+  return {
+    x: mt2 * mt * p0.x + 3 * mt2 * t * p1.x + 3 * mt * t2 * p2.x + t2 * t * p3.x,
+    z: mt2 * mt * p0.z + 3 * mt2 * t * p1.z + 3 * mt * t2 * p2.z + t2 * t * p3.z,
+  };
+}
+
+function evalCubicTangent(p0, p1, p2, p3, t) {
+  const mt = 1 - t;
+  return {
+    x: 3 * mt * mt * (p1.x - p0.x) + 6 * mt * t * (p2.x - p1.x) + 3 * t * t * (p3.x - p2.x),
+    z: 3 * mt * mt * (p1.z - p0.z) + 6 * mt * t * (p2.z - p1.z) + 3 * t * t * (p3.z - p2.z),
+  };
+}
+
+function samplePath(nodes, numSamples) {
+  const pts = [];
+  if (nodes.length < 2) return pts;
+  const segCount = nodes.length - 1;
+  for (let s = 0; s < segCount; s++) {
+    const samplesPerSeg = Math.ceil(numSamples / segCount);
+    const n0 = nodes[s], n1 = nodes[s + 1];
+    const p0 = n0.position, p1 = n0.handleOut, p2 = n1.handleIn, p3 = n1.position;
+    for (let i = 0; i <= samplesPerSeg; i++) {
+      const t = i / samplesPerSeg;
+      pts.push(evalCubic(p0, p1, p2, p3, t));
+    }
+  }
+  return pts;
+}
+
+// Find the closest point on the path to a world position, return { t, dist }
+function closestTOnPath(nodes, wx, wz, samples = 200) {
+  if (nodes.length < 2) return { t: 0, dist: Infinity };
+  let best = { t: 0, dist: Infinity };
+  const segCount = nodes.length - 1;
+  for (let i = 0; i <= samples; i++) {
+    const globalT = i / samples;
+    const seg = Math.min(Math.floor(globalT * segCount), segCount - 1);
+    const localT = (globalT * segCount) - seg;
+    const n0 = nodes[seg], n1 = nodes[seg + 1];
+    const pt = evalCubic(n0.position, n0.handleOut, n1.handleIn, n1.position, localT);
+    const dx = pt.x - wx, dz = pt.z - wz;
+    const d = Math.sqrt(dx * dx + dz * dz);
+    if (d < best.dist) best = { t: globalT, dist: d };
+  }
+  return best;
+}
+
+// ===========================================================================
+// State
+// ===========================================================================
+let branches = [];     // Array of { id, nodes, widthFactor, segmentsFactor }
+let banners = [];      // Array of banner definitions
+let activeBranchIdx = 0;
+let selectedNodeIdx = -1;
+let selectedBannerId = null;
+let dragTarget = null; // { type: 'anchor'|'handleIn'|'handleOut', nodeIdx }
+let addingNode = false;
+
+// Viewport
+const vp = { cx: 228, cz: 530, scale: 3, dragging: false, lastX: 0, lastY: 0 };
+
+// ===========================================================================
+// Canvas Setup
+// ===========================================================================
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+function resizeCanvas() {
+  const wrap = document.getElementById('canvas-wrap');
+  canvas.width = wrap.clientWidth * devicePixelRatio;
+  canvas.height = wrap.clientHeight * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  render();
+}
+window.addEventListener('resize', resizeCanvas);
+
+// Coordinate transforms
+function w2s(wx, wz) {
+  const cw = canvas.width / devicePixelRatio;
+  const ch = canvas.height / devicePixelRatio;
+  return {
+    x: (wx - vp.cx) * vp.scale + cw / 2,
+    y: (wz - vp.cz) * vp.scale + ch / 2,
+  };
+}
+function s2w(sx, sy) {
+  const cw = canvas.width / devicePixelRatio;
+  const ch = canvas.height / devicePixelRatio;
+  return {
+    x: (sx - cw / 2) / vp.scale + vp.cx,
+    z: (sy - ch / 2) / vp.scale + vp.cz,
+  };
+}
+
+// ===========================================================================
+// Rendering
+// ===========================================================================
+function render() {
+  const cw = canvas.width / devicePixelRatio;
+  const ch = canvas.height / devicePixelRatio;
+  ctx.clearRect(0, 0, cw, ch);
+
+  // Background
+  ctx.fillStyle = '#0d0d0d';
+  ctx.fillRect(0, 0, cw, ch);
+
+  // Grid
+  drawGrid(cw, ch);
+
+  const branch = branches[activeBranchIdx];
+  if (!branch || !branch.nodes.length) return;
+
+  const nodes = branch.nodes;
+
+  // Draw curve
+  const pts = samplePath(nodes, 300);
+  if (pts.length > 1) {
+    ctx.beginPath();
+    const s0 = w2s(pts[0].x, pts[0].z);
+    ctx.moveTo(s0.x, s0.y);
+    for (let i = 1; i < pts.length; i++) {
+      const si = w2s(pts[i].x, pts[i].z);
+      ctx.lineTo(si.x, si.y);
+    }
+    ctx.strokeStyle = '#03a062';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Draw banner positions
+  for (const b of banners) {
+    if (b.branch_id !== branch.id) continue;
+    const closest = closestTOnPath(nodes, 0, 0, 1); // dummy, we use t directly
+    const segCount = nodes.length - 1;
+    const seg = Math.min(Math.floor(b.t * segCount), segCount - 1);
+    const localT = (b.t * segCount) - seg;
+    const n0 = nodes[seg], n1 = nodes[seg + 1];
+    const pt = evalCubic(n0.position, n0.handleOut, n1.handleIn, n1.position, localT);
+    const sp = w2s(pt.x, pt.z);
+
+    const isSelected = b.id === selectedBannerId;
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, isSelected ? 7 : 5, 0, Math.PI * 2);
+    ctx.fillStyle = b.side === 'r' ? '#e06020' : '#2060e0';
+    if (isSelected) {
+      ctx.fillStyle = '#fff';
+    }
+    ctx.fill();
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+  }
+
+  // Draw handles and nodes
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    const sp = w2s(node.position.x, node.position.z);
+    const shi = w2s(node.handleIn.x, node.handleIn.z);
+    const sho = w2s(node.handleOut.x, node.handleOut.z);
+
+    // Handle arms
+    ctx.beginPath();
+    ctx.moveTo(shi.x, shi.y);
+    ctx.lineTo(sp.x, sp.y);
+    ctx.lineTo(sho.x, sho.y);
+    ctx.strokeStyle = i === selectedNodeIdx ? '#ffcc00' : '#555';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+
+    // Handle In circle
+    ctx.beginPath();
+    ctx.arc(shi.x, shi.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = i === selectedNodeIdx ? '#ffcc00' : '#666';
+    ctx.fill();
+
+    // Handle Out circle
+    ctx.beginPath();
+    ctx.arc(sho.x, sho.y, 4, 0, Math.PI * 2);
+    ctx.fillStyle = i === selectedNodeIdx ? '#ffcc00' : '#666';
+    ctx.fill();
+
+    // Anchor node
+    ctx.beginPath();
+    ctx.arc(sp.x, sp.y, 6, 0, Math.PI * 2);
+    ctx.fillStyle = i === selectedNodeIdx ? '#ffcc00' : '#03a062';
+    ctx.fill();
+    ctx.strokeStyle = '#fff';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    // Node index label
+    ctx.fillStyle = '#888';
+    ctx.font = '10px monospace';
+    ctx.fillText(`${i}`, sp.x + 10, sp.y - 10);
+  }
+
+  // Canvas info
+  document.getElementById('canvas-info').textContent =
+    `zoom: ${vp.scale.toFixed(1)}x | nodes: ${nodes.length} | banners: ${banners.filter(b => b.branch_id === branch.id).length}`;
+}
+
+function drawGrid(cw, ch) {
+  // Determine grid spacing based on zoom
+  let gridSize = 10;
+  if (vp.scale < 1) gridSize = 100;
+  else if (vp.scale < 3) gridSize = 50;
+  else if (vp.scale < 8) gridSize = 20;
+
+  const tl = s2w(0, 0);
+  const br = s2w(cw, ch);
+
+  ctx.strokeStyle = '#1a1a1a';
+  ctx.lineWidth = 0.5;
+
+  const startX = Math.floor(tl.x / gridSize) * gridSize;
+  const startZ = Math.floor(tl.z / gridSize) * gridSize;
+
+  for (let x = startX; x <= br.x; x += gridSize) {
+    const s = w2s(x, 0);
+    ctx.beginPath();
+    ctx.moveTo(s.x, 0);
+    ctx.lineTo(s.x, ch);
+    ctx.stroke();
+  }
+  for (let z = startZ; z <= br.z; z += gridSize) {
+    const s = w2s(0, z);
+    ctx.beginPath();
+    ctx.moveTo(0, s.y);
+    ctx.lineTo(cw, s.y);
+    ctx.stroke();
+  }
+}
+
+// ===========================================================================
+// Interaction
+// ===========================================================================
+function hitTest(sx, sy) {
+  const branch = branches[activeBranchIdx];
+  if (!branch) return null;
+
+  const hitRadius = 10;
+
+  for (let i = 0; i < branch.nodes.length; i++) {
+    const node = branch.nodes[i];
+
+    // Test anchor
+    const sp = w2s(node.position.x, node.position.z);
+    if (Math.hypot(sp.x - sx, sp.y - sy) < hitRadius) {
+      return { type: 'anchor', nodeIdx: i };
+    }
+
+    // Test handle in
+    const shi = w2s(node.handleIn.x, node.handleIn.z);
+    if (Math.hypot(shi.x - sx, shi.y - sy) < hitRadius) {
+      return { type: 'handleIn', nodeIdx: i };
+    }
+
+    // Test handle out
+    const sho = w2s(node.handleOut.x, node.handleOut.z);
+    if (Math.hypot(sho.x - sx, sho.y - sy) < hitRadius) {
+      return { type: 'handleOut', nodeIdx: i };
+    }
+  }
+
+  return null;
+}
+
+canvas.addEventListener('mousedown', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+
+  // Middle mouse or space+click: start panning
+  if (e.button === 1 || (e.button === 0 && e.altKey)) {
+    vp.dragging = true;
+    vp.lastX = e.clientX;
+    vp.lastY = e.clientY;
+    canvas.style.cursor = 'grabbing';
+    return;
+  }
+
+  if (e.button !== 0) return;
+
+  // Adding node mode: insert on curve
+  if (addingNode) {
+    const w = s2w(sx, sy);
+    insertNodeNearCursor(w.x, w.z);
+    addingNode = false;
+    document.getElementById('btn-add-node').textContent = '+ Node';
+    canvas.style.cursor = 'crosshair';
+    render();
+    return;
+  }
+
+  const hit = hitTest(sx, sy);
+  if (hit) {
+    dragTarget = hit;
+    selectedNodeIdx = hit.nodeIdx;
+    updateNodePanel();
+    render();
+    return;
+  }
+
+  // Click on empty: deselect
+  selectedNodeIdx = -1;
+  updateNodePanel();
+  render();
+});
+
+canvas.addEventListener('mousemove', (e) => {
+  // Pan
+  if (vp.dragging) {
+    const dx = e.clientX - vp.lastX;
+    const dy = e.clientY - vp.lastY;
+    vp.cx -= dx / vp.scale;
+    vp.cz -= dy / vp.scale;
+    vp.lastX = e.clientX;
+    vp.lastY = e.clientY;
+    render();
+    return;
+  }
+
+  // Drag node/handle
+  if (dragTarget) {
+    const rect = canvas.getBoundingClientRect();
+    const sx = e.clientX - rect.left;
+    const sy = e.clientY - rect.top;
+    const w = s2w(sx, sy);
+
+    const branch = branches[activeBranchIdx];
+    if (!branch) return;
+    const node = branch.nodes[dragTarget.nodeIdx];
+
+    if (dragTarget.type === 'anchor') {
+      // Move the entire node (position + handles maintain offset)
+      const dx = w.x - node.position.x;
+      const dz = w.z - node.position.z;
+      node.position.x = w.x;
+      node.position.z = w.z;
+      node.handleIn.x += dx;
+      node.handleIn.z += dz;
+      node.handleOut.x += dx;
+      node.handleOut.z += dz;
+    } else if (dragTarget.type === 'handleIn') {
+      node.handleIn.x = w.x;
+      node.handleIn.z = w.z;
+      // Mirror if not holding Alt (smooth mode)
+      if (!e.altKey) {
+        const dx = w.x - node.position.x;
+        const dz = w.z - node.position.z;
+        node.handleOut.x = node.position.x - dx;
+        node.handleOut.z = node.position.z - dz;
+      }
+    } else if (dragTarget.type === 'handleOut') {
+      node.handleOut.x = w.x;
+      node.handleOut.z = w.z;
+      if (!e.altKey) {
+        const dx = w.x - node.position.x;
+        const dz = w.z - node.position.z;
+        node.handleIn.x = node.position.x - dx;
+        node.handleIn.z = node.position.z - dz;
+      }
+    }
+
+    updateNodePanel();
+    render();
+  }
+});
+
+canvas.addEventListener('mouseup', () => {
+  if (vp.dragging) {
+    vp.dragging = false;
+    canvas.style.cursor = 'crosshair';
+  }
+  dragTarget = null;
+});
+
+canvas.addEventListener('wheel', (e) => {
+  e.preventDefault();
+  const factor = e.deltaY > 0 ? 0.9 : 1.1;
+
+  // Zoom toward cursor position
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+  const wBefore = s2w(sx, sy);
+
+  vp.scale *= factor;
+  vp.scale = Math.max(0.3, Math.min(30, vp.scale));
+
+  const wAfter = s2w(sx, sy);
+  vp.cx -= (wAfter.x - wBefore.x);
+  vp.cz -= (wAfter.z - wBefore.z);
+
+  render();
+}, { passive: false });
+
+// Keyboard
+document.addEventListener('keydown', (e) => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+
+  if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeIdx >= 0) {
+    deleteSelectedNode();
+  }
+});
+
+// ===========================================================================
+// Node Operations
+// ===========================================================================
+function insertNodeNearCursor(wx, wz) {
+  const branch = branches[activeBranchIdx];
+  if (!branch || branch.nodes.length < 2) return;
+
+  const result = closestTOnPath(branch.nodes, wx, wz, 500);
+  const segCount = branch.nodes.length - 1;
+  const seg = Math.min(Math.floor(result.t * segCount), segCount - 1);
+  const localT = (result.t * segCount) - seg;
+
+  const n0 = branch.nodes[seg], n1 = branch.nodes[seg + 1];
+  const p0 = n0.position, p1 = n0.handleOut, p2 = n1.handleIn, p3 = n1.position;
+
+  // De Casteljau split
+  const a = lerp2(p0, p1, localT);
+  const b = lerp2(p1, p2, localT);
+  const c = lerp2(p2, p3, localT);
+  const d = lerp2(a, b, localT);
+  const ee = lerp2(b, c, localT);
+  const f = lerp2(d, ee, localT); // new point on curve
+
+  // Update existing nodes' handles
+  n0.handleOut = { x: a.x, y: 0, z: a.z };
+  n1.handleIn = { x: c.x, y: 0, z: c.z };
+
+  // Insert new node
+  const newNode = {
+    position: { x: f.x, y: 0, z: f.z },
+    handleIn: { x: d.x, y: 0, z: d.z },
+    handleOut: { x: ee.x, y: 0, z: ee.z },
+  };
+
+  branch.nodes.splice(seg + 1, 0, newNode);
+  selectedNodeIdx = seg + 1;
+  updateNodePanel();
+}
+
+function lerp2(a, b, t) {
+  return { x: a.x + (b.x - a.x) * t, z: a.z + (b.z - a.z) * t };
+}
+
+function deleteSelectedNode() {
+  const branch = branches[activeBranchIdx];
+  if (!branch || selectedNodeIdx < 0 || branch.nodes.length <= 2) return;
+
+  branch.nodes.splice(selectedNodeIdx, 1);
+  selectedNodeIdx = -1;
+  updateNodePanel();
+  render();
+}
+
+// ===========================================================================
+// UI Panels
+// ===========================================================================
+function updateNodePanel() {
+  const panel = document.getElementById('node-info');
+  if (selectedNodeIdx < 0) {
+    panel.classList.remove('active');
+    return;
+  }
+
+  panel.classList.add('active');
+  const node = branches[activeBranchIdx]?.nodes[selectedNodeIdx];
+  if (!node) return;
+
+  document.getElementById('node-px').value = node.position.x.toFixed(1);
+  document.getElementById('node-pz').value = node.position.z.toFixed(1);
+  document.getElementById('node-hix').value = node.handleIn.x.toFixed(1);
+  document.getElementById('node-hiz').value = node.handleIn.z.toFixed(1);
+  document.getElementById('node-hox').value = node.handleOut.x.toFixed(1);
+  document.getElementById('node-hoz').value = node.handleOut.z.toFixed(1);
+}
+
+// Node panel input handlers
+for (const inputId of ['node-px', 'node-pz', 'node-hix', 'node-hiz', 'node-hox', 'node-hoz']) {
+  document.getElementById(inputId).addEventListener('input', () => {
+    if (selectedNodeIdx < 0) return;
+    const node = branches[activeBranchIdx]?.nodes[selectedNodeIdx];
+    if (!node) return;
+
+    node.position.x = parseFloat(document.getElementById('node-px').value) || 0;
+    node.position.z = parseFloat(document.getElementById('node-pz').value) || 0;
+    node.handleIn.x = parseFloat(document.getElementById('node-hix').value) || 0;
+    node.handleIn.z = parseFloat(document.getElementById('node-hiz').value) || 0;
+    node.handleOut.x = parseFloat(document.getElementById('node-hox').value) || 0;
+    node.handleOut.z = parseFloat(document.getElementById('node-hoz').value) || 0;
+    render();
+  });
+}
+
+function renderBannerList() {
+  const list = document.getElementById('banner-list');
+  const branch = branches[activeBranchIdx];
+  if (!branch) { list.innerHTML = ''; return; }
+
+  const branchBanners = banners.filter(b => b.branch_id === branch.id);
+  branchBanners.sort((a, b) => a.t - b.t);
+
+  list.innerHTML = branchBanners.map(b => `
+    <div class="banner-item ${b.id === selectedBannerId ? 'selected' : ''}" data-id="${b.id}">
+      <div class="banner-dot" style="background:${b.side === 'r' ? '#e06020' : '#2060e0'}"></div>
+      <span class="banner-name">${b.id}</span>
+      <span class="banner-t">t=${b.t.toFixed(3)}</span>
+    </div>
+  `).join('');
+
+  // Click handlers
+  for (const item of list.querySelectorAll('.banner-item')) {
+    item.addEventListener('click', () => {
+      selectedBannerId = item.dataset.id;
+      renderBannerList();
+      updateBannerEdit();
+      render();
+    });
+  }
+}
+
+function updateBannerEdit() {
+  const panel = document.getElementById('banner-edit');
+  if (!selectedBannerId) { panel.classList.remove('active'); return; }
+
+  const banner = banners.find(b => b.id === selectedBannerId);
+  if (!banner) { panel.classList.remove('active'); return; }
+
+  panel.classList.add('active');
+  document.getElementById('be-id').value = banner.id;
+  document.getElementById('be-t').value = banner.t;
+  document.getElementById('be-side').value = banner.side;
+  document.getElementById('be-angle').value = banner.angle || 0;
+  document.getElementById('be-size').value = banner.sizeFactor ?? 1;
+  document.getElementById('be-dist').value = banner.distanceFactor ?? 1;
+  document.getElementById('be-elev').value = banner.elevationFactor ?? 1;
+  document.getElementById('be-emissive').value = banner.emmisiveFactor ?? 1;
+  document.getElementById('be-image').value = banner.bannerImageFile || '';
+}
+
+// ===========================================================================
+// Toolbar Actions
+// ===========================================================================
+document.getElementById('btn-save').addEventListener('click', async () => {
+  const status = document.getElementById('status');
+  status.textContent = 'Saving...';
+
+  try {
+    // Save all branches
+    for (const branch of branches) {
+      await API.updateBranch(branch.id, { nodes: branch.nodes });
+    }
+
+    // Save all banners (update existing ones)
+    for (const banner of banners) {
+      await API.updateBanner(banner.id, banner);
+    }
+
+    status.textContent = 'Saved!';
+    setTimeout(() => { status.textContent = 'Ready'; }, 2000);
+  } catch (err) {
+    status.textContent = `Error: ${err.message}`;
+    console.error(err);
+  }
+});
+
+document.getElementById('btn-add-node').addEventListener('click', () => {
+  addingNode = !addingNode;
+  document.getElementById('btn-add-node').textContent = addingNode ? 'Click curve...' : '+ Node';
+  canvas.style.cursor = addingNode ? 'copy' : 'crosshair';
+});
+
+document.getElementById('btn-delete-node').addEventListener('click', () => {
+  deleteSelectedNode();
+});
+
+document.getElementById('btn-fit').addEventListener('click', () => {
+  fitView();
+});
+
+document.getElementById('btn-add-banner').addEventListener('click', () => {
+  const branch = branches[activeBranchIdx];
+  if (!branch) return;
+
+  const id = `banner_${branch.id}_${Date.now()}`;
+  const newBanner = {
+    id,
+    branch_id: branch.id,
+    t: 0.5,
+    side: 'r',
+    angle: 0,
+    sizeFactor: 1.0,
+    distanceFactor: 0.1,
+    elevationFactor: 1.0,
+    emmisiveFactor: 1.0,
+    bannerImageFile: 'placeholder.jpg',
+  };
+
+  banners.push(newBanner);
+  selectedBannerId = id;
+  renderBannerList();
+  updateBannerEdit();
+  render();
+
+  // Also create on server
+  API.createBanner(newBanner).catch(console.error);
+});
+
+// Banner edit save/delete
+document.getElementById('be-save').addEventListener('click', async () => {
+  const banner = banners.find(b => b.id === selectedBannerId);
+  if (!banner) return;
+
+  banner.t = parseFloat(document.getElementById('be-t').value) || 0;
+  banner.side = document.getElementById('be-side').value;
+  banner.angle = parseFloat(document.getElementById('be-angle').value) || 0;
+  banner.sizeFactor = parseFloat(document.getElementById('be-size').value) || 1;
+  banner.distanceFactor = parseFloat(document.getElementById('be-dist').value) || 1;
+  banner.elevationFactor = parseFloat(document.getElementById('be-elev').value) || 1;
+  banner.emmisiveFactor = parseFloat(document.getElementById('be-emissive').value) || 1;
+  banner.bannerImageFile = document.getElementById('be-image').value;
+
+  await API.updateBanner(banner.id, banner);
+  renderBannerList();
+  render();
+  document.getElementById('status').textContent = 'Banner saved!';
+  setTimeout(() => { document.getElementById('status').textContent = 'Ready'; }, 1500);
+});
+
+document.getElementById('be-delete').addEventListener('click', async () => {
+  if (!selectedBannerId) return;
+  if (!confirm(`Delete banner "${selectedBannerId}"?`)) return;
+
+  await API.deleteBanner(selectedBannerId);
+  banners = banners.filter(b => b.id !== selectedBannerId);
+  selectedBannerId = null;
+  renderBannerList();
+  updateBannerEdit();
+  render();
+});
+
+// ===========================================================================
+// Fit View
+// ===========================================================================
+function fitView() {
+  const branch = branches[activeBranchIdx];
+  if (!branch || !branch.nodes.length) return;
+
+  let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+  for (const node of branch.nodes) {
+    for (const pt of [node.position, node.handleIn, node.handleOut]) {
+      minX = Math.min(minX, pt.x);
+      maxX = Math.max(maxX, pt.x);
+      minZ = Math.min(minZ, pt.z);
+      maxZ = Math.max(maxZ, pt.z);
+    }
+  }
+
+  const pad = 40;
+  vp.cx = (minX + maxX) / 2;
+  vp.cz = (minZ + maxZ) / 2;
+
+  const cw = canvas.width / devicePixelRatio;
+  const ch = canvas.height / devicePixelRatio;
+  const scaleX = (cw - pad * 2) / (maxX - minX || 1);
+  const scaleZ = (ch - pad * 2) / (maxZ - minZ || 1);
+  vp.scale = Math.min(scaleX, scaleZ);
+
+  render();
+}
+
+// ===========================================================================
+// Init
+// ===========================================================================
+async function init() {
+  try {
+    branches = await API.getBranches();
+    banners = await API.getBanners();
+
+    document.getElementById('status').textContent = 'Ready';
+    resizeCanvas();
+    fitView();
+    renderBannerList();
+  } catch (err) {
+    document.getElementById('status').textContent = `Failed to load: ${err.message}`;
+    console.error(err);
+  }
+}
+
+init();
+</script>
+</body>
+</html>

@@ -70,13 +70,8 @@ export class HighwaySystem {
   }
 
   createBranch(branchData: HighwayBranch) {
-    // Create spline from points
-    const spline = new HighwaySpline(
-      branchData.points.map(
-        (point) => new THREE.Vector3(point.x, point.y, point.z)
-      ),
-      branchData.id
-    );
+    // Create spline from Bezier nodes
+    const spline = new HighwaySpline(branchData.nodes, branchData.id);
     this.branches.set(branchData.id, spline);
 
     const width =
