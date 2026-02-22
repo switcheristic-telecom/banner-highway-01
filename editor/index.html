@@ -69,7 +69,7 @@
 
     /* Sidebar */
     #sidebar {
-      width: 320px;
+      width: 280px;
       background: #111;
       border-left: 1px solid #2a2a2a;
       overflow-y: auto;
@@ -139,49 +139,80 @@
     .banner-item .banner-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .banner-item .banner-t { color: #666; font-size: 10px; }
 
-    /* Banner edit form */
-    #banner-edit { display: none; }
-    #banner-edit.active { display: block; }
-    #banner-edit label {
-      display: block;
-      font-size: 11px;
-      color: #888;
-      margin-bottom: 2px;
-      margin-top: 8px;
+    /* Floating banner tooltip */
+    #banner-tooltip {
+      display: none;
+      position: absolute;
+      z-index: 10;
+      background: #141414;
+      border: 1px solid #03a062;
+      border-radius: 6px;
+      padding: 10px 12px;
+      width: 240px;
+      pointer-events: auto;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.6);
     }
-    #banner-edit input, #banner-edit select {
+    #banner-tooltip.active { display: block; }
+    #banner-tooltip::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 20px;
+      width: 10px;
+      height: 10px;
+      background: #141414;
+      border-left: 1px solid #03a062;
+      border-top: 1px solid #03a062;
+      transform: rotate(45deg);
+    }
+    #banner-tooltip h4 {
+      font-size: 11px;
+      color: #03a062;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #banner-tooltip label {
+      display: block;
+      font-size: 10px;
+      color: #888;
+      margin-bottom: 1px;
+      margin-top: 6px;
+    }
+    #banner-tooltip input, #banner-tooltip select {
       width: 100%;
-      padding: 4px 8px;
+      padding: 3px 6px;
       background: #1a1a1a;
       border: 1px solid #333;
       border-radius: 3px;
       color: #ddd;
       font-family: inherit;
-      font-size: 12px;
+      font-size: 11px;
     }
-    .form-row {
+    .tt-row {
       display: flex;
-      gap: 6px;
+      gap: 4px;
     }
-    .form-row > div { flex: 1; }
-
-    #banner-edit .btn-row {
+    .tt-row > div { flex: 1; }
+    #banner-tooltip .tt-btn-row {
       display: flex;
-      gap: 6px;
-      margin-top: 12px;
+      gap: 4px;
+      margin-top: 8px;
     }
-    #banner-edit .btn-row button {
+    #banner-tooltip .tt-btn-row button {
       flex: 1;
-      padding: 6px;
+      padding: 4px;
       background: #1e1e1e;
       color: #ccc;
       border: 1px solid #333;
-      border-radius: 4px;
+      border-radius: 3px;
       cursor: pointer;
       font-family: inherit;
-      font-size: 11px;
+      font-size: 10px;
     }
-    #banner-edit .btn-row button.save { background: #03a062; color: #fff; border-color: #04b872; }
+    #banner-tooltip .tt-btn-row button.save { background: #03a062; color: #fff; border-color: #04b872; }
+    #banner-tooltip .tt-btn-row button.del { border-color: #a03030; }
+    #banner-tooltip .tt-btn-row button.del:hover { background: #a03030; color: #fff; }
 
     /* Canvas overlay info */
     #canvas-info {
@@ -209,6 +240,37 @@
     <div id="canvas-wrap">
       <canvas id="canvas"></canvas>
       <div id="canvas-info"></div>
+
+      <!-- Floating banner edit tooltip -->
+      <div id="banner-tooltip">
+        <h4 id="tt-title">Banner</h4>
+        <label>Position (t)</label>
+        <input type="number" id="tt-t" step="0.01" min="0" max="1" />
+        <div class="tt-row">
+          <div>
+            <label>Side</label>
+            <select id="tt-side"><option value="l">Left</option><option value="r">Right</option></select>
+          </div>
+          <div>
+            <label>Angle</label>
+            <input type="number" id="tt-angle" step="1" />
+          </div>
+        </div>
+        <div class="tt-row">
+          <div><label>Size</label><input type="number" id="tt-size" step="0.1" /></div>
+          <div><label>Distance</label><input type="number" id="tt-dist" step="0.1" /></div>
+        </div>
+        <div class="tt-row">
+          <div><label>Elevation</label><input type="number" id="tt-elev" step="0.1" /></div>
+          <div><label>Emissive</label><input type="number" id="tt-emissive" step="0.1" /></div>
+        </div>
+        <label>Image File</label>
+        <input type="text" id="tt-image" />
+        <div class="tt-btn-row">
+          <button class="save" id="tt-save">Save</button>
+          <button class="del" id="tt-delete">Delete</button>
+        </div>
+      </div>
     </div>
 
     <div id="sidebar">
@@ -236,39 +298,6 @@
       <div class="panel">
         <h3>Banners</h3>
         <div id="banner-list"></div>
-      </div>
-
-      <!-- Banner edit panel -->
-      <div class="panel" id="banner-edit">
-        <h3>Edit Banner</h3>
-        <label>ID</label>
-        <input type="text" id="be-id" readonly />
-        <label>Position (t)</label>
-        <input type="number" id="be-t" step="0.01" min="0" max="1" />
-        <div class="form-row">
-          <div>
-            <label>Side</label>
-            <select id="be-side"><option value="l">Left</option><option value="r">Right</option></select>
-          </div>
-          <div>
-            <label>Angle</label>
-            <input type="number" id="be-angle" step="1" />
-          </div>
-        </div>
-        <div class="form-row">
-          <div><label>Size Factor</label><input type="number" id="be-size" step="0.1" /></div>
-          <div><label>Dist Factor</label><input type="number" id="be-dist" step="0.1" /></div>
-        </div>
-        <div class="form-row">
-          <div><label>Elev Factor</label><input type="number" id="be-elev" step="0.1" /></div>
-          <div><label>Emissive</label><input type="number" id="be-emissive" step="0.1" /></div>
-        </div>
-        <label>Image File</label>
-        <input type="text" id="be-image" />
-        <div class="btn-row">
-          <button class="save" id="be-save">Save</button>
-          <button id="be-delete" style="border-color:#a03030;">Delete</button>
-        </div>
       </div>
     </div>
   </div>
@@ -305,7 +334,7 @@ const API = {
 };
 
 // ===========================================================================
-// Bezier Math (no Three.js dependency)
+// Bezier Math
 // ===========================================================================
 function evalCubic(p0, p1, p2, p3, t) {
   const mt = 1 - t, mt2 = mt * mt, t2 = t * t;
@@ -339,7 +368,6 @@ function samplePath(nodes, numSamples) {
   return pts;
 }
 
-// Find the closest point on the path to a world position, return { t, dist }
 function closestTOnPath(nodes, wx, wz, samples = 200) {
   if (nodes.length < 2) return { t: 0, dist: Infinity };
   let best = { t: 0, dist: Infinity };
@@ -357,15 +385,70 @@ function closestTOnPath(nodes, wx, wz, samples = 200) {
   return best;
 }
 
+// Get a banner's geometry: road point, tangent, normal, sign pivot position
+const DEFAULT_DISTANCE = 10;
+const SIGN_LENGTH = 8; // world units for the sign indicator
+
+function getBannerGeometry(banner, nodes) {
+  const segCount = nodes.length - 1;
+  const seg = Math.min(Math.floor(banner.t * segCount), segCount - 1);
+  const localT = (banner.t * segCount) - seg;
+  const n0 = nodes[seg], n1 = nodes[seg + 1];
+  const p0 = n0.position, p1 = n0.handleOut, p2 = n1.handleIn, p3 = n1.position;
+
+  const pt = evalCubic(p0, p1, p2, p3, localT);
+  const tan = evalCubicTangent(p0, p1, p2, p3, localT);
+
+  // Normalize tangent
+  const tLen = Math.sqrt(tan.x * tan.x + tan.z * tan.z) || 1;
+  const tx = tan.x / tLen, tz = tan.z / tLen;
+
+  // Normal (perpendicular in XZ): rotate tangent 90 deg
+  const nx = -tz, nz = tx;
+
+  const side = banner.side === 'r' ? 1 : -1;
+  const dist = (banner.distanceFactor ?? 1) * DEFAULT_DISTANCE;
+
+  // Pivot = sign position (end of the normal arm, away from road)
+  const pivotX = pt.x + nx * side * dist;
+  const pivotZ = pt.z + nz * side * dist;
+
+  // Angle in radians (banner.angle is in degrees)
+  const angleRad = ((banner.angle || 0) * Math.PI) / 180;
+
+  // Sign direction at angle=0: perpendicular to normal arm = tangent direction
+  // The sign extends from the pivot. We rotate the tangent direction by the angle
+  // around the pivot. The pivot is the far end (away from path).
+  // "Rotate from the other end (not the end on the path)" means pivot = far end.
+  const baseDir = { x: tz, z: -tx }; // CW 90 from tangent
+  const cosA = Math.cos(angleRad), sinA = Math.sin(angleRad);
+  const signDirX = baseDir.x * cosA - baseDir.z * sinA;
+  const signDirZ = baseDir.x * sinA + baseDir.z * cosA;
+
+  // Sign endpoints: extends from pivot in the sign direction
+  // One end is the pivot, the other extends outward
+  const signEndX = pivotX + signDirX * SIGN_LENGTH;
+  const signEndZ = pivotZ + signDirZ * SIGN_LENGTH;
+
+  return {
+    roadPt: pt,           // point on the road
+    pivotX, pivotZ,       // sign position (far from road)
+    signEndX, signEndZ,   // other end of the sign indicator
+    tx, tz,               // normalized tangent
+    nx, nz,               // normalized normal
+    side,
+  };
+}
+
 // ===========================================================================
 // State
 // ===========================================================================
-let branches = [];     // Array of { id, nodes, widthFactor, segmentsFactor }
-let banners = [];      // Array of banner definitions
+let branches = [];
+let banners = [];
 let activeBranchIdx = 0;
 let selectedNodeIdx = -1;
 let selectedBannerId = null;
-let dragTarget = null; // { type: 'anchor'|'handleIn'|'handleOut', nodeIdx }
+let dragTarget = null; // { type: 'anchor'|'handleIn'|'handleOut'|'banner', nodeIdx?, bannerId? }
 let addingNode = false;
 
 // Viewport
@@ -386,7 +469,6 @@ function resizeCanvas() {
 }
 window.addEventListener('resize', resizeCanvas);
 
-// Coordinate transforms
 function w2s(wx, wz) {
   const cw = canvas.width / devicePixelRatio;
   const ch = canvas.height / devicePixelRatio;
@@ -412,16 +494,12 @@ function render() {
   const ch = canvas.height / devicePixelRatio;
   ctx.clearRect(0, 0, cw, ch);
 
-  // Background
   ctx.fillStyle = '#0d0d0d';
   ctx.fillRect(0, 0, cw, ch);
-
-  // Grid
   drawGrid(cw, ch);
 
   const branch = branches[activeBranchIdx];
   if (!branch || !branch.nodes.length) return;
-
   const nodes = branch.nodes;
 
   // Draw curve
@@ -439,28 +517,48 @@ function render() {
     ctx.stroke();
   }
 
-  // Draw banner positions
+  // Draw banners with arm + angle indicator
   for (const b of banners) {
     if (b.branch_id !== branch.id) continue;
-    const closest = closestTOnPath(nodes, 0, 0, 1); // dummy, we use t directly
-    const segCount = nodes.length - 1;
-    const seg = Math.min(Math.floor(b.t * segCount), segCount - 1);
-    const localT = (b.t * segCount) - seg;
-    const n0 = nodes[seg], n1 = nodes[seg + 1];
-    const pt = evalCubic(n0.position, n0.handleOut, n1.handleIn, n1.position, localT);
-    const sp = w2s(pt.x, pt.z);
-
+    const geo = getBannerGeometry(b, nodes);
     const isSelected = b.id === selectedBannerId;
+
+    const sRoad = w2s(geo.roadPt.x, geo.roadPt.z);
+    const sPivot = w2s(geo.pivotX, geo.pivotZ);
+    const sSignEnd = w2s(geo.signEndX, geo.signEndZ);
+
+    // Arm: thin dashed line from road to pivot
     ctx.beginPath();
-    ctx.arc(sp.x, sp.y, isSelected ? 7 : 5, 0, Math.PI * 2);
-    ctx.fillStyle = b.side === 'r' ? '#e06020' : '#2060e0';
-    if (isSelected) {
-      ctx.fillStyle = '#fff';
-    }
+    ctx.setLineDash([4, 3]);
+    ctx.moveTo(sRoad.x, sRoad.y);
+    ctx.lineTo(sPivot.x, sPivot.y);
+    ctx.strokeStyle = isSelected ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Sign face: thick line from pivot to sign end
+    ctx.beginPath();
+    ctx.moveTo(sPivot.x, sPivot.y);
+    ctx.lineTo(sSignEnd.x, sSignEnd.y);
+    ctx.strokeStyle = isSelected ? '#fff' : (b.side === 'r' ? '#e06020' : '#2060e0');
+    ctx.lineWidth = isSelected ? 3.5 : 2.5;
+    ctx.stroke();
+
+    // Pivot dot (the fixed end, far from path)
+    ctx.beginPath();
+    ctx.arc(sPivot.x, sPivot.y, isSelected ? 5 : 3.5, 0, Math.PI * 2);
+    ctx.fillStyle = isSelected ? '#fff' : (b.side === 'r' ? '#e06020' : '#2060e0');
     ctx.fill();
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 1;
     ctx.stroke();
+
+    // Small dot at road contact
+    ctx.beginPath();
+    ctx.arc(sRoad.x, sRoad.y, 2, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fill();
   }
 
   // Draw handles and nodes
@@ -470,7 +568,6 @@ function render() {
     const shi = w2s(node.handleIn.x, node.handleIn.z);
     const sho = w2s(node.handleOut.x, node.handleOut.z);
 
-    // Handle arms
     ctx.beginPath();
     ctx.moveTo(shi.x, shi.y);
     ctx.lineTo(sp.x, sp.y);
@@ -479,19 +576,16 @@ function render() {
     ctx.lineWidth = 1;
     ctx.stroke();
 
-    // Handle In circle
     ctx.beginPath();
     ctx.arc(shi.x, shi.y, 4, 0, Math.PI * 2);
     ctx.fillStyle = i === selectedNodeIdx ? '#ffcc00' : '#666';
     ctx.fill();
 
-    // Handle Out circle
     ctx.beginPath();
     ctx.arc(sho.x, sho.y, 4, 0, Math.PI * 2);
     ctx.fillStyle = i === selectedNodeIdx ? '#ffcc00' : '#666';
     ctx.fill();
 
-    // Anchor node
     ctx.beginPath();
     ctx.arc(sp.x, sp.y, 6, 0, Math.PI * 2);
     ctx.fillStyle = i === selectedNodeIdx ? '#ffcc00' : '#03a062';
@@ -500,19 +594,19 @@ function render() {
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Node index label
     ctx.fillStyle = '#888';
     ctx.font = '10px monospace';
     ctx.fillText(`${i}`, sp.x + 10, sp.y - 10);
   }
 
-  // Canvas info
   document.getElementById('canvas-info').textContent =
     `zoom: ${vp.scale.toFixed(1)}x | nodes: ${nodes.length} | banners: ${banners.filter(b => b.branch_id === branch.id).length}`;
+
+  // Reposition floating tooltip if a banner is selected
+  positionTooltip();
 }
 
 function drawGrid(cw, ch) {
-  // Determine grid spacing based on zoom
   let gridSize = 10;
   if (vp.scale < 1) gridSize = 100;
   else if (vp.scale < 3) gridSize = 50;
@@ -529,22 +623,51 @@ function drawGrid(cw, ch) {
 
   for (let x = startX; x <= br.x; x += gridSize) {
     const s = w2s(x, 0);
-    ctx.beginPath();
-    ctx.moveTo(s.x, 0);
-    ctx.lineTo(s.x, ch);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s.x, 0); ctx.lineTo(s.x, ch); ctx.stroke();
   }
   for (let z = startZ; z <= br.z; z += gridSize) {
     const s = w2s(0, z);
-    ctx.beginPath();
-    ctx.moveTo(0, s.y);
-    ctx.lineTo(cw, s.y);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, s.y); ctx.lineTo(cw, s.y); ctx.stroke();
   }
 }
 
 // ===========================================================================
-// Interaction
+// Tooltip positioning
+// ===========================================================================
+function positionTooltip() {
+  const tooltip = document.getElementById('banner-tooltip');
+  if (!selectedBannerId) { tooltip.classList.remove('active'); return; }
+
+  const banner = banners.find(b => b.id === selectedBannerId);
+  const branch = branches[activeBranchIdx];
+  if (!banner || !branch) { tooltip.classList.remove('active'); return; }
+
+  tooltip.classList.add('active');
+
+  const geo = getBannerGeometry(banner, branch.nodes);
+  const sPivot = w2s(geo.pivotX, geo.pivotZ);
+
+  const wrap = document.getElementById('canvas-wrap');
+  const wrapRect = wrap.getBoundingClientRect();
+
+  // Position tooltip below and slightly right of the banner pivot
+  let left = sPivot.x + 15;
+  let top = sPivot.y + 15;
+
+  // Keep within canvas bounds
+  const ttWidth = 240;
+  const ttHeight = tooltip.offsetHeight || 280;
+  if (left + ttWidth > wrapRect.width - 10) left = sPivot.x - ttWidth - 15;
+  if (top + ttHeight > wrapRect.height - 10) top = sPivot.y - ttHeight - 15;
+  if (left < 10) left = 10;
+  if (top < 10) top = 10;
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
+// ===========================================================================
+// Hit Testing
 // ===========================================================================
 function hitTest(sx, sy) {
   const branch = branches[activeBranchIdx];
@@ -552,22 +675,30 @@ function hitTest(sx, sy) {
 
   const hitRadius = 10;
 
+  // Test banner pivots first (they're on top visually)
+  for (const b of banners) {
+    if (b.branch_id !== branch.id) continue;
+    const geo = getBannerGeometry(b, branch.nodes);
+    const sp = w2s(geo.pivotX, geo.pivotZ);
+    if (Math.hypot(sp.x - sx, sp.y - sy) < hitRadius) {
+      return { type: 'banner', bannerId: b.id };
+    }
+  }
+
+  // Test path nodes
   for (let i = 0; i < branch.nodes.length; i++) {
     const node = branch.nodes[i];
 
-    // Test anchor
     const sp = w2s(node.position.x, node.position.z);
     if (Math.hypot(sp.x - sx, sp.y - sy) < hitRadius) {
       return { type: 'anchor', nodeIdx: i };
     }
 
-    // Test handle in
     const shi = w2s(node.handleIn.x, node.handleIn.z);
     if (Math.hypot(shi.x - sx, shi.y - sy) < hitRadius) {
       return { type: 'handleIn', nodeIdx: i };
     }
 
-    // Test handle out
     const sho = w2s(node.handleOut.x, node.handleOut.z);
     if (Math.hypot(sho.x - sx, sho.y - sy) < hitRadius) {
       return { type: 'handleOut', nodeIdx: i };
@@ -577,13 +708,17 @@ function hitTest(sx, sy) {
   return null;
 }
 
+// ===========================================================================
+// Interaction
+// ===========================================================================
 canvas.addEventListener('mousedown', (e) => {
   const rect = canvas.getBoundingClientRect();
   const sx = e.clientX - rect.left;
   const sy = e.clientY - rect.top;
 
-  // Middle mouse or space+click: start panning
-  if (e.button === 1 || (e.button === 0 && e.altKey)) {
+  // Right-click or middle-click or alt+click: start panning
+  if (e.button === 1 || e.button === 2 || (e.button === 0 && e.altKey)) {
+    e.preventDefault();
     vp.dragging = true;
     vp.lastX = e.clientX;
     vp.lastY = e.clientY;
@@ -593,7 +728,6 @@ canvas.addEventListener('mousedown', (e) => {
 
   if (e.button !== 0) return;
 
-  // Adding node mode: insert on curve
   if (addingNode) {
     const w = s2w(sx, sy);
     insertNodeNearCursor(w.x, w.z);
@@ -605,22 +739,44 @@ canvas.addEventListener('mousedown', (e) => {
   }
 
   const hit = hitTest(sx, sy);
-  if (hit) {
-    dragTarget = hit;
-    selectedNodeIdx = hit.nodeIdx;
+
+  if (hit && hit.type === 'banner') {
+    selectedBannerId = hit.bannerId;
+    selectedNodeIdx = -1;
     updateNodePanel();
+    updateTooltipFields();
+    renderBannerList();
     render();
     return;
   }
 
-  // Click on empty: deselect
+  if (hit && (hit.type === 'anchor' || hit.type === 'handleIn' || hit.type === 'handleOut')) {
+    dragTarget = hit;
+    selectedNodeIdx = hit.nodeIdx;
+    selectedBannerId = null;
+    updateNodePanel();
+    renderBannerList();
+    render();
+    return;
+  }
+
+  // Left-click on empty space: start panning
+  vp.dragging = true;
+  vp.lastX = e.clientX;
+  vp.lastY = e.clientY;
+  canvas.style.cursor = 'grabbing';
+  // Also deselect
   selectedNodeIdx = -1;
+  selectedBannerId = null;
   updateNodePanel();
+  renderBannerList();
   render();
 });
 
+// Prevent context menu on canvas so right-click drag works
+canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
 canvas.addEventListener('mousemove', (e) => {
-  // Pan
   if (vp.dragging) {
     const dx = e.clientX - vp.lastX;
     const dy = e.clientY - vp.lastY;
@@ -632,7 +788,6 @@ canvas.addEventListener('mousemove', (e) => {
     return;
   }
 
-  // Drag node/handle
   if (dragTarget) {
     const rect = canvas.getBoundingClientRect();
     const sx = e.clientX - rect.left;
@@ -644,7 +799,6 @@ canvas.addEventListener('mousemove', (e) => {
     const node = branch.nodes[dragTarget.nodeIdx];
 
     if (dragTarget.type === 'anchor') {
-      // Move the entire node (position + handles maintain offset)
       const dx = w.x - node.position.x;
       const dz = w.z - node.position.z;
       node.position.x = w.x;
@@ -656,7 +810,6 @@ canvas.addEventListener('mousemove', (e) => {
     } else if (dragTarget.type === 'handleIn') {
       node.handleIn.x = w.x;
       node.handleIn.z = w.z;
-      // Mirror if not holding Alt (smooth mode)
       if (!e.altKey) {
         const dx = w.x - node.position.x;
         const dz = w.z - node.position.z;
@@ -691,7 +844,6 @@ canvas.addEventListener('wheel', (e) => {
   e.preventDefault();
   const factor = e.deltaY > 0 ? 0.9 : 1.1;
 
-  // Zoom toward cursor position
   const rect = canvas.getBoundingClientRect();
   const sx = e.clientX - rect.left;
   const sy = e.clientY - rect.top;
@@ -707,12 +859,17 @@ canvas.addEventListener('wheel', (e) => {
   render();
 }, { passive: false });
 
-// Keyboard
 document.addEventListener('keydown', (e) => {
   if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
-
   if ((e.key === 'Delete' || e.key === 'Backspace') && selectedNodeIdx >= 0) {
     deleteSelectedNode();
+  }
+  if (e.key === 'Escape') {
+    selectedBannerId = null;
+    selectedNodeIdx = -1;
+    updateNodePanel();
+    renderBannerList();
+    render();
   }
 });
 
@@ -731,19 +888,16 @@ function insertNodeNearCursor(wx, wz) {
   const n0 = branch.nodes[seg], n1 = branch.nodes[seg + 1];
   const p0 = n0.position, p1 = n0.handleOut, p2 = n1.handleIn, p3 = n1.position;
 
-  // De Casteljau split
   const a = lerp2(p0, p1, localT);
   const b = lerp2(p1, p2, localT);
   const c = lerp2(p2, p3, localT);
   const d = lerp2(a, b, localT);
   const ee = lerp2(b, c, localT);
-  const f = lerp2(d, ee, localT); // new point on curve
+  const f = lerp2(d, ee, localT);
 
-  // Update existing nodes' handles
   n0.handleOut = { x: a.x, y: 0, z: a.z };
   n1.handleIn = { x: c.x, y: 0, z: c.z };
 
-  // Insert new node
   const newNode = {
     position: { x: f.x, y: 0, z: f.z },
     handleIn: { x: d.x, y: 0, z: d.z },
@@ -762,7 +916,6 @@ function lerp2(a, b, t) {
 function deleteSelectedNode() {
   const branch = branches[activeBranchIdx];
   if (!branch || selectedNodeIdx < 0 || branch.nodes.length <= 2) return;
-
   branch.nodes.splice(selectedNodeIdx, 1);
   selectedNodeIdx = -1;
   updateNodePanel();
@@ -774,10 +927,7 @@ function deleteSelectedNode() {
 // ===========================================================================
 function updateNodePanel() {
   const panel = document.getElementById('node-info');
-  if (selectedNodeIdx < 0) {
-    panel.classList.remove('active');
-    return;
-  }
+  if (selectedNodeIdx < 0) { panel.classList.remove('active'); return; }
 
   panel.classList.add('active');
   const node = branches[activeBranchIdx]?.nodes[selectedNodeIdx];
@@ -791,13 +941,11 @@ function updateNodePanel() {
   document.getElementById('node-hoz').value = node.handleOut.z.toFixed(1);
 }
 
-// Node panel input handlers
 for (const inputId of ['node-px', 'node-pz', 'node-hix', 'node-hiz', 'node-hox', 'node-hoz']) {
   document.getElementById(inputId).addEventListener('input', () => {
     if (selectedNodeIdx < 0) return;
     const node = branches[activeBranchIdx]?.nodes[selectedNodeIdx];
     if (!node) return;
-
     node.position.x = parseFloat(document.getElementById('node-px').value) || 0;
     node.position.z = parseFloat(document.getElementById('node-pz').value) || 0;
     node.handleIn.x = parseFloat(document.getElementById('node-hix').value) || 0;
@@ -824,35 +972,87 @@ function renderBannerList() {
     </div>
   `).join('');
 
-  // Click handlers
   for (const item of list.querySelectorAll('.banner-item')) {
     item.addEventListener('click', () => {
       selectedBannerId = item.dataset.id;
+      selectedNodeIdx = -1;
+      updateNodePanel();
+      updateTooltipFields();
       renderBannerList();
-      updateBannerEdit();
       render();
     });
   }
 }
 
-function updateBannerEdit() {
-  const panel = document.getElementById('banner-edit');
-  if (!selectedBannerId) { panel.classList.remove('active'); return; }
+// ===========================================================================
+// Banner Tooltip
+// ===========================================================================
+function updateTooltipFields() {
+  const tooltip = document.getElementById('banner-tooltip');
+  if (!selectedBannerId) { tooltip.classList.remove('active'); return; }
 
   const banner = banners.find(b => b.id === selectedBannerId);
-  if (!banner) { panel.classList.remove('active'); return; }
+  if (!banner) { tooltip.classList.remove('active'); return; }
 
-  panel.classList.add('active');
-  document.getElementById('be-id').value = banner.id;
-  document.getElementById('be-t').value = banner.t;
-  document.getElementById('be-side').value = banner.side;
-  document.getElementById('be-angle').value = banner.angle || 0;
-  document.getElementById('be-size').value = banner.sizeFactor ?? 1;
-  document.getElementById('be-dist').value = banner.distanceFactor ?? 1;
-  document.getElementById('be-elev').value = banner.elevationFactor ?? 1;
-  document.getElementById('be-emissive').value = banner.emmisiveFactor ?? 1;
-  document.getElementById('be-image').value = banner.bannerImageFile || '';
+  document.getElementById('tt-title').textContent = banner.id;
+  document.getElementById('tt-t').value = banner.t;
+  document.getElementById('tt-side').value = banner.side;
+  document.getElementById('tt-angle').value = banner.angle || 0;
+  document.getElementById('tt-size').value = banner.sizeFactor ?? 1;
+  document.getElementById('tt-dist').value = banner.distanceFactor ?? 1;
+  document.getElementById('tt-elev').value = banner.elevationFactor ?? 1;
+  document.getElementById('tt-emissive').value = banner.emmisiveFactor ?? 1;
+  document.getElementById('tt-image').value = banner.bannerImageFile || '';
 }
+
+// Live-update rendering when tooltip fields change
+function syncTooltipToState() {
+  const banner = banners.find(b => b.id === selectedBannerId);
+  if (!banner) return;
+  banner.t = parseFloat(document.getElementById('tt-t').value) || 0;
+  banner.side = document.getElementById('tt-side').value;
+  banner.angle = parseFloat(document.getElementById('tt-angle').value) || 0;
+  banner.distanceFactor = parseFloat(document.getElementById('tt-dist').value) || 1;
+  banner.sizeFactor = parseFloat(document.getElementById('tt-size').value) || 1;
+  renderBannerList();
+  render();
+}
+for (const id of ['tt-t', 'tt-angle', 'tt-dist', 'tt-size']) {
+  document.getElementById(id).addEventListener('input', syncTooltipToState);
+}
+// <select> uses 'change' event
+document.getElementById('tt-side').addEventListener('change', syncTooltipToState);
+
+document.getElementById('tt-save').addEventListener('click', async () => {
+  const banner = banners.find(b => b.id === selectedBannerId);
+  if (!banner) return;
+
+  banner.t = parseFloat(document.getElementById('tt-t').value) || 0;
+  banner.side = document.getElementById('tt-side').value;
+  banner.angle = parseFloat(document.getElementById('tt-angle').value) || 0;
+  banner.sizeFactor = parseFloat(document.getElementById('tt-size').value) || 1;
+  banner.distanceFactor = parseFloat(document.getElementById('tt-dist').value) || 1;
+  banner.elevationFactor = parseFloat(document.getElementById('tt-elev').value) || 1;
+  banner.emmisiveFactor = parseFloat(document.getElementById('tt-emissive').value) || 1;
+  banner.bannerImageFile = document.getElementById('tt-image').value;
+
+  await API.updateBanner(banner.id, banner);
+  renderBannerList();
+  render();
+  document.getElementById('status').textContent = 'Banner saved!';
+  setTimeout(() => { document.getElementById('status').textContent = 'Ready'; }, 1500);
+});
+
+document.getElementById('tt-delete').addEventListener('click', async () => {
+  if (!selectedBannerId) return;
+  if (!confirm(`Delete banner "${selectedBannerId}"?`)) return;
+
+  await API.deleteBanner(selectedBannerId);
+  banners = banners.filter(b => b.id !== selectedBannerId);
+  selectedBannerId = null;
+  renderBannerList();
+  render();
+});
 
 // ===========================================================================
 // Toolbar Actions
@@ -860,18 +1060,13 @@ function updateBannerEdit() {
 document.getElementById('btn-save').addEventListener('click', async () => {
   const status = document.getElementById('status');
   status.textContent = 'Saving...';
-
   try {
-    // Save all branches
     for (const branch of branches) {
       await API.updateBranch(branch.id, { nodes: branch.nodes });
     }
-
-    // Save all banners (update existing ones)
     for (const banner of banners) {
       await API.updateBanner(banner.id, banner);
     }
-
     status.textContent = 'Saved!';
     setTimeout(() => { status.textContent = 'Ready'; }, 2000);
   } catch (err) {
@@ -897,7 +1092,6 @@ document.getElementById('btn-fit').addEventListener('click', () => {
 document.getElementById('btn-add-banner').addEventListener('click', () => {
   const branch = branches[activeBranchIdx];
   if (!branch) return;
-
   const id = `banner_${branch.id}_${Date.now()}`;
   const newBanner = {
     id,
@@ -911,48 +1105,14 @@ document.getElementById('btn-add-banner').addEventListener('click', () => {
     emmisiveFactor: 1.0,
     bannerImageFile: 'placeholder.jpg',
   };
-
   banners.push(newBanner);
   selectedBannerId = id;
+  selectedNodeIdx = -1;
+  updateNodePanel();
+  updateTooltipFields();
   renderBannerList();
-  updateBannerEdit();
   render();
-
-  // Also create on server
   API.createBanner(newBanner).catch(console.error);
-});
-
-// Banner edit save/delete
-document.getElementById('be-save').addEventListener('click', async () => {
-  const banner = banners.find(b => b.id === selectedBannerId);
-  if (!banner) return;
-
-  banner.t = parseFloat(document.getElementById('be-t').value) || 0;
-  banner.side = document.getElementById('be-side').value;
-  banner.angle = parseFloat(document.getElementById('be-angle').value) || 0;
-  banner.sizeFactor = parseFloat(document.getElementById('be-size').value) || 1;
-  banner.distanceFactor = parseFloat(document.getElementById('be-dist').value) || 1;
-  banner.elevationFactor = parseFloat(document.getElementById('be-elev').value) || 1;
-  banner.emmisiveFactor = parseFloat(document.getElementById('be-emissive').value) || 1;
-  banner.bannerImageFile = document.getElementById('be-image').value;
-
-  await API.updateBanner(banner.id, banner);
-  renderBannerList();
-  render();
-  document.getElementById('status').textContent = 'Banner saved!';
-  setTimeout(() => { document.getElementById('status').textContent = 'Ready'; }, 1500);
-});
-
-document.getElementById('be-delete').addEventListener('click', async () => {
-  if (!selectedBannerId) return;
-  if (!confirm(`Delete banner "${selectedBannerId}"?`)) return;
-
-  await API.deleteBanner(selectedBannerId);
-  banners = banners.filter(b => b.id !== selectedBannerId);
-  selectedBannerId = null;
-  renderBannerList();
-  updateBannerEdit();
-  render();
 });
 
 // ===========================================================================
@@ -992,7 +1152,6 @@ async function init() {
   try {
     branches = await API.getBranches();
     banners = await API.getBanners();
-
     document.getElementById('status').textContent = 'Ready';
     resizeCanvas();
     fitView();
