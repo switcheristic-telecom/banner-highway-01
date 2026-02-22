@@ -5,9 +5,7 @@ import { SceneManager } from './core/SceneManager';
 import { NavigationController } from './core/NavigationController';
 import { RenderPipeline } from './core/RenderPipeline';
 import { loadingManager } from './utils/LoadingManager';
-
-import { HIGHWAY_DATA } from '../constants/highway';
-import { BANNER_INFOS } from '../constants/banner';
+import { loadSceneData } from './data/DataProvider';
 
 class BannerHighwayApp {
   canvas: HTMLCanvasElement;
@@ -31,28 +29,29 @@ class BannerHighwayApp {
       loadingManager.setStatus('Initializing core systems...');
       loadingManager.updateProgress('init', 10);
 
-      // Initialize core systems
       this.sceneManager = new SceneManager(this.canvas);
       this.renderPipeline = new RenderPipeline(this.sceneManager);
       this.assetLoader = new AssetLoader();
       loadingManager.updateProgress('init', 20);
 
-      // Initialize highway system
+      loadingManager.setStatus('Loading scene data...');
+      const sceneData = await loadSceneData();
+      loadingManager.updateProgress('init', 40);
+
       loadingManager.setStatus('Loading highway system...');
       this.highwaySystem = new HighwaySystem(this.sceneManager.scene);
-      await this.highwaySystem.loadHighwayData(HIGHWAY_DATA);
+      await this.highwaySystem.loadHighwayData(sceneData.highway);
       loadingManager.updateProgress('highway', 100);
 
-      // Initialize banner manager
       loadingManager.setStatus('Loading banners...');
       this.bannerManager = new BannerManager(
         this.sceneManager.scene,
-        this.assetLoader
+        this.assetLoader,
+        this.highwaySystem
       );
-      await this.bannerManager.loadBanners(BANNER_INFOS);
+      await this.bannerManager.loadBanners(sceneData.banners);
       loadingManager.updateProgress('banners', 100);
 
-      // Initialize navigation
       loadingManager.setStatus('Setting up navigation...');
       this.navigationController = new NavigationController(
         this.highwaySystem,
@@ -60,15 +59,12 @@ class BannerHighwayApp {
       );
       loadingManager.updateProgress('init', 100);
 
-      // Complete loading
       loadingManager.complete();
       setTimeout(() => this.hideLoadingScreen(), 500);
 
-      // Start render loop
       this.isInitialized = true;
       this.animate();
 
-      // Setup event listeners
       this.setupEventListeners();
     } catch (error: any) {
       console.error('Failed to initialize Banner Highway:', error);
@@ -77,12 +73,9 @@ class BannerHighwayApp {
   }
 
   setupEventListeners() {
-    // Window resize
     window.addEventListener('resize', () => this.handleResize());
 
-    // Keyboard shortcuts
     window.addEventListener('keydown', (e) => {
-      // Toggle controls panel (C key)
       if (e.key === 'c' || e.key === 'C') {
         const controlsPanel = document.getElementById('controls-panel');
         if (controlsPanel) {
@@ -90,13 +83,11 @@ class BannerHighwayApp {
         }
       }
 
-      // Toggle edge lines (E key)
       if (e.key === 'e' || e.key === 'E') {
         const newState = this.highwaySystem.toggleEdgeLines(true);
         console.log(`Edge lines: ${newState ? 'ON' : 'OFF'}`);
       }
 
-      // Toggle blocks/guardrails (B key)
       if (e.key === 'b' || e.key === 'B') {
         const newState = this.highwaySystem.toggleBlocks(true);
         console.log(`Blocks/Guardrails: ${newState ? 'ON' : 'OFF'}`);
@@ -118,24 +109,16 @@ class BannerHighwayApp {
 
     this.animationId = requestAnimationFrame(() => this.animate());
 
-    // Update systems
     const deltaTime = this.sceneManager.clock.getDelta();
     const elapsedTime = this.sceneManager.clock.getElapsedTime();
 
-    // Update sky shader time for twinkling stars
     this.sceneManager.updateSkyTime(elapsedTime);
-
-    // Update navigation
     this.navigationController.update(deltaTime);
-
-    // Update highway (for any animations)
     this.highwaySystem.update(deltaTime);
 
-    // Update banners (for video textures and visibility)
     const currentPosition = this.navigationController.getCurrentPosition();
     this.bannerManager.update(deltaTime, currentPosition);
 
-    // Render
     this.renderPipeline.render();
   }
 
@@ -154,25 +137,20 @@ class BannerHighwayApp {
   }
 
   dispose() {
-    // if (this.animationId) {
-    //   cancelAnimationFrame(this.animationId);
-    // }
-    // Cleanup all systems
-    // this.navigationController?.dispose();
-    // this.bannerManager?.dispose();
-    // this.highwaySystem?.dispose();
-    // this.renderPipeline?.dispose();
-    // this.sceneManager?.dispose();
+    if (this.animationId) {
+      cancelAnimationFrame(this.animationId);
+    }
+    this.bannerManager?.dispose();
+    this.highwaySystem?.dispose();
+    this.renderPipeline?.dispose();
   }
 }
 
-// Initialize app when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
   const app = new BannerHighwayApp();
-  (window as any).app = app; // Expose globally for Billboard access
+  (window as any).app = app;
   app.init();
 
-  // Cleanup on page unload
   window.addEventListener('beforeunload', () => {
     app.dispose();
   });

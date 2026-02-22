@@ -2,13 +2,11 @@ import * as THREE from 'three';
 
 import { HighwayMesh } from './HighwayMesh';
 import { HighwaySpline } from './HighwaySpline';
+import type { HighwayData, HighwayBranch, HighwayExit } from '@/constants/types';
 import {
-  type HighwayData,
-  type HighwayBranch,
-  type HighwayExit,
   HIGHWAY_SYSTEM_DEFAULT_OPTIONS,
   HIGHWAY_MESH_DEFAULT_OPTIONS,
-} from '@/constants/highway';
+} from '@/constants/defaults';
 
 export class HighwaySystem {
   scene: THREE.Scene;
@@ -70,8 +68,11 @@ export class HighwaySystem {
   }
 
   createBranch(branchData: HighwayBranch) {
-    // Create spline from Bezier nodes
-    const spline = new HighwaySpline(branchData.nodes, branchData.id);
+    const spline = new HighwaySpline(
+      branchData.waypoints,
+      branchData.id,
+      branchData.isCyclic ?? false,
+    );
     this.branches.set(branchData.id, spline);
 
     const width =

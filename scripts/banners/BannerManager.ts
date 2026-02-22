@@ -1,12 +1,14 @@
 import * as THREE from 'three';
-import { Billboard } from './Billboard.js';
-import { type Scene } from 'three';
-import { type AssetLoader } from '../utils/AssetLoader.js';
-import { BannerInfo } from '@/constants/banner.js';
+import { Billboard } from './Billboard';
+import type { Scene } from 'three';
+import type { AssetLoader } from '../utils/AssetLoader';
+import type { HighwaySystem } from '../highway/HighwaySystem';
+import type { BannerInfo } from '@/constants/types';
 
 export class BannerManager {
   scene: Scene;
   assetLoader: AssetLoader;
+  highwaySystem: HighwaySystem;
   billboards: Map<string, Billboard>;
   bannerData: BannerInfo[];
   visibleBanners: Set<string>;
@@ -14,11 +16,16 @@ export class BannerManager {
   viewDistance: number;
   lodDistances: number[];
 
-  constructor(scene: Scene, assetLoader: AssetLoader) {
+  constructor(
+    scene: Scene,
+    assetLoader: AssetLoader,
+    highwaySystem: HighwaySystem
+  ) {
     this.scene = scene;
     this.assetLoader = assetLoader;
+    this.highwaySystem = highwaySystem;
 
-    this.billboards = new Map(); // Map of bannerId -> Billboard
+    this.billboards = new Map();
     this.bannerData = [];
     this.visibleBanners = new Set();
 
@@ -26,19 +33,16 @@ export class BannerManager {
     this.group.name = 'BannerManager';
     this.scene.add(this.group);
 
-    // Visibility settings
-    this.viewDistance = 50; // Distance at which banners become visible
-    this.lodDistances = [20, 40, 80]; // LOD distances
+    this.viewDistance = 50;
+    this.lodDistances = [20, 40, 80];
   }
 
   async loadBanners(bannerInfos: BannerInfo[]) {
     this.bannerData = bannerInfos;
 
-    // Group banners by branch for efficient loading
     const bannersByBranch = this.groupBannersByBranch(bannerInfos);
 
-    // Create billboards for each banner
-    for (const [branchId, banners] of bannersByBranch) {
+    for (const [_branchId, banners] of bannersByBranch) {
       for (const banner of banners) {
         await this.createBillboard(banner);
       }
@@ -46,13 +50,13 @@ export class BannerManager {
   }
 
   groupBannersByBranch(bannerInfos: BannerInfo[]) {
-    const grouped = new Map();
+    const grouped = new Map<string, BannerInfo[]>();
 
     for (const banner of bannerInfos) {
       if (!grouped.has(banner.branch_id)) {
         grouped.set(banner.branch_id, []);
       }
-      grouped.get(banner.branch_id).push(banner);
+      grouped.get(banner.branch_id)!.push(banner);
     }
 
     return grouped;
@@ -60,7 +64,7 @@ export class BannerManager {
 
   async createBillboard(bannerInfo: BannerInfo) {
     const billboard = new Billboard(bannerInfo, this.assetLoader);
-    await billboard.load();
+    await billboard.load(this.highwaySystem);
 
     this.billboards.set(
       bannerInfo.id || `${bannerInfo.branch_id}_${bannerInfo.t}`,
@@ -68,17 +72,14 @@ export class BannerManager {
     );
     this.group.add(billboard.group);
 
-    // Initially hide distant banners
     billboard.group.visible = false;
 
     return billboard;
   }
 
   update(deltaTime: number, currentPosition: { branchId: string; t: number }) {
-    // Update visibility based on player position
     this.updateVisibility(currentPosition);
 
-    // Update each visible billboard (for animations, video textures, etc.)
     for (const bannerId of this.visibleBanners) {
       const billboard = this.billboards.get(bannerId);
       if (billboard) {
@@ -89,10 +90,9 @@ export class BannerManager {
 
   updateVisibility(currentPosition: { branchId: string; t: number }) {
     const newVisibleBanners = new Set<string>();
-    const fadeDistance = 0.15; // Distance at which banners are fully visible
-    const fadeStartDistance = 0.25; // Distance at which banners start to fade in
+    const fadeDistance = 0.15;
+    const fadeStartDistance = 0.25;
 
-    // Check each banner on the current branch
     const branchBanners = this.bannerData.filter(
       (b) => b.branch_id === currentPosition.branchId
     );
@@ -104,32 +104,25 @@ export class BannerManager {
 
       if (!billboard) continue;
 
-      // Calculate distance along the spline
       const distance = Math.abs(currentPosition.t - bannerInfo.t);
 
       if (distance < fadeStartDistance) {
         newVisibleBanners.add(bannerId);
 
-        // Make visible if not already
         if (!billboard.group.visible) {
           billboard.group.visible = true;
           billboard.onShow();
         }
 
-        // Calculate opacity based on distance
         let opacity = 1.0;
         if (distance > fadeDistance) {
-          // Fade in/out zone
           opacity =
             1.0 -
             (distance - fadeDistance) / (fadeStartDistance - fadeDistance);
-          opacity = Math.max(0, Math.min(1, opacity)); // Clamp between 0 and 1
+          opacity = Math.max(0, Math.min(1, opacity));
         }
 
-        // Apply opacity to billboard
         this.updateBillboardOpacity(billboard, opacity);
-
-        // Update LOD based on distance
         this.updateBillboardLOD(billboard, distance);
       } else if (billboard.group.visible) {
         billboard.group.visible = false;
@@ -141,10 +134,8 @@ export class BannerManager {
   }
 
   updateBillboardOpacity(billboard: Billboard, opacity: number) {
-    // Update opacity for all meshes in the billboard
     billboard.group.traverse((child) => {
       if (child instanceof THREE.Mesh && child.material) {
-        // Store original opacity if not already stored
         if (!child.material.userData.originalOpacity) {
           child.material.userData.originalOpacity =
             child.material.opacity || 1.0;
@@ -159,13 +150,12 @@ export class BannerManager {
   }
 
   updateBillboardLOD(billboard: Billboard, distance: number) {
-    // Simple LOD system
     if (distance < 0.05) {
-      billboard.setLOD(0); // Highest quality
+      billboard.setLOD(0);
     } else if (distance < 0.1) {
-      billboard.setLOD(0); // Medium quality
+      billboard.setLOD(0);
     } else {
-      billboard.setLOD(0); // Low quality
+      billboard.setLOD(0);
     }
   }
 
@@ -189,7 +179,6 @@ export class BannerManager {
       this.billboards.delete(bannerId);
       this.visibleBanners.delete(bannerId);
 
-      // Remove from data
       this.bannerData = this.bannerData.filter(
         (b) => (b.id || `${b.branch_id}_${b.t}`) !== bannerId
       );
@@ -197,7 +186,7 @@ export class BannerManager {
   }
 
   clear(): void {
-    for (const [bannerId, billboard] of this.billboards) {
+    for (const [_bannerId, billboard] of this.billboards) {
       billboard.dispose();
       this.group.remove(billboard.group);
     }

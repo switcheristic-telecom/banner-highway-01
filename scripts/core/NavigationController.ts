@@ -285,8 +285,7 @@ export class NavigationController {
       // Linear scroll mode - directly update position like a webpage
       this.currentT += delta * this.linearScrollSensitivity;
 
-      // Keep position within bounds
-      this.currentT = Math.max(0, Math.min(1, this.currentT));
+      this.wrapOrClampT();
 
       // Update positions immediately
       this.updateCarPosition();
@@ -350,34 +349,7 @@ export class NavigationController {
       this.currentT += this.speed * deltaTime;
     }
 
-    // Handle branch transitions
-    if (this.currentT > 1) {
-      // Check for exits at current position
-      const exits = this.highwaySystem.getExitsAtPosition(
-        this.currentBranchId,
-        1,
-        0.1
-      );
-
-      if (exits.length > 0 && this.keys.right) {
-        // Take the exit
-        const exit = exits[0];
-        const result = this.highwaySystem.switchBranch(
-          exit.toBranch,
-          exit.toT || 0
-        );
-        if (result) {
-          this.currentBranchId = exit.toBranch;
-          this.currentT = result.startT;
-        }
-      } else {
-        // Loop back to start of current branch
-        this.currentT = 0;
-      }
-    } else if (this.currentT < 0) {
-      this.currentT = 0;
-      this.speed = 0;
-    }
+    this.wrapOrClampT();
 
     // Update car and camera positions
     this.updateCarPosition();
@@ -385,6 +357,38 @@ export class NavigationController {
 
     // Hide instructions panel after user has moved forward
     this.updateInstructionsVisibility();
+  }
+
+  private isBranchCyclic(): boolean {
+    const branch = this.highwaySystem.getBranch(this.currentBranchId);
+    return branch ? branch.isCyclic : false;
+  }
+
+  private wrapOrClampT() {
+    if (this.isBranchCyclic()) {
+      this.currentT = ((this.currentT % 1) + 1) % 1;
+    } else {
+      if (this.currentT > 1) {
+        const exits = this.highwaySystem.getExitsAtPosition(
+          this.currentBranchId, 1, 0.1,
+        );
+        if (exits.length > 0 && this.keys.right) {
+          const exit = exits[0];
+          const result = this.highwaySystem.switchBranch(
+            exit.toBranch, exit.toT || 0,
+          );
+          if (result) {
+            this.currentBranchId = exit.toBranch;
+            this.currentT = result.startT;
+          }
+        } else {
+          this.currentT = 0;
+        }
+      } else if (this.currentT < 0) {
+        this.currentT = 0;
+        this.speed = 0;
+      }
+    }
   }
 
   updateInstructionsVisibility() {
@@ -429,9 +433,13 @@ export class NavigationController {
     const branch = this.highwaySystem.getBranch(this.currentBranchId);
     if (!branch) return;
 
-    // Get current position and look-ahead position
     const currentPos = branch.getPoint(this.currentT);
-    const lookAheadT = Math.min(this.currentT + this.cameraLookAhead, 1);
+    let lookAheadT = this.currentT + this.cameraLookAhead;
+    if (branch.isCyclic) {
+      lookAheadT = ((lookAheadT % 1) + 1) % 1;
+    } else {
+      lookAheadT = Math.min(lookAheadT, 1);
+    }
     const lookAheadPos = branch.getPoint(lookAheadT);
     const tangent = branch.getTangent(this.currentT);
 
@@ -511,9 +519,10 @@ export class NavigationController {
   }
 
   setPosition(branchId: string, t: number) {
-    if (this.highwaySystem.getBranch(branchId)) {
+    const branch = this.highwaySystem.getBranch(branchId);
+    if (branch) {
       this.currentBranchId = branchId;
-      this.currentT = Math.max(0, Math.min(1, t));
+      this.currentT = branch.isCyclic ? ((t % 1) + 1) % 1 : Math.max(0, Math.min(1, t));
       this.speed = 0;
       this.targetSpeed = 0;
       this.scrollAccumulator = 0;

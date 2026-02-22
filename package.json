@@ -4,12 +4,12 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "bun scripts/extract-data.ts && vite build",
-    "preview": "vite preview",
-    "start": "serve -s dist -l 3000",
     "editor": "bun server/index.ts",
     "seed": "bun server/seed.ts",
-    "extract": "bun scripts/extract-data.ts"
+    "extract": "bun scripts/extract-data.ts",
+    "build": "bun scripts/extract-data.ts && vite build",
+    "preview": "vite preview",
+    "start": "serve -s dist -l 3000"
   },
   "dependencies": {
     "postprocessing": "^6.37.8",
