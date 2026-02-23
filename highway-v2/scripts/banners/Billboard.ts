@@ -139,7 +139,7 @@ export class Billboard {
     this.bannerMesh.position.z = 0.01;
     this.bannerMesh.layers.set(2);
 
-    if (this.info.mirror) {
+    if (this.info.distance > 0) {
       this.bannerMesh.scale.x = -1;
     }
 

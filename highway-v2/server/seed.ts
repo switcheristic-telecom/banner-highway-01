@@ -47,12 +47,12 @@ const banners = [
 ];
 
 const insertBanner = db.prepare(
-  `INSERT INTO banners (id, road_id, t, angle, distance, size, elevation, emissive_intensity, mirror)
-   VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  `INSERT INTO banners (id, road_id, t, angle, distance, size, elevation, emissive_intensity)
+   VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
 );
 
 for (const b of banners) {
-  insertBanner.run(b.id, b.roadId, b.t, b.angle, b.distance, b.size, b.elevation, b.emissiveIntensity, 0);
+  insertBanner.run(b.id, b.roadId, b.t, b.angle, b.distance, b.size, b.elevation, b.emissiveIntensity);
 }
 
 console.log(`Seeded: 1 road with ${waypoints.length} waypoints, ${banners.length} banners`);

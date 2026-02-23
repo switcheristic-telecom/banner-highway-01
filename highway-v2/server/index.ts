@@ -55,7 +55,6 @@ interface BannerRow {
   size: number;
   elevation: number;
   emissive_intensity: number;
-  mirror: number;
 }
 
 interface AssetRow {
@@ -96,7 +95,6 @@ function bannerRowToJson(r: BannerRow) {
     size: r.size,
     elevation: r.elevation,
     emissiveIntensity: r.emissive_intensity,
-    mirror: !!r.mirror,
   };
 }
 
@@ -192,8 +190,8 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
       return errorResponse('Missing required fields: id, roadId, t');
     }
     db.run(
-      `INSERT INTO banners (id, road_id, t, angle, asset_id, distance, size, elevation, emissive_intensity, mirror)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO banners (id, road_id, t, angle, asset_id, distance, size, elevation, emissive_intensity)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         b.id as string,
         b.roadId as string,
@@ -204,7 +202,6 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
         (b.size as number) ?? 1.7,
         (b.elevation as number) ?? 10,
         (b.emissiveIntensity as number) ?? 0.8,
-        b.mirror ? 1 : 0,
       ],
     );
     return jsonResponse({ ok: true }, 201);
@@ -234,11 +231,6 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
         fields.push(`${dbCol} = ?`);
         values.push(b[jsKey] as string | number | null);
       }
-    }
-
-    if (b.mirror !== undefined) {
-      fields.push('mirror = ?');
-      values.push(b.mirror ? 1 : 0);
     }
 
     if (fields.length > 0) {

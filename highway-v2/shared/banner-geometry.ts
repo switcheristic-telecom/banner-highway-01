@@ -17,11 +17,19 @@ export interface BannerGeometryResult {
   roadPointZ: number;
   signEndX: number;
   signEndZ: number;
+  /** Pole base position (where the leg meets the ground in 3D) */
+  poleX: number;
+  poleZ: number;
+  /** Far end of the banner frame (opposite the pole) */
+  farEndX: number;
+  farEndZ: number;
   side: number;
   tangentX: number;
   tangentZ: number;
   normalX: number;
   normalZ: number;
+  signDirX: number;
+  signDirZ: number;
 }
 
 /**
@@ -66,9 +74,18 @@ export function computeBannerGeometry(
   const signDirZ = baseDir.x * sinA + baseDir.z * cosA;
 
   const aspectRatio = banner.aspectRatio ?? BANNER_DEFAULTS.aspectRatio;
+  const padX = BANNER_DEFAULTS.padX;
   const signLen = (banner.size * aspectRatio) / 2;
+  const frameHalfW = signLen + padX;
   const signEndX = pivotX + signDirX * signLen;
   const signEndZ = pivotZ + signDirZ * signLen;
+
+  // Pole: left edge of frame (where the leg is in 3D), opposite from signEnd
+  const poleX = pivotX - signDirX * frameHalfW;
+  const poleZ = pivotZ - signDirZ * frameHalfW;
+  // Far end: right edge of frame (opposite the pole)
+  const farEndX = pivotX + signDirX * frameHalfW;
+  const farEndZ = pivotZ + signDirZ * frameHalfW;
 
   return {
     pivotX,
@@ -79,10 +96,16 @@ export function computeBannerGeometry(
     roadPointZ: roadPoint.z,
     signEndX,
     signEndZ,
+    poleX,
+    poleZ,
+    farEndX,
+    farEndZ,
     side,
     tangentX: tx,
     tangentZ: tz,
     normalX: nx,
     normalZ: nz,
+    signDirX,
+    signDirZ,
   };
 }

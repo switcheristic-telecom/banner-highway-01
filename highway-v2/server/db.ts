@@ -53,7 +53,6 @@ export function getDb(): Database {
     size REAL DEFAULT 1.7,
     elevation REAL DEFAULT 10,
     emissive_intensity REAL DEFAULT 0.8,
-    mirror INTEGER DEFAULT 0,
     FOREIGN KEY (road_id) REFERENCES roads(id),
     FOREIGN KEY (asset_id) REFERENCES banner_assets(id) ON DELETE SET NULL
   )`);

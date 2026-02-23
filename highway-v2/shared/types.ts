@@ -41,7 +41,6 @@ export interface BannerPlacement {
   elevation: number;
   size: number;
   emissiveIntensity: number;
-  mirror: boolean;
   assetId: string | null;
 }
 

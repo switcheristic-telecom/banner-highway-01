@@ -209,32 +209,32 @@ function render() {
     const isSelected = b.id === selectedBannerId;
 
     const sRoad = w2s(geo.roadPointX, geo.roadPointZ);
-    const sPivot = w2s(geo.pivotX, geo.pivotZ);
-    const sSignEnd = w2s(geo.signEndX, geo.signEndZ);
+    const sPole = w2s(geo.poleX, geo.poleZ);
+    const sFarEnd = w2s(geo.farEndX, geo.farEndZ);
 
-    // Dashed line: road → pivot
+    // Dashed line: road → pole
     ctx.beginPath();
     ctx.setLineDash([4, 3]);
     ctx.moveTo(sRoad.x, sRoad.y);
-    ctx.lineTo(sPivot.x, sPivot.y);
+    ctx.lineTo(sPole.x, sPole.y);
     ctx.strokeStyle = isSelected ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.15)';
     ctx.lineWidth = 1;
     ctx.stroke();
     ctx.setLineDash([]);
 
-    // Sign line: pivot → end
+    // Sign line: pole → far end
     ctx.beginPath();
-    ctx.moveTo(sPivot.x, sPivot.y);
-    ctx.lineTo(sSignEnd.x, sSignEnd.y);
+    ctx.moveTo(sPole.x, sPole.y);
+    ctx.lineTo(sFarEnd.x, sFarEnd.y);
     ctx.strokeStyle = isSelected ? '#fff' : (b.distance >= 0 ? '#e06020' : '#2060e0');
     ctx.lineWidth = isSelected ? 3.5 : 2.5;
     ctx.stroke();
 
     if (isSelected) {
-      drawSelectedBannerHandles(sPivot, sSignEnd);
+      drawSelectedBannerHandles(sPole, sFarEnd);
     } else {
       ctx.beginPath();
-      ctx.arc(sPivot.x, sPivot.y, 3.5, 0, Math.PI * 2);
+      ctx.arc(sPole.x, sPole.y, 3.5, 0, Math.PI * 2);
       ctx.fillStyle = b.distance >= 0 ? '#e06020' : '#2060e0';
       ctx.fill();
       ctx.strokeStyle = '#000';
@@ -259,12 +259,12 @@ function render() {
 }
 
 function drawSelectedBannerHandles(
-  sPivot: { x: number; y: number },
-  sSignEnd: { x: number; y: number },
+  sPole: { x: number; y: number },
+  sFarEnd: { x: number; y: number },
 ) {
-  // Drag handle circle
+  // Drag handle circle at pole
   ctx.beginPath();
-  ctx.arc(sPivot.x, sPivot.y, 8, 0, Math.PI * 2);
+  ctx.arc(sPole.x, sPole.y, 8, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255,255,255,0.15)';
   ctx.fill();
   ctx.strokeStyle = '#fff';
@@ -272,23 +272,23 @@ function drawSelectedBannerHandles(
   ctx.stroke();
 
   ctx.beginPath();
-  ctx.arc(sPivot.x, sPivot.y, 4, 0, Math.PI * 2);
+  ctx.arc(sPole.x, sPole.y, 4, 0, Math.PI * 2);
   ctx.fillStyle = '#fff';
   ctx.fill();
 
   // Crosshair
   ctx.beginPath();
-  ctx.moveTo(sPivot.x - 5, sPivot.y);
-  ctx.lineTo(sPivot.x + 5, sPivot.y);
-  ctx.moveTo(sPivot.x, sPivot.y - 5);
-  ctx.lineTo(sPivot.x, sPivot.y + 5);
+  ctx.moveTo(sPole.x - 5, sPole.y);
+  ctx.lineTo(sPole.x + 5, sPole.y);
+  ctx.moveTo(sPole.x, sPole.y - 5);
+  ctx.lineTo(sPole.x, sPole.y + 5);
   ctx.strokeStyle = 'rgba(255,255,255,0.6)';
   ctx.lineWidth = 1;
   ctx.stroke();
 
-  // Rotate handle at sign end
+  // Rotate handle at far end
   ctx.beginPath();
-  ctx.arc(sSignEnd.x, sSignEnd.y, 6, 0, Math.PI * 2);
+  ctx.arc(sFarEnd.x, sFarEnd.y, 6, 0, Math.PI * 2);
   ctx.fillStyle = 'rgba(255,180,0,0.2)';
   ctx.fill();
   ctx.strokeStyle = '#ffb400';
@@ -297,19 +297,19 @@ function drawSelectedBannerHandles(
 
   // Curved arrow arc
   const arcRadius = 10;
-  const dirX = sSignEnd.x - sPivot.x;
-  const dirY = sSignEnd.y - sPivot.y;
+  const dirX = sFarEnd.x - sPole.x;
+  const dirY = sFarEnd.y - sPole.y;
   const baseAngle = Math.atan2(dirY, dirX);
   ctx.beginPath();
-  ctx.arc(sSignEnd.x, sSignEnd.y, arcRadius, baseAngle + 0.5, baseAngle + 2.2);
+  ctx.arc(sFarEnd.x, sFarEnd.y, arcRadius, baseAngle + 0.5, baseAngle + 2.2);
   ctx.strokeStyle = 'rgba(255,180,0,0.5)';
   ctx.lineWidth = 1.5;
   ctx.stroke();
 
   // Arrowhead
   const tipAngle = baseAngle + 2.2;
-  const tipX = sSignEnd.x + Math.cos(tipAngle) * arcRadius;
-  const tipY = sSignEnd.y + Math.sin(tipAngle) * arcRadius;
+  const tipX = sFarEnd.x + Math.cos(tipAngle) * arcRadius;
+  const tipY = sFarEnd.y + Math.sin(tipAngle) * arcRadius;
   ctx.beginPath();
   ctx.moveTo(tipX, tipY);
   ctx.lineTo(tipX - 4 * Math.cos(tipAngle - 0.8), tipY - 4 * Math.sin(tipAngle - 0.8));
@@ -421,17 +421,17 @@ function positionTooltip() {
     return;
   }
 
-  const sPivot = w2s(geo.pivotX, geo.pivotZ);
+  const sPole = w2s(geo.poleX, geo.poleZ);
   const wrap = $('canvas-wrap');
   const wrapRect = wrap.getBoundingClientRect();
 
-  let left = sPivot.x + 15;
-  let top = sPivot.y + 15;
+  let left = sPole.x + 15;
+  let top = sPole.y + 15;
   const ttWidth = 240;
   const ttHeight = tooltip.offsetHeight || 280;
 
-  if (left + ttWidth > wrapRect.width - 10) left = sPivot.x - ttWidth - 15;
-  if (top + ttHeight > wrapRect.height - 10) top = sPivot.y - ttHeight - 15;
+  if (left + ttWidth > wrapRect.width - 10) left = sPole.x - ttWidth - 15;
+  if (top + ttHeight > wrapRect.height - 10) top = sPole.y - ttHeight - 15;
   if (left < 10) left = 10;
   if (top < 10) top = 10;
 
@@ -455,24 +455,24 @@ function hitTest(sx: number, sy: number) {
     if (selBanner && selBanner.roadId === road.id) {
       const geo = getBannerGeo(selBanner);
       if (geo) {
-        const sEnd = w2s(geo.signEndX, geo.signEndZ);
-        if (Math.hypot(sEnd.x - sx, sEnd.y - sy) < hitRadius) {
+        const sFarEnd = w2s(geo.farEndX, geo.farEndZ);
+        if (Math.hypot(sFarEnd.x - sx, sFarEnd.y - sy) < hitRadius) {
           return { type: 'banner-rotate', bannerId: selBanner.id };
         }
-        const sPivot = w2s(geo.pivotX, geo.pivotZ);
-        if (Math.hypot(sPivot.x - sx, sPivot.y - sy) < hitRadius) {
+        const sPole = w2s(geo.poleX, geo.poleZ);
+        if (Math.hypot(sPole.x - sx, sPole.y - sy) < hitRadius) {
           return { type: 'banner-drag', bannerId: selBanner.id };
         }
       }
     }
   }
 
-  // Banner pivots
+  // Banner poles (click to select)
   for (const b of banners) {
     if (b.roadId !== road.id) continue;
     const geo = getBannerGeo(b);
     if (!geo) continue;
-    const sp = w2s(geo.pivotX, geo.pivotZ);
+    const sp = w2s(geo.poleX, geo.poleZ);
     if (Math.hypot(sp.x - sx, sp.y - sy) < hitRadius) {
       return { type: 'banner', bannerId: b.id };
     }
@@ -581,7 +581,7 @@ canvas.addEventListener('mousemove', (e) => {
     return;
   }
 
-  // Banner drag (move pivot)
+  // Banner drag (move pole)
   if (dragTarget?.type === 'banner-drag') {
     const road = roads[activeRoadIdx];
     const banner = banners.find(b => b.id === dragTarget!.bannerId);
@@ -598,8 +598,19 @@ canvas.addEventListener('mousemove', (e) => {
     const dz = w.z - pt.z;
     const projDist = dx * nx + dz * nz;
 
+    // Compute correction: we want the pole at the mouse, not the pivot.
+    // Place pivot at mouse first, then see where the pole ends up and correct.
     banner.t = closest.t;
-    banner.distance = projDist;
+    const tempGeo = computeBannerGeometry(pt, tan, {
+      distance: projDist,
+      elevation: banner.elevation,
+      angle: banner.angle,
+      size: banner.size,
+    });
+    const errX = w.x - tempGeo.poleX;
+    const errZ = w.z - tempGeo.poleZ;
+    const correction = errX * nx + errZ * nz;
+    banner.distance = projDist + correction;
 
     updateTooltipFields();
     renderBannerList();
@@ -617,8 +628,8 @@ canvas.addEventListener('mousemove', (e) => {
     if (!geo) return;
 
     const w = s2w(sx, sy);
-    const toMouseX = w.x - geo.pivotX;
-    const toMouseZ = w.z - geo.pivotZ;
+    const toMouseX = w.x - geo.poleX;
+    const toMouseZ = w.z - geo.poleZ;
     const mouseAngle = Math.atan2(toMouseZ, toMouseX);
 
     const baseAngle = Math.atan2(-geo.tangentX * geo.side, geo.tangentZ * geo.side);
@@ -847,7 +858,6 @@ function updateTooltipFields() {
 
   $('tt-title').textContent = banner.id;
   $<HTMLInputElement>('tt-t').value = String(banner.t);
-  $<HTMLInputElement>('tt-mirror').checked = banner.mirror;
   $<HTMLInputElement>('tt-angle').value = String(banner.angle);
   $<HTMLInputElement>('tt-size').value = String(banner.size);
   $<HTMLInputElement>('tt-dist').value = String(banner.distance);
@@ -873,7 +883,6 @@ function syncTooltipToState() {
   const banner = banners.find(b => b.id === selectedBannerId);
   if (!banner) return;
   banner.t = parseFloat($<HTMLInputElement>('tt-t').value) || 0;
-  banner.mirror = $<HTMLInputElement>('tt-mirror').checked;
   banner.angle = parseFloat($<HTMLInputElement>('tt-angle').value) || 0;
   banner.distance = parseFloat($<HTMLInputElement>('tt-dist').value) || 0;
   banner.size = parseFloat($<HTMLInputElement>('tt-size').value) || 1;
@@ -884,7 +893,6 @@ function syncTooltipToState() {
 for (const id of ['tt-t', 'tt-angle', 'tt-dist', 'tt-size']) {
   $(id).addEventListener('input', syncTooltipToState);
 }
-$('tt-mirror').addEventListener('change', syncTooltipToState);
 
 // Save banner
 $('tt-save').addEventListener('click', async () => {
@@ -892,7 +900,6 @@ $('tt-save').addEventListener('click', async () => {
   if (!banner) return;
 
   banner.t = parseFloat($<HTMLInputElement>('tt-t').value) || 0;
-  banner.mirror = $<HTMLInputElement>('tt-mirror').checked;
   banner.angle = parseFloat($<HTMLInputElement>('tt-angle').value) || 0;
   banner.size = parseFloat($<HTMLInputElement>('tt-size').value) || 1;
   banner.distance = parseFloat($<HTMLInputElement>('tt-dist').value) || 0;
@@ -977,7 +984,6 @@ $('btn-add-banner').addEventListener('click', () => {
     elevation: BANNER_DEFAULTS.elevation,
     emissiveIntensity: BANNER_DEFAULTS.emissiveIntensity,
     assetId: null,
-    mirror: false,
   };
 
   banners.push(newBanner);
