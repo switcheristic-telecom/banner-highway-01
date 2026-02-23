@@ -68,26 +68,26 @@ const SEED_ASSETS = [
 ];
 
 const SEED_BANNERS = [
-  { id: 'banner_main_1', branch_id: 'main', t: 0.1 / 2, side: 'r', angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, assetId: 'poem1_1' },
-  { id: 'banner_main_2', branch_id: 'main', t: 0.21 / 2, side: 'r', angle: 0, sizeFactor: 1.0, distanceFactor: 0.1, assetId: 'poem1_2' },
-  { id: 'banner_main_3', branch_id: 'main', t: 0.32 / 2, side: 'r', angle: 0, sizeFactor: 1.5, distanceFactor: 0.9, assetId: 'poem1_3' },
-  { id: 'banner_main_4', branch_id: 'main', t: 0.4 / 2, side: 'r', angle: -15, sizeFactor: 1, distanceFactor: 0.1, assetId: 'poem1_4' },
-  { id: 'banner_main_5', branch_id: 'main', t: 0.48 / 2, side: 'r', angle: 10, sizeFactor: 1.3, distanceFactor: 0.5, assetId: 'poem1_5' },
-  { id: 'banner_main_6', branch_id: 'main', t: 0.55 / 2, side: 'r', angle: 0, sizeFactor: 1, distanceFactor: 0.1, assetId: 'poem1_6' },
-  { id: 'banner_main_7', branch_id: 'main', t: 0.65 / 2, side: 'r', angle: 30, sizeFactor: 1, distanceFactor: 0.1, assetId: 'poem1_7' },
-  { id: 'banner_main_8', branch_id: 'main', t: 0.75 / 2, side: 'r', angle: 8, sizeFactor: 1.4, distanceFactor: 0.15, assetId: 'poem1_8' },
-  { id: 'banner_main_9', branch_id: 'main', t: 0.85 / 2, side: 'r', angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, emissiveFactor: 0.4, assetId: 'poem1_9' },
-  { id: 'banner_main_10', branch_id: 'main', t: 0.99 / 2, side: 'r', angle: 0, sizeFactor: 2.0, elevationFactor: 0.8, distanceFactor: 0.01, assetId: 'poem1_10' },
-  { id: 'banner_main_11', branch_id: 'main', t: 0.12 / 2 + 0.5, side: 'l', angle: 30, sizeFactor: 1.2, elevationFactor: 0.9, distanceFactor: 0.01, assetId: 'poem2_1' },
-  { id: 'banner_main_12', branch_id: 'main', t: 0.18 / 2 + 0.5, side: 'l', angle: 30, sizeFactor: 1.2, elevationFactor: 1.0, distanceFactor: 0.1, assetId: 'poem2_2' },
-  { id: 'banner_main_13', branch_id: 'main', t: 0.28 / 2 + 0.5, side: 'l', angle: 0, sizeFactor: 1.2, elevationFactor: 1.1, distanceFactor: 0.1, assetId: 'poem2_3' },
-  { id: 'banner_main_14', branch_id: 'main', t: 0.36 / 2 + 0.5, side: 'l', angle: 12, sizeFactor: 1, elevationFactor: 1, distanceFactor: 0.001, emissiveFactor: 0.8, assetId: 'poem2_4' },
-  { id: 'banner_main_15', branch_id: 'main', t: 0.48 / 2 + 0.5, side: 'l', angle: 0, sizeFactor: 1.5, distanceFactor: 0.1, emissiveFactor: 2, assetId: 'poem2_5' },
-  { id: 'banner_main_16', branch_id: 'main', t: 0.55 / 2 + 0.5, side: 'l', angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, assetId: 'poem2_6' },
-  { id: 'banner_main_17', branch_id: 'main', t: 0.65 / 2 + 0.5, side: 'l', angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, assetId: 'poem2_7' },
-  { id: 'banner_main_18', branch_id: 'main', t: 0.75 / 2 + 0.5, side: 'l', angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, emissiveFactor: 0.6, assetId: 'poem2_8' },
-  { id: 'banner_main_19', branch_id: 'main', t: 0.85 / 2 + 0.5, side: 'l', angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, assetId: 'poem2_9' },
-  { id: 'banner_main_20', branch_id: 'main', t: 0.99 / 2 + 0.5, side: 'l', angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, assetId: 'poem2_10' },
+  { id: 'banner_main_1', branch_id: 'main', t: 0.1 / 2, angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, mirror: true, assetId: 'poem1_1' },
+  { id: 'banner_main_2', branch_id: 'main', t: 0.21 / 2, angle: 0, sizeFactor: 1.0, distanceFactor: 0.1, mirror: true, assetId: 'poem1_2' },
+  { id: 'banner_main_3', branch_id: 'main', t: 0.32 / 2, angle: 0, sizeFactor: 1.5, distanceFactor: 0.9, mirror: true, assetId: 'poem1_3' },
+  { id: 'banner_main_4', branch_id: 'main', t: 0.4 / 2, angle: 15, sizeFactor: 1, distanceFactor: 0.1, mirror: true, assetId: 'poem1_4' },
+  { id: 'banner_main_5', branch_id: 'main', t: 0.48 / 2, angle: -10, sizeFactor: 1.3, distanceFactor: 0.5, mirror: true, assetId: 'poem1_5' },
+  { id: 'banner_main_6', branch_id: 'main', t: 0.55 / 2, angle: 0, sizeFactor: 1, distanceFactor: 0.1, mirror: true, assetId: 'poem1_6' },
+  { id: 'banner_main_7', branch_id: 'main', t: 0.65 / 2, angle: -30, sizeFactor: 1, distanceFactor: 0.1, mirror: true, assetId: 'poem1_7' },
+  { id: 'banner_main_8', branch_id: 'main', t: 0.75 / 2, angle: -8, sizeFactor: 1.4, distanceFactor: 0.15, mirror: true, assetId: 'poem1_8' },
+  { id: 'banner_main_9', branch_id: 'main', t: 0.85 / 2, angle: 0, sizeFactor: 1.2, distanceFactor: 0.1, emissiveFactor: 0.4, mirror: true, assetId: 'poem1_9' },
+  { id: 'banner_main_10', branch_id: 'main', t: 0.99 / 2, angle: 0, sizeFactor: 2.0, elevationFactor: 0.8, distanceFactor: 0.01, mirror: true, assetId: 'poem1_10' },
+  { id: 'banner_main_11', branch_id: 'main', t: 0.12 / 2 + 0.5, angle: 30, sizeFactor: 1.2, elevationFactor: 0.9, distanceFactor: -0.01, mirror: false, assetId: 'poem2_1' },
+  { id: 'banner_main_12', branch_id: 'main', t: 0.18 / 2 + 0.5, angle: 30, sizeFactor: 1.2, elevationFactor: 1.0, distanceFactor: -0.1, mirror: false, assetId: 'poem2_2' },
+  { id: 'banner_main_13', branch_id: 'main', t: 0.28 / 2 + 0.5, angle: 0, sizeFactor: 1.2, elevationFactor: 1.1, distanceFactor: -0.1, mirror: false, assetId: 'poem2_3' },
+  { id: 'banner_main_14', branch_id: 'main', t: 0.36 / 2 + 0.5, angle: 12, sizeFactor: 1, elevationFactor: 1, distanceFactor: -0.001, emissiveFactor: 0.8, mirror: false, assetId: 'poem2_4' },
+  { id: 'banner_main_15', branch_id: 'main', t: 0.48 / 2 + 0.5, angle: 0, sizeFactor: 1.5, distanceFactor: -0.1, emissiveFactor: 2, mirror: false, assetId: 'poem2_5' },
+  { id: 'banner_main_16', branch_id: 'main', t: 0.55 / 2 + 0.5, angle: 0, sizeFactor: 1.2, distanceFactor: -0.1, mirror: false, assetId: 'poem2_6' },
+  { id: 'banner_main_17', branch_id: 'main', t: 0.65 / 2 + 0.5, angle: 0, sizeFactor: 1.2, distanceFactor: -0.1, mirror: false, assetId: 'poem2_7' },
+  { id: 'banner_main_18', branch_id: 'main', t: 0.75 / 2 + 0.5, angle: 0, sizeFactor: 1.2, distanceFactor: -0.1, emissiveFactor: 0.6, mirror: false, assetId: 'poem2_8' },
+  { id: 'banner_main_19', branch_id: 'main', t: 0.85 / 2 + 0.5, angle: 0, sizeFactor: 1.2, distanceFactor: -0.1, mirror: false, assetId: 'poem2_9' },
+  { id: 'banner_main_20', branch_id: 'main', t: 0.99 / 2 + 0.5, angle: 0, sizeFactor: 1.2, distanceFactor: -0.1, mirror: false, assetId: 'poem2_10' },
 ] as Array<Record<string, unknown>>;
 
 // ---------------------------------------------------------------------------
@@ -122,8 +122,8 @@ for (const a of SEED_ASSETS) {
 }
 
 const insertBanner = db.prepare(
-  `INSERT INTO banners (id, branch_id, t, side, angle, asset_id,
-   distance_factor, size_factor, elevation_factor, emissive_factor)
+  `INSERT INTO banners (id, branch_id, t, angle, asset_id,
+   distance_factor, size_factor, elevation_factor, emissive_factor, mirror)
    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 );
 
@@ -132,13 +132,13 @@ for (const b of SEED_BANNERS) {
     b.id as string,
     b.branch_id as string,
     b.t as number,
-    b.side as string,
     (b.angle as number) ?? 0,
     (b.assetId as string) ?? null,
     (b.distanceFactor as number) ?? null,
     (b.sizeFactor as number) ?? null,
     (b.elevationFactor as number) ?? null,
     (b.emissiveFactor as number) ?? null,
+    b.mirror ? 1 : 0,
   );
 }
 

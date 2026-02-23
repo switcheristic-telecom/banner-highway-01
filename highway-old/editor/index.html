@@ -378,8 +378,8 @@
         <input type="number" id="tt-t" step="0.01" min="0" max="1" />
         <div class="tt-row">
           <div>
-            <label>Side</label>
-            <select id="tt-side"><option value="l">Left</option><option value="r">Right</option></select>
+            <label>Mirror</label>
+            <input type="checkbox" id="tt-mirror" />
           </div>
           <div>
             <label>Angle</label>
@@ -574,10 +574,29 @@ function solveSpline(waypoints, isCyclic) {
   }
 
   splineCache = { waypoints, isCyclic, h, dxdt, dzdt, headings, segCount };
+  buildArcLengthTable();
 }
 
-// Evaluate spline using Hermite basis at global t in [0,1]
-function evalSpline(globalT) {
+function buildArcLengthTable(numSamples = 1600) {
+  if (!splineCache) return;
+  const samples = [];
+  let cumLen = 0;
+  for (let i = 0; i <= numSamples; i++) {
+    const t = i / numSamples;
+    const p = evalSplineRaw(t);
+    if (!p) continue;
+    if (samples.length > 0) {
+      const prev = samples[samples.length - 1];
+      cumLen += Math.sqrt((p.x - prev.x) ** 2 + (p.z - prev.z) ** 2);
+    }
+    samples.push({ x: p.x, z: p.z, tx: p.tx, tz: p.tz, cumLen });
+  }
+  splineCache.arcSamples = samples;
+  splineCache.totalLength = cumLen;
+}
+
+// Evaluate spline using Hermite basis at global t in [0,1] (segment-based, raw)
+function evalSplineRaw(globalT) {
   if (!splineCache || splineCache.waypoints.length < 2) return null;
   const { waypoints, isCyclic, h, dxdt, dzdt, segCount } = splineCache;
   const N = waypoints.length;
@@ -618,6 +637,32 @@ function evalSpline(globalT) {
   return { x, z, tx, tz };
 }
 
+// Arc-length-based evalSpline (matches 3D HighwaySpline.sampleAtT)
+function evalSpline(globalT) {
+  if (!splineCache?.arcSamples) return null;
+  const { arcSamples, totalLength, isCyclic } = splineCache;
+  if (isCyclic) globalT = ((globalT % 1) + 1) % 1;
+  else globalT = Math.max(0, Math.min(1, globalT));
+
+  const targetLen = globalT * totalLength;
+  let lo = 0, hi = arcSamples.length - 1;
+  while (lo < hi - 1) {
+    const mid = (lo + hi) >> 1;
+    if (arcSamples[mid].cumLen <= targetLen) lo = mid;
+    else hi = mid;
+  }
+  const s0 = arcSamples[lo], s1 = arcSamples[hi];
+  const segLen = s1.cumLen - s0.cumLen;
+  if (segLen < 1e-12) return { x: s0.x, z: s0.z, tx: s0.tx, tz: s0.tz };
+  const alpha = (targetLen - s0.cumLen) / segLen;
+  return {
+    x: s0.x + alpha * (s1.x - s0.x),
+    z: s0.z + alpha * (s1.z - s0.z),
+    tx: s0.tx + alpha * (s1.tx - s0.tx),
+    tz: s0.tz + alpha * (s1.tz - s0.tz),
+  };
+}
+
 function samplePath(waypoints, isCyclic, numSamples) {
   solveSpline(waypoints, isCyclic);
   if (!splineCache) return [];
@@ -632,7 +677,7 @@ function samplePath(waypoints, isCyclic, numSamples) {
 
 function closestTOnPath(waypoints, isCyclic, wx, wz, samples) {
   if (!splineCache) solveSpline(waypoints, isCyclic);
-  if (!splineCache) return { t: 0, dist: Infinity };
+  if (!splineCache?.arcSamples) return { t: 0, dist: Infinity };
   let best = { t: 0, dist: Infinity };
   for (let i = 0; i <= samples; i++) {
     const t = i / samples;
@@ -645,9 +690,10 @@ function closestTOnPath(waypoints, isCyclic, wx, wz, samples) {
   return best;
 }
 
-// Get banner geometry using spline
+// Banner constants (must match BANNER_DEFAULT_OPTIONS in constants/defaults.ts)
 const DEFAULT_DISTANCE = 10;
-const SIGN_LENGTH = 8;
+const DEFAULT_SIZE = 1.7;
+const DEFAULT_ASPECT = 7.8;
 
 function getBannerGeometry(banner, waypoints, isCyclic) {
   if (!splineCache) solveSpline(waypoints, isCyclic);
@@ -658,20 +704,22 @@ function getBannerGeometry(banner, waypoints, isCyclic) {
   const tx = pt.tx/tLen, tz = pt.tz/tLen;
   const nx = -tz, nz = tx;
 
-  const side = banner.side === 'r' ? 1 : -1;
   const dist = (banner.distanceFactor ?? 1) * DEFAULT_DISTANCE;
+  const side = Math.sign(dist) || 1;
 
-  const pivotX = pt.x + nx * side * dist;
-  const pivotZ = pt.z + nz * side * dist;
+  const pivotX = pt.x + nx * dist;
+  const pivotZ = pt.z + nz * dist;
 
   const angleRad = ((banner.angle || 0) * Math.PI) / 180;
-  const baseDir = { x: tz, z: -tx };
+  const baseDir = { x: tz * side, z: -tx * side };
   const cosA = Math.cos(angleRad), sinA = Math.sin(angleRad);
   const signDirX = baseDir.x * cosA - baseDir.z * sinA;
   const signDirZ = baseDir.x * sinA + baseDir.z * cosA;
 
-  const signEndX = pivotX + signDirX * SIGN_LENGTH;
-  const signEndZ = pivotZ + signDirZ * SIGN_LENGTH;
+  const bannerSize = (banner.sizeFactor ?? 1) * DEFAULT_SIZE;
+  const signLen = (bannerSize * DEFAULT_ASPECT) / 2;
+  const signEndX = pivotX + signDirX * signLen;
+  const signEndZ = pivotZ + signDirZ * signLen;
 
   return {
     roadPt: pt,
@@ -785,17 +833,74 @@ function render() {
     ctx.beginPath();
     ctx.moveTo(sPivot.x, sPivot.y);
     ctx.lineTo(sSignEnd.x, sSignEnd.y);
-    ctx.strokeStyle = isSelected ? '#fff' : (b.side === 'r' ? '#e06020' : '#2060e0');
+    ctx.strokeStyle = isSelected ? '#fff' : ((b.distanceFactor ?? 1) >= 0 ? '#e06020' : '#2060e0');
     ctx.lineWidth = isSelected ? 3.5 : 2.5;
     ctx.stroke();
 
-    ctx.beginPath();
-    ctx.arc(sPivot.x, sPivot.y, isSelected ? 5 : 3.5, 0, Math.PI * 2);
-    ctx.fillStyle = isSelected ? '#fff' : (b.side === 'r' ? '#e06020' : '#2060e0');
-    ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
-    ctx.stroke();
+    if (isSelected) {
+      // Drag handle: larger pivot with crosshair
+      ctx.beginPath();
+      ctx.arc(sPivot.x, sPivot.y, 8, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(sPivot.x, sPivot.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+
+      // Crosshair inside drag handle
+      ctx.beginPath();
+      ctx.moveTo(sPivot.x - 5, sPivot.y);
+      ctx.lineTo(sPivot.x + 5, sPivot.y);
+      ctx.moveTo(sPivot.x, sPivot.y - 5);
+      ctx.lineTo(sPivot.x, sPivot.y + 5);
+      ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Rotate handle at sign end
+      ctx.beginPath();
+      ctx.arc(sSignEnd.x, sSignEnd.y, 6, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,180,0,0.2)';
+      ctx.fill();
+      ctx.strokeStyle = '#ffb400';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Curved arrow arc near rotate handle
+      const arcRadius = 10;
+      const dirX = sSignEnd.x - sPivot.x;
+      const dirY = sSignEnd.y - sPivot.y;
+      const baseAngle = Math.atan2(dirY, dirX);
+      ctx.beginPath();
+      ctx.arc(sSignEnd.x, sSignEnd.y, arcRadius, baseAngle + 0.5, baseAngle + 2.2);
+      ctx.strokeStyle = 'rgba(255,180,0,0.5)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Arrowhead on arc
+      const tipAngle = baseAngle + 2.2;
+      const tipX = sSignEnd.x + Math.cos(tipAngle) * arcRadius;
+      const tipY = sSignEnd.y + Math.sin(tipAngle) * arcRadius;
+      ctx.beginPath();
+      ctx.moveTo(tipX, tipY);
+      ctx.lineTo(tipX - 4 * Math.cos(tipAngle - 0.8), tipY - 4 * Math.sin(tipAngle - 0.8));
+      ctx.lineTo(tipX - 4 * Math.cos(tipAngle + 0.4), tipY - 4 * Math.sin(tipAngle + 0.4));
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,180,0,0.5)';
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.arc(sPivot.x, sPivot.y, 3.5, 0, Math.PI * 2);
+      ctx.fillStyle = (b.distanceFactor ?? 1) >= 0 ? '#e06020' : '#2060e0';
+      ctx.fill();
+      ctx.strokeStyle = '#000';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    }
 
     ctx.beginPath();
     ctx.arc(sRoad.x, sRoad.y, 2, 0, Math.PI * 2);
@@ -923,7 +1028,25 @@ function hitTest(sx, sy) {
 
   const hitRadius = 10;
 
-  // Test banner pivots first
+  // Test handles on selected banner first (highest priority)
+  if (selectedBannerId) {
+    const selBanner = banners.find(b => b.id === selectedBannerId);
+    if (selBanner && selBanner.branch_id === branch.id) {
+      const geo = getBannerGeometry(selBanner, branch.waypoints, branch.isCyclic);
+      if (geo) {
+        const sEnd = w2s(geo.signEndX, geo.signEndZ);
+        if (Math.hypot(sEnd.x - sx, sEnd.y - sy) < hitRadius) {
+          return { type: 'banner-rotate', bannerId: selBanner.id };
+        }
+        const sPivot = w2s(geo.pivotX, geo.pivotZ);
+        if (Math.hypot(sPivot.x - sx, sPivot.y - sy) < hitRadius) {
+          return { type: 'banner-drag', bannerId: selBanner.id };
+        }
+      }
+    }
+  }
+
+  // Test banner pivots
   for (const b of banners) {
     if (b.branch_id !== branch.id) continue;
     const geo = getBannerGeometry(b, branch.waypoints, branch.isCyclic);
@@ -977,6 +1100,13 @@ canvas.addEventListener('mousedown', (e) => {
 
   const hit = hitTest(sx, sy);
 
+  if (hit && (hit.type === 'banner-drag' || hit.type === 'banner-rotate')) {
+    dragTarget = hit;
+    canvas.style.cursor = hit.type === 'banner-drag' ? 'grabbing' : 'alias';
+    render();
+    return;
+  }
+
   if (hit && hit.type === 'banner') {
     selectedBannerId = hit.bannerId;
     selectedNodeIdx = -1;
@@ -1012,6 +1142,10 @@ canvas.addEventListener('mousedown', (e) => {
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 canvas.addEventListener('mousemove', (e) => {
+  const rect = canvas.getBoundingClientRect();
+  const sx = e.clientX - rect.left;
+  const sy = e.clientY - rect.top;
+
   if (vp.dragging) {
     const dx = e.clientX - vp.lastX;
     const dy = e.clientY - vp.lastY;
@@ -1023,10 +1157,60 @@ canvas.addEventListener('mousemove', (e) => {
     return;
   }
 
+  if (dragTarget && dragTarget.type === 'banner-drag') {
+    const branch = branches[activeBranchIdx];
+    if (!branch) return;
+    const banner = banners.find(b => b.id === dragTarget.bannerId);
+    if (!banner) return;
+
+    const w = s2w(sx, sy);
+    const closest = closestTOnPath(branch.waypoints, branch.isCyclic, w.x, w.z, 800);
+    const pt = evalSpline(closest.t);
+    if (!pt) return;
+
+    const tLen = Math.sqrt(pt.tx * pt.tx + pt.tz * pt.tz) || 1;
+    const nx = -pt.tz / tLen, nz = pt.tx / tLen;
+
+    const dx = w.x - pt.x;
+    const dz = w.z - pt.z;
+    const projDist = dx * nx + dz * nz;
+
+    banner.t = closest.t;
+    banner.distanceFactor = projDist / DEFAULT_DISTANCE;
+
+    updateTooltipFields();
+    renderBannerList();
+    render();
+    return;
+  }
+
+  if (dragTarget && dragTarget.type === 'banner-rotate') {
+    const branch = branches[activeBranchIdx];
+    if (!branch) return;
+    const banner = banners.find(b => b.id === dragTarget.bannerId);
+    if (!banner) return;
+
+    const geo = getBannerGeometry(banner, branch.waypoints, branch.isCyclic);
+    if (!geo) return;
+
+    const w = s2w(sx, sy);
+    const toMouseX = w.x - geo.pivotX;
+    const toMouseZ = w.z - geo.pivotZ;
+    const mouseAngle = Math.atan2(toMouseZ, toMouseX);
+
+    const baseAngle = Math.atan2(-geo.tx * geo.side, geo.tz * geo.side);
+    let deltaAngle = mouseAngle - baseAngle;
+
+    deltaAngle = ((deltaAngle + Math.PI) % (2 * Math.PI) + 2 * Math.PI) % (2 * Math.PI) - Math.PI;
+
+    banner.angle = Math.round(deltaAngle * 180 / Math.PI * 10) / 10;
+
+    updateTooltipFields();
+    render();
+    return;
+  }
+
   if (dragTarget && dragTarget.type === 'waypoint') {
-    const rect = canvas.getBoundingClientRect();
-    const sx = e.clientX - rect.left;
-    const sy = e.clientY - rect.top;
     const w = s2w(sx, sy);
 
     const branch = branches[activeBranchIdx];
@@ -1035,18 +1219,28 @@ canvas.addEventListener('mousemove', (e) => {
     wp.x = w.x;
     wp.z = w.z;
 
-    splineCache = null; // Force re-solve
+    splineCache = null;
     updateNodePanel();
     render();
+    return;
+  }
+
+  // Hover cursor feedback
+  if (!addingNode) {
+    const hit = hitTest(sx, sy);
+    if (hit?.type === 'banner-drag') canvas.style.cursor = 'grab';
+    else if (hit?.type === 'banner-rotate') canvas.style.cursor = 'alias';
+    else if (hit?.type === 'banner' || hit?.type === 'waypoint') canvas.style.cursor = 'pointer';
+    else canvas.style.cursor = 'crosshair';
   }
 });
 
 canvas.addEventListener('mouseup', () => {
   if (vp.dragging) {
     vp.dragging = false;
-    canvas.style.cursor = 'crosshair';
   }
   dragTarget = null;
+  canvas.style.cursor = addingNode ? 'crosshair' : 'crosshair';
 });
 
 canvas.addEventListener('wheel', (e) => {
@@ -1170,7 +1364,7 @@ function renderBannerList() {
 
   list.innerHTML = branchBanners.map(b => `
     <div class="banner-item ${b.id === selectedBannerId ? 'selected' : ''}" data-id="${b.id}">
-      <div class="banner-dot" style="background:${b.side === 'r' ? '#e06020' : '#2060e0'}"></div>
+      <div class="banner-dot" style="background:${(b.distanceFactor ?? 1) >= 0 ? '#e06020' : '#2060e0'}"></div>
       <span class="banner-name">${b.id}</span>
       <span class="banner-t">t=${b.t.toFixed(3)}</span>
     </div>
@@ -1200,7 +1394,7 @@ function updateTooltipFields() {
 
   document.getElementById('tt-title').textContent = banner.id;
   document.getElementById('tt-t').value = banner.t;
-  document.getElementById('tt-side').value = banner.side;
+  document.getElementById('tt-mirror').checked = !!banner.mirror;
   document.getElementById('tt-angle').value = banner.angle || 0;
   document.getElementById('tt-size').value = banner.sizeFactor ?? 1;
   document.getElementById('tt-dist').value = banner.distanceFactor ?? 1;
@@ -1225,9 +1419,9 @@ function syncTooltipToState() {
   const banner = banners.find(b => b.id === selectedBannerId);
   if (!banner) return;
   banner.t = parseFloat(document.getElementById('tt-t').value) || 0;
-  banner.side = document.getElementById('tt-side').value;
+  banner.mirror = document.getElementById('tt-mirror').checked;
   banner.angle = parseFloat(document.getElementById('tt-angle').value) || 0;
-  banner.distanceFactor = parseFloat(document.getElementById('tt-dist').value) || 1;
+  banner.distanceFactor = parseFloat(document.getElementById('tt-dist').value) || 0;
   banner.sizeFactor = parseFloat(document.getElementById('tt-size').value) || 1;
   renderBannerList();
   render();
@@ -1235,17 +1429,17 @@ function syncTooltipToState() {
 for (const id of ['tt-t', 'tt-angle', 'tt-dist', 'tt-size']) {
   document.getElementById(id).addEventListener('input', syncTooltipToState);
 }
-document.getElementById('tt-side').addEventListener('change', syncTooltipToState);
+document.getElementById('tt-mirror').addEventListener('change', syncTooltipToState);
 
 document.getElementById('tt-save').addEventListener('click', async () => {
   const banner = banners.find(b => b.id === selectedBannerId);
   if (!banner) return;
 
   banner.t = parseFloat(document.getElementById('tt-t').value) || 0;
-  banner.side = document.getElementById('tt-side').value;
+  banner.mirror = document.getElementById('tt-mirror').checked;
   banner.angle = parseFloat(document.getElementById('tt-angle').value) || 0;
   banner.sizeFactor = parseFloat(document.getElementById('tt-size').value) || 1;
-  banner.distanceFactor = parseFloat(document.getElementById('tt-dist').value) || 1;
+  banner.distanceFactor = parseFloat(document.getElementById('tt-dist').value) || 0;
   banner.elevationFactor = parseFloat(document.getElementById('tt-elev').value) || 1;
   banner.emissiveFactor = parseFloat(document.getElementById('tt-emissive').value) || 1;
 
@@ -1313,13 +1507,13 @@ document.getElementById('btn-add-banner').addEventListener('click', () => {
     id,
     branch_id: branch.id,
     t: 0.5,
-    side: 'r',
     angle: 0,
     sizeFactor: 1.0,
     distanceFactor: 0.1,
     elevationFactor: 1.0,
     emissiveFactor: 1.0,
     assetId: null,
+    mirror: false,
   };
   banners.push(newBanner);
   selectedBannerId = id;

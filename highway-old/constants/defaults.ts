@@ -43,7 +43,6 @@ export function applyDefaults(
     id: def.id,
     branch_id: def.branch_id,
     t: def.t,
-    side: def.side,
     angle: def.angle,
     distance: (def.distanceFactor ?? 1) * BANNER_DEFAULT_OPTIONS.distance,
     size: (def.sizeFactor ?? 1) * BANNER_DEFAULT_OPTIONS.size,
@@ -56,5 +55,6 @@ export function applyDefaults(
       ? asset.width / asset.height
       : BANNER_DEFAULT_OPTIONS.aspectRatio,
     imageFile: asset?.filePath ?? '',
+    mirror: def.mirror ?? false,
   };
 }

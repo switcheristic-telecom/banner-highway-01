@@ -49,7 +49,6 @@ export interface BannerDefinition {
   id: string;
   branch_id: string;
   t: number;
-  side: 'l' | 'r';
   angle: number;
 
   assetId: string | null;
@@ -58,13 +57,13 @@ export interface BannerDefinition {
   sizeFactor?: number;
   elevationFactor?: number;
   emissiveFactor?: number;
+  mirror?: boolean;
 }
 
 export interface BannerInfo {
   id: string;
   branch_id: string;
   t: number;
-  side: 'l' | 'r';
   angle: number;
   distance: number;
   size: number;
@@ -74,6 +73,7 @@ export interface BannerInfo {
   padY: number;
   aspectRatio: number;
   imageFile: string;
+  mirror: boolean;
 }
 
 export interface RawSceneData {

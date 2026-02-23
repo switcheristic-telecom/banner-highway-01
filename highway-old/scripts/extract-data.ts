@@ -33,13 +33,13 @@ const banners = db.query('SELECT * FROM banners ORDER BY t').all() as Array<{
   id: string;
   branch_id: string;
   t: number;
-  side: string;
   angle: number;
   asset_id: string | null;
   distance_factor: number | null;
   size_factor: number | null;
   elevation_factor: number | null;
   emissive_factor: number | null;
+  mirror: number;
 }>;
 
 const assets = db.query('SELECT * FROM banner_assets').all() as Array<{
@@ -71,9 +71,9 @@ const data = {
       id: b.id,
       branch_id: b.branch_id,
       t: b.t,
-      side: b.side,
       angle: b.angle,
       assetId: b.asset_id,
+      mirror: !!b.mirror,
     };
 
     if (b.distance_factor != null) def.distanceFactor = b.distance_factor;

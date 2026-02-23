@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Banner Highway</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="loading-container">
+        <h1 class="loading-title">Banner Highway</h1>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+        <div class="loading-status" id="loading-status">Initializing...</div>
+      </div>
+    </div>
+
+    <div id="app">
+      <canvas id="canvas"></canvas>
+
+      <!-- Instructions overlay -->
+      <div id="instructions-panel">
+        <div class="instruction-text">
+          <strong>Arrow</strong> or <strong>scroll up/down</strong> to move
+          back/forward
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/scripts/main.ts"></script>
+  </body>
+</html>

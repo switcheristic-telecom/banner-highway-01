@@ -39,21 +39,17 @@ export class Billboard {
   }
 
   positionBillboard(roadPosition: THREE.Vector3, roadNormal: THREE.Vector3) {
-    const side = this.info.side === 'r' ? 1 : -1;
     const distance = this.info.distance;
+    const side = Math.sign(distance) || 1;
 
-    const offset = roadNormal.clone().multiplyScalar(side * distance);
+    const offset = roadNormal.clone().multiplyScalar(distance);
     this.group.position.copy(roadPosition).add(offset);
+    this.group.position.y += this.info.elevation;
 
-    const elevation = this.info.elevation;
-    this.group.position.y += elevation;
-
-    const angleRaw = this.info.angle || 0;
-    const angle =
-      ((this.info.side === 'r' ? -angleRaw : angleRaw) * Math.PI) / 180;
+    const angleRad = (this.info.angle * Math.PI) / 180;
 
     this.group.rotation.y =
-      Math.atan2(roadNormal.x, roadNormal.z) + (Math.PI / 2) * side + angle;
+      Math.atan2(roadNormal.x, roadNormal.z) + (Math.PI / 2) * side + angleRad;
   }
 
   createFrame() {
@@ -156,7 +152,7 @@ export class Billboard {
     this.bannerMesh.position.z = 0.01;
     this.bannerMesh.layers.set(2);
 
-    if (this.info.side === 'r') {
+    if (this.info.mirror) {
       this.bannerMesh.scale.x = -1;
     }
 

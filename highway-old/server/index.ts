@@ -49,13 +49,13 @@ interface BannerRow {
   id: string;
   branch_id: string;
   t: number;
-  side: string;
   angle: number;
   asset_id: string | null;
   distance_factor: number | null;
   size_factor: number | null;
   elevation_factor: number | null;
   emissive_factor: number | null;
+  mirror: number;
 }
 
 interface AssetRow {
@@ -90,13 +90,13 @@ function bannerRowToJson(r: BannerRow) {
     id: r.id,
     branch_id: r.branch_id,
     t: r.t,
-    side: r.side,
     angle: r.angle,
     assetId: r.asset_id,
     distanceFactor: r.distance_factor,
     sizeFactor: r.size_factor,
     elevationFactor: r.elevation_factor,
     emissiveFactor: r.emissive_factor,
+    mirror: !!r.mirror,
   };
 }
 
@@ -236,28 +236,27 @@ function handleBanners(
     if (
       !b.id ||
       !b.branch_id ||
-      b.t === undefined ||
-      !b.side
+      b.t === undefined
     ) {
       return errorResponse(
-        'Missing required fields: id, branch_id, t, side'
+        'Missing required fields: id, branch_id, t'
       );
     }
     db.run(
-      `INSERT INTO banners (id, branch_id, t, side, angle, asset_id,
-       distance_factor, size_factor, elevation_factor, emissive_factor)
+      `INSERT INTO banners (id, branch_id, t, angle, asset_id,
+       distance_factor, size_factor, elevation_factor, emissive_factor, mirror)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         b.id as string,
         b.branch_id as string,
         b.t as number,
-        b.side as string,
         (b.angle as number) ?? 0,
         (b.assetId as string) ?? null,
         (b.distanceFactor as number) ?? null,
         (b.sizeFactor as number) ?? null,
         (b.elevationFactor as number) ?? null,
         (b.emissiveFactor as number) ?? null,
+        b.mirror ? 1 : 0,
       ]
     );
     return jsonResponse({ ok: true }, 201);
@@ -276,7 +275,6 @@ function handleBanners(
     const mapping: Record<string, string> = {
       branch_id: 'branch_id',
       t: 't',
-      side: 'side',
       angle: 'angle',
       assetId: 'asset_id',
       distanceFactor: 'distance_factor',
@@ -290,6 +288,11 @@ function handleBanners(
         fields.push(`${dbCol} = ?`);
         values.push(b[jsKey] as string | number | null);
       }
+    }
+
+    if (b.mirror !== undefined) {
+      fields.push('mirror = ?');
+      values.push(b.mirror ? 1 : 0);
     }
 
     if (fields.length > 0) {
