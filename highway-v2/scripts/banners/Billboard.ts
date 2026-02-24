@@ -3,6 +3,7 @@ import type { BannerRenderData } from '../../shared/types';
 import { computeBannerGeometry } from '../../shared/banner-geometry';
 import type { RoadSystem } from '../road/RoadSystem';
 import { AssetLoader } from '../utils/AssetLoader';
+import { applyCurvature } from '../shaders/WorldCurvature';
 
 export class Billboard {
   info: BannerRenderData;
@@ -62,6 +63,7 @@ export class Billboard {
       color: 0x03a062,
       linewidth: 2,
     });
+    applyCurvature(lineMaterial);
 
     const barThickness = 0.3;
 
@@ -156,6 +158,7 @@ export class Billboard {
       color: 0xffffff,
       linewidth: 0.03,
     });
+    applyCurvature(bannerFrameMaterial);
     const bannerFrame = new THREE.LineLoop(bannerFrameGeometry, bannerFrameMaterial);
     bannerFrame.position.z = 0.01;
     bannerFrame.layers.set(1);
@@ -171,7 +174,7 @@ export class Billboard {
       texture.magFilter = THREE.NearestFilter;
       texture.anisotropy = 16;
 
-      return new THREE.MeshStandardMaterial({
+      const mat = new THREE.MeshStandardMaterial({
         map: texture,
         emissiveMap: texture,
         side: THREE.DoubleSide,
@@ -180,6 +183,8 @@ export class Billboard {
         transparent: true,
         opacity: 1.0,
       });
+      applyCurvature(mat);
+      return mat;
     } catch (error) {
       console.error(`Failed to load banner image ${imagePath}:`, error);
       return this.createPlaceholderMaterial();
@@ -206,12 +211,14 @@ export class Billboard {
     ctx.fillText('BANNER', canvas.width / 2, canvas.height / 2);
 
     const texture = new THREE.CanvasTexture(canvas);
-    return new THREE.MeshBasicMaterial({
+    const mat = new THREE.MeshBasicMaterial({
       map: texture,
       side: THREE.DoubleSide,
       transparent: true,
       opacity: 1.0,
     });
+    applyCurvature(mat);
+    return mat;
   }
 
   update(_deltaTime: number) {

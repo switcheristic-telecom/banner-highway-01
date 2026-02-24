@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { SkyGradientShader } from '../shaders/SkyGradientShader';
+import { applyCurvature } from '../shaders/WorldCurvature';
 
 export class SceneManager {
   canvas: HTMLCanvasElement;
@@ -85,13 +86,11 @@ export class SceneManager {
   }
 
   setupFog() {
-    this.scene.fog = new THREE.Fog(0x808080, 10, 400);
+    this.scene.fog = new THREE.Fog(0x808080, 10, 200);
   }
 
   addGroundPlane() {
-    const radius = 150;
-    const segments = 12;
-    const groundGeometry = new THREE.CircleGeometry(radius, segments);
+    const groundGeometry = new THREE.PlaneGeometry(400, 400, 100, 100);
     const groundMaterial = new THREE.MeshStandardMaterial({
       color: 0x000000,
       roughness: 1.0,
@@ -99,6 +98,7 @@ export class SceneManager {
       emissive: 0x000000,
       emissiveIntensity: 0.0,
     });
+    applyCurvature(groundMaterial);
     this.ground = new THREE.Mesh(groundGeometry, groundMaterial);
     this.ground.rotation.x = -Math.PI / 2;
     this.ground.position.y = -0.1;

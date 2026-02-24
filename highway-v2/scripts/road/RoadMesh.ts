@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { RoadSpline } from '../../shared/road-spline';
+import { applyCurvature } from '../shaders/WorldCurvature';
 
 interface RoadMeshOptions {
   width: number;
@@ -92,6 +93,7 @@ export class RoadMesh {
       transparent: true,
       opacity: 0.5,
     });
+    applyCurvature(middleEdgeMaterial);
 
     const leftVertices: number[] = [];
     const leftIndices: number[] = [];
@@ -175,7 +177,9 @@ export class RoadMesh {
     rightGeometry.setAttribute('normal', new THREE.Float32BufferAttribute(rightNormals, 3));
     rightGeometry.setAttribute('uv', new THREE.Float32BufferAttribute(rightUvs, 2));
     rightGeometry.setIndex(rightIndices);
-    const rightMesh = new THREE.Mesh(rightGeometry, this.edgeMaterial.clone());
+    const rightEdgeMaterial = this.edgeMaterial.clone();
+    applyCurvature(rightEdgeMaterial);
+    const rightMesh = new THREE.Mesh(rightGeometry, rightEdgeMaterial);
     rightMesh.layers.set(3);
     edgeLinesGroup.add(rightMesh);
 

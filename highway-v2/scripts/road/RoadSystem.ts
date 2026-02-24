@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { RoadMesh } from './RoadMesh';
 import { RoadSpline } from '../../shared/road-spline';
 import type { Road, RoadNetwork, RoadJunction } from '../../shared/types';
+import { applyCurvature } from '../shaders/WorldCurvature';
 
 const ROAD_BLOCK_MATERIAL = new THREE.MeshStandardMaterial({
   color: 0x03a062,
@@ -10,6 +11,7 @@ const ROAD_BLOCK_MATERIAL = new THREE.MeshStandardMaterial({
   emissive: 0x03a062,
   emissiveIntensity: 0.3,
 });
+applyCurvature(ROAD_BLOCK_MATERIAL);
 
 const ROAD_EDGE_MATERIAL = new THREE.MeshStandardMaterial({
   color: 0x03a062,
@@ -17,6 +19,7 @@ const ROAD_EDGE_MATERIAL = new THREE.MeshStandardMaterial({
   emissiveIntensity: 0.5,
   side: THREE.DoubleSide,
 });
+applyCurvature(ROAD_EDGE_MATERIAL);
 
 export class RoadSystem {
   scene: THREE.Scene;
