@@ -3,7 +3,8 @@
   "version": "2.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "vite & bun server/index.ts",
+    "dev:vite": "vite",
     "editor": "bun server/index.ts",
     "seed": "bun server/seed.ts",
     "extract": "bun scripts/extract-data.ts",
