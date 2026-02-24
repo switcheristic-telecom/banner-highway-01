@@ -21,7 +21,7 @@ export function getDb(): Database {
     waypoints TEXT NOT NULL,
     is_cyclic INTEGER DEFAULT 0,
     width REAL DEFAULT 5.555,
-    segment_count INTEGER DEFAULT 100
+    segment_count INTEGER DEFAULT 2000
   )`);
 
   db.run(`CREATE TABLE IF NOT EXISTS banner_assets (
@@ -56,6 +56,11 @@ export function getDb(): Database {
     FOREIGN KEY (road_id) REFERENCES roads(id),
     FOREIGN KEY (asset_id) REFERENCES banner_assets(id) ON DELETE SET NULL
   )`);
+
+  // Migrations: add columns to existing tables
+  try { db.run('ALTER TABLE banner_assets ADD COLUMN caption TEXT'); } catch { /* already exists */ }
+  try { db.run('ALTER TABLE banners ADD COLUMN caption TEXT'); } catch { /* already exists */ }
+  db.run('UPDATE roads SET segment_count = 2000 WHERE segment_count <= 100');
 
   _db = db;
   return db;

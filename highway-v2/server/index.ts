@@ -55,6 +55,7 @@ interface BannerRow {
   size: number;
   elevation: number;
   emissive_intensity: number;
+  caption: string | null;
 }
 
 interface AssetRow {
@@ -63,6 +64,7 @@ interface AssetRow {
   file_path: string;
   width: number | null;
   height: number | null;
+  caption: string | null;
   created_at: string;
 }
 
@@ -95,6 +97,7 @@ function bannerRowToJson(r: BannerRow) {
     size: r.size,
     elevation: r.elevation,
     emissiveIntensity: r.emissive_intensity,
+    caption: r.caption ?? '',
   };
 }
 
@@ -105,6 +108,7 @@ function assetRowToJson(r: AssetRow) {
     filePath: r.file_path,
     width: r.width,
     height: r.height,
+    caption: r.caption,
   };
 }
 
@@ -139,7 +143,7 @@ function handleRoads(method: string, id: string | null, body: unknown): Response
     if (!b.id || !b.waypoints) return errorResponse('Missing id or waypoints');
     db.run(
       'INSERT INTO roads (id, waypoints, is_cyclic, width, segment_count) VALUES (?, ?, ?, ?, ?)',
-      [b.id, JSON.stringify(b.waypoints), b.isCyclic ? 1 : 0, b.width ?? 5.555, b.segmentCount ?? 100],
+      [b.id, JSON.stringify(b.waypoints), b.isCyclic ? 1 : 0, b.width ?? 5.555, b.segmentCount ?? 2000],
     );
     return jsonResponse({ ok: true }, 201);
   }
@@ -190,8 +194,8 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
       return errorResponse('Missing required fields: id, roadId, t');
     }
     db.run(
-      `INSERT INTO banners (id, road_id, t, angle, asset_id, distance, size, elevation, emissive_intensity)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO banners (id, road_id, t, angle, asset_id, distance, size, elevation, emissive_intensity, caption)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         b.id as string,
         b.roadId as string,
@@ -202,6 +206,7 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
         (b.size as number) ?? 1.7,
         (b.elevation as number) ?? 10,
         (b.emissiveIntensity as number) ?? 0.8,
+        (b.caption as string) ?? null,
       ],
     );
     return jsonResponse({ ok: true }, 201);
@@ -224,6 +229,7 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
       size: 'size',
       elevation: 'elevation',
       emissiveIntensity: 'emissive_intensity',
+      caption: 'caption',
     };
 
     for (const [jsKey, dbCol] of Object.entries(mapping)) {
@@ -308,6 +314,8 @@ async function handleAssetUpload(req: Request): Promise<Response> {
   const formData = await req.formData();
   const file = formData.get('file') as File | null;
   const name = (formData.get('name') as string) || '';
+  const width = formData.get('width') ? parseInt(formData.get('width') as string) : null;
+  const height = formData.get('height') ? parseInt(formData.get('height') as string) : null;
 
   if (!file) return errorResponse('No file provided');
 
@@ -322,8 +330,8 @@ async function handleAssetUpload(req: Request): Promise<Response> {
   const displayName = name || file.name.replace(/\.[^.]+$/, '');
 
   db.run(
-    'INSERT INTO banner_assets (id, name, file_path) VALUES (?, ?, ?)',
-    [id, displayName, filename],
+    'INSERT INTO banner_assets (id, name, file_path, width, height) VALUES (?, ?, ?, ?, ?)',
+    [id, displayName, filename, width, height],
   );
 
   const row = db.query('SELECT * FROM banner_assets WHERE id = ?').get(id) as AssetRow;

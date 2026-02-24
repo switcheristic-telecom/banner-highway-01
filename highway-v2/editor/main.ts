@@ -42,8 +42,19 @@ const API = {
     return (await fetch('/api/assets')).json();
   },
   async uploadAsset(file: File, name?: string): Promise<BannerAsset> {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = reject;
+      img.src = url;
+    });
+    URL.revokeObjectURL(url);
+
     const fd = new FormData();
     fd.append('file', file);
+    fd.append('width', img.naturalWidth.toString());
+    fd.append('height', img.naturalHeight.toString());
     if (name) fd.append('name', name);
     return (await fetch('/api/assets', { method: 'POST', body: fd })).json();
   },
@@ -65,6 +76,7 @@ let selectedBannerId: string | null = null;
 let pickingAssetForBanner: string | null = null;
 let dragTarget: { type: string; bannerId?: string; nodeIdx?: number } | null = null;
 let addingNode = false;
+let addingBanner = false;
 let spline: RoadSpline | null = null;
 
 const vp = { cx: 228, cz: 530, scale: 3, dragging: false, lastX: 0, lastY: 0 };
@@ -522,6 +534,16 @@ canvas.addEventListener('mousedown', (e) => {
     return;
   }
 
+  // Add banner mode
+  if (addingBanner) {
+    placeBannerAtClick(sx, sy);
+    addingBanner = false;
+    $('btn-add-banner').textContent = '+ Banner';
+    canvas.style.cursor = 'crosshair';
+    render();
+    return;
+  }
+
   const hit = hitTest(sx, sy);
 
   if (hit && (hit.type === 'banner-drag' || hit.type === 'banner-rotate')) {
@@ -658,7 +680,7 @@ canvas.addEventListener('mousemove', (e) => {
   }
 
   // Hover cursor
-  if (!addingNode) {
+  if (!addingNode && !addingBanner) {
     const hit = hitTest(sx, sy);
     if (hit?.type === 'banner-drag') canvas.style.cursor = 'grab';
     else if (hit?.type === 'banner-rotate') canvas.style.cursor = 'alias';
@@ -670,7 +692,7 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', () => {
   if (vp.dragging) vp.dragging = false;
   dragTarget = null;
-  canvas.style.cursor = addingNode ? 'copy' : 'crosshair';
+  canvas.style.cursor = (addingNode || addingBanner) ? 'copy' : 'crosshair';
 });
 
 canvas.addEventListener('wheel', (e) => {
@@ -702,11 +724,21 @@ document.addEventListener('keydown', (e) => {
     deleteSelectedNode();
   }
   if (e.key === 'Escape') {
-    selectedBannerId = null;
-    selectedNodeIdx = -1;
-    updateNodePanel();
-    renderBannerList();
-    render();
+    if (addingBanner) {
+      addingBanner = false;
+      $('btn-add-banner').textContent = '+ Banner';
+      canvas.style.cursor = 'crosshair';
+    } else if (addingNode) {
+      addingNode = false;
+      $('btn-add-node').textContent = '+ Waypoint';
+      canvas.style.cursor = 'crosshair';
+    } else {
+      selectedBannerId = null;
+      selectedNodeIdx = -1;
+      updateNodePanel();
+      renderBannerList();
+      render();
+    }
   }
 });
 
@@ -863,6 +895,7 @@ function updateTooltipFields() {
   $<HTMLInputElement>('tt-dist').value = String(banner.distance);
   $<HTMLInputElement>('tt-elev').value = String(banner.elevation);
   $<HTMLInputElement>('tt-emissive').value = String(banner.emissiveIntensity);
+  $<HTMLInputElement>('tt-caption').value = banner.caption ?? '';
 
   // Asset preview
   const previewEl = $('tt-asset-preview');
@@ -905,6 +938,7 @@ $('tt-save').addEventListener('click', async () => {
   banner.distance = parseFloat($<HTMLInputElement>('tt-dist').value) || 0;
   banner.elevation = parseFloat($<HTMLInputElement>('tt-elev').value) || 0;
   banner.emissiveIntensity = parseFloat($<HTMLInputElement>('tt-emissive').value) || 0;
+  banner.caption = $<HTMLInputElement>('tt-caption').value;
 
   await API.updateBanner(banner.id, banner);
   renderBannerList();
@@ -972,12 +1006,25 @@ $('btn-fit').addEventListener('click', () => {
 $('btn-add-banner').addEventListener('click', () => {
   const road = roads[activeRoadIdx];
   if (!road) return;
+  addingBanner = !addingBanner;
+  addingNode = false;
+  $('btn-add-banner').textContent = addingBanner ? 'Click road...' : '+ Banner';
+  $('btn-add-node').textContent = '+ Waypoint';
+  canvas.style.cursor = addingBanner ? 'copy' : 'crosshair';
+});
+
+function placeBannerAtClick(sx: number, sy: number) {
+  const road = roads[activeRoadIdx];
+  if (!road || !spline) return;
+
+  const w = s2w(sx, sy);
+  const closest = spline.getClosestT(w.x, w.z, 800);
 
   const id = `banner_${road.id}_${Date.now()}`;
   const newBanner: BannerPlacement = {
     id,
     roadId: road.id,
-    t: 0.5,
+    t: closest.t,
     angle: BANNER_DEFAULTS.angle,
     distance: BANNER_DEFAULTS.distance,
     size: BANNER_DEFAULTS.size,
@@ -994,7 +1041,7 @@ $('btn-add-banner').addEventListener('click', () => {
   renderBannerList();
   render();
   API.createBanner(newBanner).catch(console.error);
-});
+}
 
 // Toggle cyclic
 $<HTMLInputElement>('chk-cyclic').addEventListener('change', (e) => {

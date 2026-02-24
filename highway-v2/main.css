@@ -204,6 +204,25 @@ body {
   50% { transform: translateY(-10px); }
 }
 
+#banner-caption {
+  position: fixed;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 10px 24px;
+  font-size: 14px;
+  font-family: 'Courier New', monospace;
+  pointer-events: none;
+  z-index: 50;
+  max-width: 80vw;
+  text-align: center;
+  line-height: 1.5;
+  will-change: opacity;
+  contain: layout style paint;
+}
+
 #instructions-panel {
   position: fixed;
   bottom: 20px;

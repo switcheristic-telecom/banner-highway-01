@@ -42,6 +42,7 @@ export interface BannerPlacement {
   size: number;
   emissiveIntensity: number;
   assetId: string | null;
+  caption?: string;
 }
 
 export interface BannerRenderData extends BannerPlacement {
@@ -49,6 +50,7 @@ export interface BannerRenderData extends BannerPlacement {
   aspectRatio: number;
   padX: number;
   padY: number;
+  caption: string;
 }
 
 export interface RawSceneData {

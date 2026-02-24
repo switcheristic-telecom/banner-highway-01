@@ -13,7 +13,7 @@ export const BANNER_DEFAULTS = {
 
 export const ROAD_DEFAULTS = {
   width: 5.555,
-  segmentCount: 100,
+  segmentCount: 10,
 };
 
 export function resolveForRender(
@@ -30,5 +30,6 @@ export function resolveForRender(
         : BANNER_DEFAULTS.aspectRatio,
     padX: BANNER_DEFAULTS.padX,
     padY: BANNER_DEFAULTS.padY,
+    caption: placement.caption ?? '',
   };
 }
