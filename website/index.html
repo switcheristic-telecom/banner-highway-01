@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Get on the fast lane, 汽车是旅行的工具</title>
+    <link rel="stylesheet" href="main.css" />
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div id="loading-screen">
+      <div class="loading-container">
+        <h1 class="loading-title">
+          <span class="title-en">Get on the fast lane,</span>
+          <span class="title-zh">汽车是旅行的工具</span>
+        </h1>
+        <div class="progress-container">
+          <div class="progress-bar">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+        <div class="loading-status" id="loading-status">Initializing...</div>
+        <div class="series-label">Banner Highway Series #1</div>
+        <button id="enter-btn" style="display: none">Enter</button>
+      </div>
+    </div>
+
+    <div id="app">
+      <canvas id="canvas"></canvas>
+
+      <!-- Banner caption (CC-style) -->
+      <div id="banner-caption" style="opacity: 0"></div>
+
+      <!-- Instructions overlay -->
+      <div id="instructions-panel">
+        <div class="instruction-text">
+          <strong>Arrow</strong> or <strong>scroll up/down</strong> to move
+          back/forward
+        </div>
+      </div>
+    </div>
+
+    <script type="module" src="/scripts/main.ts"></script>
+  </body>
+</html>

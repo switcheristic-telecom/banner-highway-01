@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Banner Highway Editor</title>
+  <link rel="stylesheet" href="./editor.css" />
+</head>
+<body>
+  <div id="toolbar">
+    <button class="primary" id="btn-save">Save All</button>
+    <button id="btn-add-node">+ Waypoint</button>
+    <button class="danger" id="btn-delete-node">Delete Waypoint</button>
+    <span>|</span>
+    <button id="btn-fit">Fit View</button>
+    <button id="btn-add-banner">+ Banner</button>
+    <button id="btn-add-part">+ Part</button>
+    <label><input type="checkbox" id="chk-cyclic" /> Cyclic</label>
+    <span id="status">Loading...</span>
+  </div>
+
+  <div id="main">
+    <div id="canvas-wrap">
+      <canvas id="canvas"></canvas>
+      <div id="canvas-info"></div>
+
+      <!-- Floating part edit tooltip -->
+      <div id="part-tooltip">
+        <h4 id="pt-title">Part</h4>
+        <label>Start (t)</label>
+        <input type="number" id="pt-start-t" step="0.01" min="0" max="1" />
+        <label>Sky Effect</label>
+        <select id="pt-sky-effect">
+          <option value="0">0 — Blocky Clouds</option>
+          <option value="1">1 — Starfield</option>
+          <option value="2">2 — Voronoi Cells</option>
+          <option value="3">3 — Aurora Waves</option>
+        </select>
+        <label>Songs</label>
+        <div id="pt-song-list" class="pt-song-list"></div>
+        <div class="tt-btn-row">
+          <button class="save" id="pt-save">Save</button>
+          <button class="del" id="pt-delete">Delete</button>
+        </div>
+      </div>
+
+      <!-- Floating banner edit tooltip -->
+      <div id="banner-tooltip">
+        <h4 id="tt-title">Banner</h4>
+        <label>Position (t)</label>
+        <input type="number" id="tt-t" step="0.01" min="0" max="1" />
+        <div class="tt-row">
+          <div>
+            <label>Angle (deg)</label>
+            <input type="number" id="tt-angle" step="1" />
+          </div>
+        </div>
+        <div class="tt-row">
+          <div><label>Size</label><input type="number" id="tt-size" step="0.1" /></div>
+          <div><label>Distance</label><input type="number" id="tt-dist" step="0.5" /></div>
+        </div>
+        <div class="tt-row">
+          <div><label>Elevation</label><input type="number" id="tt-elev" step="0.5" /></div>
+          <div><label>Emissive</label><input type="number" id="tt-emissive" step="0.1" /></div>
+        </div>
+        <label>Caption</label>
+        <input type="text" id="tt-caption" placeholder="Caption text..." />
+        <label>Asset</label>
+        <div class="tt-asset-picker">
+          <div class="tt-asset-preview" id="tt-asset-preview"></div>
+          <div class="tt-asset-picker-row">
+            <span class="tt-asset-name empty" id="tt-asset-name">No asset</span>
+            <div class="tt-asset-btns">
+              <button id="tt-asset-pick" title="Pick from library">Pick</button>
+              <button id="tt-asset-clear" title="Clear assignment">X</button>
+            </div>
+          </div>
+        </div>
+        <div class="tt-btn-row">
+          <button class="save" id="tt-save">Save</button>
+          <button class="del" id="tt-delete">Delete</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="sidebar">
+      <!-- Node info panel -->
+      <div class="panel" id="node-info">
+        <h3>Selected Waypoint</h3>
+        <label>Position</label>
+        <div class="coord-row">
+          <div><input type="number" id="node-px" step="1" placeholder="x" /></div>
+          <div><input type="number" id="node-pz" step="1" placeholder="z" /></div>
+        </div>
+        <label>Heading (computed)</label>
+        <div class="readonly-field" id="node-heading">--</div>
+        <label>Curvature (computed)</label>
+        <div class="readonly-field" id="node-curvature">--</div>
+      </div>
+
+      <!-- Banner list panel -->
+      <div class="panel">
+        <h3>Banners</h3>
+        <div id="banner-list"></div>
+      </div>
+
+      <!-- Parts list panel -->
+      <div class="panel">
+        <h3>Parts</h3>
+        <div id="part-list"></div>
+      </div>
+
+      <!-- Songs library panel -->
+      <div class="panel">
+        <h3>Songs</h3>
+        <div id="song-list"></div>
+        <button id="song-upload-btn">+ Upload MIDI</button>
+        <input type="file" id="song-upload-input" accept=".mid,.midi" style="display:none" />
+      </div>
+
+      <!-- Audio settings panel -->
+      <div class="panel">
+        <h3>Audio Settings</h3>
+        <div id="audio-settings"></div>
+        <button id="audio-save-btn" class="audio-save-btn">Save Audio Settings</button>
+      </div>
+
+      <!-- Asset library panel -->
+      <div class="panel">
+        <h3>Assets</h3>
+        <div class="asset-grid" id="asset-grid"></div>
+        <button id="asset-upload-btn">+ Upload Image</button>
+        <input type="file" id="asset-upload-input" accept="image/*" style="display:none" />
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./main.ts"></script>
+</body>
+</html>
