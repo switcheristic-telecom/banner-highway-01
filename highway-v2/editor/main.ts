@@ -1,7 +1,9 @@
 import { RoadSpline } from '../shared/road-spline';
 import { computeBannerGeometry, type BannerGeometryResult } from '../shared/banner-geometry';
 import { BANNER_DEFAULTS } from '../shared/defaults';
-import type { Road, BannerPlacement, BannerAsset, HighwayPart, MidiSong, PartSongAssignment } from '../shared/types';
+import type { Road, BannerPlacement, BannerAsset, HighwayPart, MidiSong, PartSongAssignment, AudioSettings } from '../shared/types';
+import * as Audio from '../scripts/audio/AudioEngine';
+import * as MidiPlayer from '../scripts/audio/MidiPlayer';
 
 // ===========================================================================
 // API Client
@@ -96,6 +98,13 @@ const API = {
     if (language) fd.append('language', language);
     return (await fetch('/api/songs', { method: 'POST', body: fd })).json();
   },
+  async updateSong(id: string, data: Partial<MidiSong>) {
+    return (await fetch(`/api/songs/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })).json();
+  },
   async deleteSong(id: string) {
     return (await fetch(`/api/songs/${id}`, { method: 'DELETE' })).json();
   },
@@ -114,6 +123,18 @@ const API = {
   },
   async unassignSong(partId: string, songId: string) {
     return (await fetch(`/api/parts/${partId}/songs/${songId}`, { method: 'DELETE' })).json();
+  },
+
+  // Audio settings
+  async getAudioSettings(): Promise<AudioSettings> {
+    return (await fetch('/api/audio-settings')).json();
+  },
+  async saveAudioSettings(data: Partial<AudioSettings>) {
+    return (await fetch('/api/audio-settings', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })).json();
   },
 };
 
@@ -138,6 +159,10 @@ let parts: HighwayPart[] = [];
 let songs: MidiSong[] = [];
 let partSongs: PartSongAssignment[] = [];
 let selectedPartId: string | null = null;
+let selectedSongId: string | null = null;
+let audioSettings: AudioSettings | null = null;
+let playingSongId: string | null = null;
+let audioStarted = false;
 
 const vp = { cx: 228, cz: 530, scale: 3, dragging: false, lastX: 0, lastY: 0 };
 
@@ -1258,6 +1283,7 @@ function placePartAtClick(sx: number, sy: number) {
     id,
     roadId: road.id,
     startT: Math.round(closest.t * 1000) / 1000,
+    skyEffect: 0,
   };
 
   parts.push(newPart);
@@ -1453,6 +1479,7 @@ function updatePartTooltipFields() {
 
   $('pt-title').textContent = part.id;
   $<HTMLInputElement>('pt-start-t').value = String(part.startT);
+  $<HTMLSelectElement>('pt-sky-effect').value = String(part.skyEffect ?? 0);
 
   // Build song checklist
   const songList = $('pt-song-list');
@@ -1492,8 +1519,9 @@ $('pt-save').addEventListener('click', async () => {
   if (!part) return;
 
   part.startT = parseFloat($<HTMLInputElement>('pt-start-t').value) || 0;
+  part.skyEffect = parseInt($<HTMLSelectElement>('pt-sky-effect').value) || 0;
 
-  await API.updatePart(part.id, { startT: part.startT });
+  await API.updatePart(part.id, { startT: part.startT, skyEffect: part.skyEffect });
   renderPartList();
   render();
   $('status').textContent = 'Part saved!';
@@ -1514,35 +1542,134 @@ $('pt-delete').addEventListener('click', async () => {
 });
 
 // ===========================================================================
+// Song Playback
+// ===========================================================================
+
+async function togglePlaySong(songId: string) {
+  if (playingSongId === songId) {
+    MidiPlayer.stop();
+    playingSongId = null;
+    renderSongList();
+    return;
+  }
+
+  const song = songs.find(s => s.id === songId);
+  if (!song) return;
+
+  MidiPlayer.stop();
+  playingSongId = songId;
+  renderSongList();
+
+  try {
+    if (!audioStarted) {
+      await Audio.ensureAudioStarted();
+      audioStarted = true;
+    }
+    await Audio.reverbReady;
+    await MidiPlayer.loadMidi(`/assets/midi/${song.filePath}`);
+    MidiPlayer.play();
+  } catch (err) {
+    console.error('Failed to play MIDI:', err);
+    playingSongId = null;
+    renderSongList();
+  }
+}
+
+// ===========================================================================
 // Song List
 // ===========================================================================
 
 function renderSongList() {
   const list = $('song-list');
 
-  list.innerHTML = songs.map(s => `
-    <div class="song-item" data-id="${s.id}">
-      <span class="song-name">${s.name}</span>
-      ${s.language ? `<span class="song-lang">${s.language}</span>` : ''}
-      <button class="song-del" data-id="${s.id}" title="Delete song">&times;</button>
-    </div>
-  `).join('');
+  list.innerHTML = songs.map(s => {
+    const isSelected = s.id === selectedSongId;
+    const isPlaying = s.id === playingSongId;
+    return `
+      <div class="song-item ${isSelected ? 'selected' : ''}" data-id="${s.id}">
+        <button class="song-play ${isPlaying ? 'playing' : ''}" data-id="${s.id}" title="${isPlaying ? 'Stop' : 'Play'}">${isPlaying ? '\u25A0' : '\u25B6'}</button>
+        <span class="song-name">${s.name}</span>
+        ${s.language ? `<span class="song-lang">${s.language}</span>` : ''}
+        <button class="song-del" data-id="${s.id}" title="Delete song">&times;</button>
+      </div>
+      ${isSelected ? `
+        <div class="song-edit" data-id="${s.id}">
+          <label>Name</label>
+          <input type="text" class="song-edit-name" value="${s.name}" />
+          <label>Source URL</label>
+          <input type="text" class="song-edit-url" value="${s.sourceUrl || ''}" placeholder="https://..." />
+          <label>Language</label>
+          <input type="text" class="song-edit-lang" value="${s.language || ''}" placeholder="ZH, JA, EN..." />
+          <button class="song-edit-save">Save</button>
+        </div>
+      ` : ''}
+    `;
+  }).join('');
 
   if (songs.length === 0) {
     list.innerHTML = '<div style="color:#666;font-size:10px;padding:4px">No songs uploaded</div>';
   }
 
+  // Play buttons
+  for (const btn of list.querySelectorAll<HTMLElement>('.song-play')) {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      togglePlaySong(btn.dataset.id!);
+    });
+  }
+
+  // Click to select/expand
+  for (const item of list.querySelectorAll<HTMLElement>('.song-item')) {
+    item.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).classList.contains('song-del') ||
+          (e.target as HTMLElement).classList.contains('song-play')) return;
+      const id = item.dataset.id!;
+      selectedSongId = selectedSongId === id ? null : id;
+      renderSongList();
+    });
+  }
+
+  // Delete button
   for (const btn of list.querySelectorAll<HTMLElement>('.song-del')) {
     btn.addEventListener('click', async (e) => {
       e.stopPropagation();
       const id = btn.dataset.id!;
       const song = songs.find(s => s.id === id);
       if (!song || !confirm(`Delete song "${song.name}"?`)) return;
+      if (playingSongId === id) {
+        MidiPlayer.stop();
+        playingSongId = null;
+      }
       await API.deleteSong(id);
       songs = songs.filter(s => s.id !== id);
       partSongs = partSongs.filter(ps => ps.songId !== id);
+      if (selectedSongId === id) selectedSongId = null;
       renderSongList();
       updatePartTooltipFields();
+    });
+  }
+
+  // Save edits
+  for (const editDiv of list.querySelectorAll<HTMLElement>('.song-edit')) {
+    const saveBtn = editDiv.querySelector('.song-edit-save')!;
+    saveBtn.addEventListener('click', async () => {
+      const id = editDiv.dataset.id!;
+      const song = songs.find(s => s.id === id);
+      if (!song) return;
+
+      const name = (editDiv.querySelector('.song-edit-name') as HTMLInputElement).value.trim();
+      const sourceUrl = (editDiv.querySelector('.song-edit-url') as HTMLInputElement).value.trim();
+      const language = (editDiv.querySelector('.song-edit-lang') as HTMLInputElement).value.trim();
+
+      song.name = name || song.name;
+      song.sourceUrl = sourceUrl;
+      song.language = language;
+
+      await API.updateSong(id, { name: song.name, sourceUrl, language });
+      renderSongList();
+      updatePartTooltipFields();
+      $('status').textContent = 'Song saved!';
+      setTimeout(() => { $('status').textContent = 'Ready'; }, 1500);
     });
   }
 }
@@ -1572,24 +1699,144 @@ $('song-upload-input').addEventListener('change', async (e) => {
 });
 
 // ===========================================================================
+// Audio Settings Panel
+// ===========================================================================
+
+interface AudioSliderDef {
+  label: string;
+  key: keyof AudioSettings;
+  min: number;
+  max: number;
+  step: number;
+  get: () => number;
+  set: (v: number) => void;
+}
+
+const AUDIO_SECTIONS: { title: string; sliders: AudioSliderDef[] }[] = [
+  {
+    title: 'Synth',
+    sliders: [
+      { label: 'Volume (dB)', key: 'synthVolume', min: -40, max: 0, step: 1, get: Audio.getSynthVolume, set: Audio.setSynthVolume },
+      { label: 'Attack', key: 'synthAttack', min: 0.001, max: 2, step: 0.01, get: Audio.getSynthAttack, set: Audio.setSynthAttack },
+      { label: 'Decay', key: 'synthDecay', min: 0, max: 2, step: 0.01, get: Audio.getSynthDecay, set: Audio.setSynthDecay },
+      { label: 'Sustain', key: 'synthSustain', min: 0, max: 1, step: 0.01, get: Audio.getSynthSustain, set: Audio.setSynthSustain },
+      { label: 'Release', key: 'synthRelease', min: 0.01, max: 4, step: 0.01, get: Audio.getSynthRelease, set: Audio.setSynthRelease },
+    ],
+  },
+  {
+    title: 'Reverb',
+    sliders: [
+      { label: 'Wet', key: 'reverbWet', min: 0, max: 1, step: 0.01, get: Audio.getReverbWet, set: Audio.setReverbWet },
+      { label: 'Decay (s)', key: 'reverbDecay', min: 0.1, max: 10, step: 0.1, get: Audio.getReverbDecay, set: Audio.setReverbDecay },
+    ],
+  },
+  {
+    title: 'Delay',
+    sliders: [
+      { label: 'Wet', key: 'delayWet', min: 0, max: 1, step: 0.01, get: Audio.getDelayWet, set: Audio.setDelayWet },
+      { label: 'Time (s)', key: 'delayTime', min: 0.01, max: 2, step: 0.01, get: Audio.getDelayTime, set: Audio.setDelayTime },
+      { label: 'Feedback', key: 'delayFeedback', min: 0, max: 0.99, step: 0.01, get: Audio.getDelayFeedback, set: Audio.setDelayFeedback },
+    ],
+  },
+  {
+    title: 'Chorus',
+    sliders: [
+      { label: 'Wet', key: 'chorusWet', min: 0, max: 1, step: 0.01, get: Audio.getChorusWet, set: Audio.setChorusWet },
+      { label: 'Freq (Hz)', key: 'chorusFrequency', min: 0.1, max: 20, step: 0.1, get: Audio.getChorusFrequency, set: Audio.setChorusFrequency },
+      { label: 'Depth', key: 'chorusDepth', min: 0, max: 1, step: 0.01, get: Audio.getChorusDepth, set: Audio.setChorusDepth },
+      { label: 'Spread', key: 'chorusSpread', min: 0, max: 180, step: 1, get: Audio.getChorusSpread, set: Audio.setChorusSpread },
+    ],
+  },
+  {
+    title: 'EQ',
+    sliders: [
+      { label: 'Low (dB)', key: 'eqLow', min: -12, max: 12, step: 0.5, get: Audio.getEQLow, set: Audio.setEQLow },
+      { label: 'Mid (dB)', key: 'eqMid', min: -12, max: 12, step: 0.5, get: Audio.getEQMid, set: Audio.setEQMid },
+      { label: 'High (dB)', key: 'eqHigh', min: -12, max: 12, step: 0.5, get: Audio.getEQHigh, set: Audio.setEQHigh },
+    ],
+  },
+];
+
+function renderAudioSettings() {
+  const container = $('audio-settings');
+  let html = '';
+
+  for (const section of AUDIO_SECTIONS) {
+    html += `<div class="audio-section"><div class="audio-section-title">${section.title}</div>`;
+    for (const slider of section.sliders) {
+      const id = `as-${slider.key}`;
+      const val = slider.get();
+      html += `
+        <div class="audio-row">
+          <label class="audio-label">${slider.label}</label>
+          <input type="range" class="audio-slider" id="${id}"
+            min="${slider.min}" max="${slider.max}" step="${slider.step}"
+            value="${val}" />
+          <span class="audio-value" id="${id}-val">${val.toFixed(2)}</span>
+        </div>`;
+    }
+    html += '</div>';
+  }
+  container.innerHTML = html;
+
+  // Wire slider events
+  for (const section of AUDIO_SECTIONS) {
+    for (const slider of section.sliders) {
+      const id = `as-${slider.key}`;
+      const input = document.getElementById(id) as HTMLInputElement;
+      const valSpan = document.getElementById(`${id}-val`)!;
+      if (!input) continue;
+      input.addEventListener('input', () => {
+        const v = parseFloat(input.value);
+        slider.set(v);
+        valSpan.textContent = v.toFixed(2);
+      });
+    }
+  }
+}
+
+function collectAudioSettings(): Partial<AudioSettings> {
+  const result: Partial<AudioSettings> = {};
+  for (const section of AUDIO_SECTIONS) {
+    for (const slider of section.sliders) {
+      (result as any)[slider.key] = slider.get();
+    }
+  }
+  return result;
+}
+
+$('audio-save-btn').addEventListener('click', async () => {
+  const settings = collectAudioSettings();
+  await API.saveAudioSettings(settings);
+  $('status').textContent = 'Audio settings saved!';
+  setTimeout(() => { $('status').textContent = 'Ready'; }, 1500);
+});
+
+// ===========================================================================
 // Init
 // ===========================================================================
 
 async function init() {
   try {
-    [roads, banners, assets, parts, songs, partSongs] = await Promise.all([
+    [roads, banners, assets, parts, songs, partSongs, audioSettings] = await Promise.all([
       API.getRoads(),
       API.getBanners(),
       API.getAssets(),
       API.getParts(),
       API.getSongs(),
       API.getPartSongs(),
+      API.getAudioSettings(),
     ]);
 
     const road = roads[activeRoadIdx];
     if (road) {
       $<HTMLInputElement>('chk-cyclic').checked = road.isCyclic;
       rebuildSpline();
+    }
+
+    // Apply saved audio settings to the engine
+    if (audioSettings) {
+      Audio.applySettings(audioSettings);
     }
 
     $('status').textContent = 'Ready';
@@ -1599,6 +1846,7 @@ async function init() {
     renderAssetGrid();
     renderPartList();
     renderSongList();
+    renderAudioSettings();
   } catch (err) {
     $('status').textContent = `Failed to load: ${(err as Error).message}`;
     console.error(err);

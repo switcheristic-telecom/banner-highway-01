@@ -29,6 +29,13 @@
         <h4 id="pt-title">Part</h4>
         <label>Start (t)</label>
         <input type="number" id="pt-start-t" step="0.01" min="0" max="1" />
+        <label>Sky Effect</label>
+        <select id="pt-sky-effect">
+          <option value="0">0 — Blocky Clouds</option>
+          <option value="1">1 — Starfield</option>
+          <option value="2">2 — Voronoi Cells</option>
+          <option value="3">3 — Aurora Waves</option>
+        </select>
         <label>Songs</label>
         <div id="pt-song-list" class="pt-song-list"></div>
         <div class="tt-btn-row">
@@ -109,6 +116,13 @@
         <div id="song-list"></div>
         <button id="song-upload-btn">+ Upload MIDI</button>
         <input type="file" id="song-upload-input" accept=".mid,.midi" style="display:none" />
+      </div>
+
+      <!-- Audio settings panel -->
+      <div class="panel">
+        <h3>Audio Settings</h3>
+        <div id="audio-settings"></div>
+        <button id="audio-save-btn" class="audio-save-btn">Save Audio Settings</button>
       </div>
 
       <!-- Asset library panel -->

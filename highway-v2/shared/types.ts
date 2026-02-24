@@ -57,6 +57,7 @@ export interface HighwayPart {
   id: string;
   roadId: string;
   startT: number;
+  skyEffect: number;
 }
 
 export interface MidiSong {
@@ -72,6 +73,26 @@ export interface PartSongAssignment {
   songId: string;
 }
 
+export interface AudioSettings {
+  synthVolume: number;
+  synthAttack: number;
+  synthDecay: number;
+  synthSustain: number;
+  synthRelease: number;
+  reverbWet: number;
+  reverbDecay: number;
+  delayWet: number;
+  delayTime: number;
+  delayFeedback: number;
+  chorusWet: number;
+  chorusFrequency: number;
+  chorusDepth: number;
+  chorusSpread: number;
+  eqLow: number;
+  eqMid: number;
+  eqHigh: number;
+}
+
 export interface RawSceneData {
   roadNetwork: RoadNetwork;
   banners: BannerPlacement[];
@@ -79,6 +100,7 @@ export interface RawSceneData {
   parts: HighwayPart[];
   songs: MidiSong[];
   partSongs: PartSongAssignment[];
+  audioSettings: AudioSettings | null;
 }
 
 export interface SceneData {
@@ -87,4 +109,5 @@ export interface SceneData {
   parts: HighwayPart[];
   songs: MidiSong[];
   partSongs: PartSongAssignment[];
+  audioSettings: AudioSettings | null;
 }

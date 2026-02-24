@@ -1,7 +1,7 @@
 import type { HighwayPart, MidiSong, PartSongAssignment } from '../../shared/types';
 import type { RoadSystem } from '../road/RoadSystem';
 import * as MidiPlayer from './MidiPlayer';
-import { ensureAudioStarted, setSynthVolume, getSynthVolume } from './AudioEngine';
+import { ensureAudioStarted } from './AudioEngine';
 
 interface ResolvedPart {
   id: string;
@@ -156,7 +156,7 @@ export class MusicManager {
       await MidiPlayer.loadMidi(url);
       this.fadeVolume = -6;
       this.targetVolume = -6;
-      setSynthVolume(this.fadeVolume);
+      MidiPlayer.setVolume(this.fadeVolume);
       MidiPlayer.play();
     } catch (err) {
       console.error('Failed to load MIDI:', err);
@@ -171,13 +171,13 @@ export class MusicManager {
 
     const FADE_SPEED = 30; // dB per second
     this.fadeVolume = Math.max(this.targetVolume, this.fadeVolume - FADE_SPEED * dt);
-    setSynthVolume(this.fadeVolume);
+    MidiPlayer.setVolume(this.fadeVolume);
 
     if (this.fadeVolume <= -59) {
       MidiPlayer.stop();
       this.fadingOut = false;
       this.fadeVolume = -6;
-      setSynthVolume(this.fadeVolume);
+      MidiPlayer.setVolume(this.fadeVolume);
 
       // If there's a pending song, start it
       if (this.pendingSongUrl) {

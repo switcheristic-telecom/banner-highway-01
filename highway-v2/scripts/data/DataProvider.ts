@@ -37,5 +37,6 @@ export async function loadSceneData(): Promise<SceneData> {
     parts: raw.parts ?? [],
     songs: raw.songs ?? [],
     partSongs: raw.partSongs ?? [],
+    audioSettings: raw.audioSettings ?? null,
   };
 }

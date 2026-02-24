@@ -53,6 +53,7 @@ const parts = db.query('SELECT * FROM highway_parts ORDER BY road_id, start_t').
   id: string;
   road_id: string;
   start_t: number;
+  sky_effect: number;
 }>;
 
 const songs = db.query('SELECT * FROM midi_songs').all() as Array<{
@@ -67,6 +68,11 @@ const partSongs = db.query('SELECT * FROM part_songs').all() as Array<{
   part_id: string;
   song_id: string;
 }>;
+
+let audioSettingsRow: any = null;
+try {
+  audioSettingsRow = db.query('SELECT * FROM audio_settings WHERE id = 1').get() as any;
+} catch { /* table may not exist in older DBs */ }
 
 const data = {
   roadNetwork: {
@@ -106,6 +112,7 @@ const data = {
     id: p.id,
     roadId: p.road_id,
     startT: p.start_t,
+    skyEffect: p.sky_effect ?? 0,
   })),
   songs: songs.map((s) => ({
     id: s.id,
@@ -118,6 +125,25 @@ const data = {
     partId: ps.part_id,
     songId: ps.song_id,
   })),
+  audioSettings: audioSettingsRow ? {
+    synthVolume: audioSettingsRow.synth_volume,
+    synthAttack: audioSettingsRow.synth_attack,
+    synthDecay: audioSettingsRow.synth_decay,
+    synthSustain: audioSettingsRow.synth_sustain,
+    synthRelease: audioSettingsRow.synth_release,
+    reverbWet: audioSettingsRow.reverb_wet,
+    reverbDecay: audioSettingsRow.reverb_decay,
+    delayWet: audioSettingsRow.delay_wet,
+    delayTime: audioSettingsRow.delay_time,
+    delayFeedback: audioSettingsRow.delay_feedback,
+    chorusWet: audioSettingsRow.chorus_wet,
+    chorusFrequency: audioSettingsRow.chorus_frequency,
+    chorusDepth: audioSettingsRow.chorus_depth,
+    chorusSpread: audioSettingsRow.chorus_spread,
+    eqLow: audioSettingsRow.eq_low,
+    eqMid: audioSettingsRow.eq_mid,
+    eqHigh: audioSettingsRow.eq_high,
+  } : null,
 };
 
 writeFileSync(

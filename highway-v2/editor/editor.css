@@ -380,7 +380,7 @@ body {
   margin-bottom: 1px;
   margin-top: 6px;
 }
-#part-tooltip input {
+#part-tooltip input, #part-tooltip select {
   width: 100%;
   padding: 3px 6px;
   background: #1a1a1a;
@@ -460,7 +460,10 @@ body {
   border: 1px solid #222;
   border-radius: 4px;
   font-size: 11px;
+  cursor: pointer;
 }
+.song-item:hover { border-color: #444; }
+.song-item.selected { border-color: #e0a020; background: #1f1a0d; }
 .song-item .song-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
 .song-item .song-lang { color: #666; font-size: 9px; }
 .song-item .song-del {
@@ -472,6 +475,47 @@ body {
   padding: 0 2px;
 }
 .song-item .song-del:hover { color: #a03030; }
+
+.song-edit {
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: #151510;
+  border: 1px solid #e0a020;
+  border-top: none;
+  border-radius: 0 0 4px 4px;
+  margin-top: -5px;
+}
+.song-edit label {
+  display: block;
+  font-size: 9px;
+  color: #888;
+  margin-top: 4px;
+  margin-bottom: 1px;
+}
+.song-edit input {
+  width: 100%;
+  padding: 3px 6px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 3px;
+  color: #ddd;
+  font-family: inherit;
+  font-size: 11px;
+}
+.song-edit-save {
+  display: block;
+  width: 100%;
+  margin-top: 6px;
+  padding: 4px;
+  background: #e0a020;
+  color: #000;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+}
+.song-edit-save:hover { background: #f0b030; }
 
 #song-upload-btn {
   display: block;
@@ -488,3 +532,92 @@ body {
   text-align: center;
 }
 #song-upload-btn:hover { border-color: #e0a020; color: #fff; }
+
+/* Song play button */
+.song-play {
+  background: none;
+  border: none;
+  color: #03a062;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 4px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+.song-play:hover { color: #04d882; }
+.song-play.playing { color: #e04040; }
+
+/* Audio settings panel */
+.audio-section {
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #1a1a1a;
+}
+.audio-section:last-child { border-bottom: none; margin-bottom: 0; }
+.audio-section-title {
+  color: #03a062;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.audio-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 3px;
+}
+.audio-label {
+  width: 65px;
+  flex-shrink: 0;
+  color: #888;
+  font-size: 9px;
+}
+.audio-slider {
+  flex: 1;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 2px;
+  background: #333;
+  outline: none;
+  border-radius: 1px;
+}
+.audio-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 8px;
+  height: 8px;
+  background: #03a062;
+  cursor: pointer;
+  border-radius: 50%;
+}
+.audio-slider::-moz-range-thumb {
+  width: 8px;
+  height: 8px;
+  background: #03a062;
+  cursor: pointer;
+  border-radius: 50%;
+  border: none;
+}
+.audio-value {
+  width: 36px;
+  text-align: right;
+  color: #666;
+  font-size: 9px;
+  flex-shrink: 0;
+}
+.audio-save-btn {
+  display: block;
+  width: 100%;
+  padding: 6px;
+  margin-top: 8px;
+  background: #03a062;
+  color: #fff;
+  border: 1px solid #04b872;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: center;
+}
+.audio-save-btn:hover { background: #04b872; }

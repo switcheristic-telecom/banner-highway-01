@@ -17,6 +17,10 @@ export default defineConfig({
         target: 'http://localhost:4000',
         changeOrigin: true,
       },
+      '/assets/midi': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+      },
     },
   },
   build: {

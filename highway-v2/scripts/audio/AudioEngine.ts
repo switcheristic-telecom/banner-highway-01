@@ -70,6 +70,7 @@ export function getEQHigh(): number { return eq3.high.value; }
 export function setEQHigh(v: number): void { eq3.high.value = v; }
 
 export function getSynth(): Tone.PolySynth<Tone.Synth> { return synth; }
+export function getEffectsInput(): Tone.ToneAudioNode { return chorus; }
 export function getTransport(): ReturnType<typeof Tone.getTransport> { return Tone.getTransport(); }
 export function getBpm(): number { return Tone.getTransport().bpm.value; }
 export function setBpm(v: number): void { Tone.getTransport().bpm.value = v; }
@@ -78,4 +79,31 @@ export async function ensureAudioStarted(): Promise<void> {
   if (Tone.getContext().state !== 'running') {
     await Tone.start();
   }
+}
+
+export function applySettings(s: {
+  synthVolume: number; synthAttack: number; synthDecay: number;
+  synthSustain: number; synthRelease: number;
+  reverbWet: number; reverbDecay: number;
+  delayWet: number; delayTime: number; delayFeedback: number;
+  chorusWet: number; chorusFrequency: number; chorusDepth: number; chorusSpread: number;
+  eqLow: number; eqMid: number; eqHigh: number;
+}): void {
+  setSynthVolume(s.synthVolume);
+  setSynthAttack(s.synthAttack);
+  setSynthDecay(s.synthDecay);
+  setSynthSustain(s.synthSustain);
+  setSynthRelease(s.synthRelease);
+  setReverbWet(s.reverbWet);
+  setReverbDecay(s.reverbDecay);
+  setDelayWet(s.delayWet);
+  setDelayTime(s.delayTime);
+  setDelayFeedback(s.delayFeedback);
+  setChorusWet(s.chorusWet);
+  setChorusFrequency(s.chorusFrequency);
+  setChorusDepth(s.chorusDepth);
+  setChorusSpread(s.chorusSpread);
+  setEQLow(s.eqLow);
+  setEQMid(s.eqMid);
+  setEQHigh(s.eqHigh);
 }

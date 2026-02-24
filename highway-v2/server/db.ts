@@ -81,9 +81,32 @@ export function getDb(): Database {
     FOREIGN KEY (song_id) REFERENCES midi_songs(id) ON DELETE CASCADE
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS audio_settings (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    synth_volume REAL DEFAULT -6,
+    synth_attack REAL DEFAULT 0.01,
+    synth_decay REAL DEFAULT 0.2,
+    synth_sustain REAL DEFAULT 0.5,
+    synth_release REAL DEFAULT 0.5,
+    reverb_wet REAL DEFAULT 0.35,
+    reverb_decay REAL DEFAULT 2,
+    delay_wet REAL DEFAULT 0.5,
+    delay_time REAL DEFAULT 0.25,
+    delay_feedback REAL DEFAULT 0.4,
+    chorus_wet REAL DEFAULT 0.5,
+    chorus_frequency REAL DEFAULT 4,
+    chorus_depth REAL DEFAULT 0.5,
+    chorus_spread REAL DEFAULT 180,
+    eq_low REAL DEFAULT 0,
+    eq_mid REAL DEFAULT 0,
+    eq_high REAL DEFAULT 0
+  )`);
+  db.run('INSERT OR IGNORE INTO audio_settings (id) VALUES (1)');
+
   // Migrations: add columns to existing tables
   try { db.run('ALTER TABLE banner_assets ADD COLUMN caption TEXT'); } catch { /* already exists */ }
   try { db.run('ALTER TABLE banners ADD COLUMN caption TEXT'); } catch { /* already exists */ }
+  try { db.run('ALTER TABLE highway_parts ADD COLUMN sky_effect INTEGER DEFAULT 0'); } catch { /* already exists */ }
   db.run('UPDATE roads SET segment_count = 2000 WHERE segment_count <= 100');
 
   // Ensure asset directories exist

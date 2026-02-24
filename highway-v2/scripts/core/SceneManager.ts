@@ -14,6 +14,7 @@ export class SceneManager {
   ground!: THREE.Mesh | null;
   sky!: THREE.Mesh | null;
   sunLight!: THREE.DirectionalLight | null;
+  private skyProgress = 0;
 
   constructor(canvas: HTMLCanvasElement) {
     this.canvas = canvas;
@@ -125,6 +126,27 @@ export class SceneManager {
   updateSkyTime(time: number) {
     if (this.sky && this.sky.material instanceof THREE.ShaderMaterial) {
       this.sky.material.uniforms.time.value = time;
+    }
+  }
+
+  updateSkyProgress(targetProgress: number) {
+    if (this.sky && this.sky.material instanceof THREE.ShaderMaterial) {
+      // Compute shortest-path delta on the circular 0–4 range so that
+      // wrapping from part 3 back to part 0 moves forward through 4.0
+      // instead of jumping backward. skyProgress is kept as a continuous
+      // (unwrapped) value; the shader mods it back into 0–4.
+      const current = ((this.skyProgress % 4) + 4) % 4;
+      let delta = targetProgress - current;
+      if (delta > 2) delta -= 4;
+      if (delta < -2) delta += 4;
+      this.skyProgress += delta;
+      this.sky.material.uniforms.progress.value = this.skyProgress;
+    }
+  }
+
+  updateSkyPrevEffect(idx: number) {
+    if (this.sky && this.sky.material instanceof THREE.ShaderMaterial) {
+      this.sky.material.uniforms.prevEffectIndex.value = idx;
     }
   }
 

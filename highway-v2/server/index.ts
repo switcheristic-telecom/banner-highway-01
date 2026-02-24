@@ -84,6 +84,7 @@ interface PartRow {
   id: string;
   road_id: string;
   start_t: number;
+  sky_effect: number;
 }
 
 interface SongRow {
@@ -100,8 +101,29 @@ interface PartSongRow {
   song_id: string;
 }
 
+interface AudioSettingsRow {
+  id: number;
+  synth_volume: number;
+  synth_attack: number;
+  synth_decay: number;
+  synth_sustain: number;
+  synth_release: number;
+  reverb_wet: number;
+  reverb_decay: number;
+  delay_wet: number;
+  delay_time: number;
+  delay_feedback: number;
+  chorus_wet: number;
+  chorus_frequency: number;
+  chorus_depth: number;
+  chorus_spread: number;
+  eq_low: number;
+  eq_mid: number;
+  eq_high: number;
+}
+
 function partRowToJson(r: PartRow) {
-  return { id: r.id, roadId: r.road_id, startT: r.start_t };
+  return { id: r.id, roadId: r.road_id, startT: r.start_t, skyEffect: r.sky_effect ?? 0 };
 }
 
 function songRowToJson(r: SongRow) {
@@ -360,20 +382,26 @@ function handleParts(method: string, id: string | null, body: unknown, subPath: 
   }
 
   if (method === 'POST') {
-    const b = body as { id: string; roadId: string; startT: number };
+    const b = body as { id: string; roadId: string; startT: number; skyEffect?: number };
     if (!b.id || !b.roadId || b.startT === undefined) {
       return errorResponse('Missing required fields: id, roadId, startT');
     }
-    db.run('INSERT INTO highway_parts (id, road_id, start_t) VALUES (?, ?, ?)', [b.id, b.roadId, b.startT]);
+    db.run(
+      'INSERT INTO highway_parts (id, road_id, start_t, sky_effect) VALUES (?, ?, ?, ?)',
+      [b.id, b.roadId, b.startT, b.skyEffect ?? 0],
+    );
     return jsonResponse({ ok: true }, 201);
   }
 
   if (method === 'PUT' && id) {
     const existing = db.query('SELECT * FROM highway_parts WHERE id = ?').get(id);
     if (!existing) return errorResponse('Part not found', 404);
-    const b = body as { startT?: number };
+    const b = body as { startT?: number; skyEffect?: number };
     if (b.startT !== undefined) {
       db.run('UPDATE highway_parts SET start_t = ? WHERE id = ?', [b.startT, id]);
+    }
+    if (b.skyEffect !== undefined) {
+      db.run('UPDATE highway_parts SET sky_effect = ? WHERE id = ?', [b.skyEffect, id]);
     }
     return jsonResponse({ ok: true });
   }
@@ -391,7 +419,7 @@ function handleParts(method: string, id: string | null, body: unknown, subPath: 
 // Songs handlers
 // ---------------------------------------------------------------------------
 
-function handleSongs(method: string, id: string | null): Response {
+function handleSongs(method: string, id: string | null, body: any): Response {
   if (method === 'GET' && !id) {
     const rows = db.query('SELECT * FROM midi_songs ORDER BY created_at DESC').all() as SongRow[];
     return jsonResponse(rows.map(songRowToJson));
@@ -401,6 +429,23 @@ function handleSongs(method: string, id: string | null): Response {
     const r = db.query('SELECT * FROM midi_songs WHERE id = ?').get(id) as SongRow | null;
     if (!r) return errorResponse('Song not found', 404);
     return jsonResponse(songRowToJson(r));
+  }
+
+  if (method === 'PUT' && id && body) {
+    const row = db.query('SELECT * FROM midi_songs WHERE id = ?').get(id) as SongRow | null;
+    if (!row) return errorResponse('Song not found', 404);
+
+    const name = body.name ?? row.name;
+    const sourceUrl = body.sourceUrl ?? row.source_url;
+    const language = body.language ?? row.language;
+
+    db.run(
+      'UPDATE midi_songs SET name = ?, source_url = ?, language = ? WHERE id = ?',
+      [name, sourceUrl, language, id],
+    );
+
+    const updated = db.query('SELECT * FROM midi_songs WHERE id = ?').get(id) as SongRow;
+    return jsonResponse(songRowToJson(updated));
   }
 
   if (method === 'DELETE' && id) {
@@ -522,6 +567,68 @@ function serveAssetFile(filePath: string): Response {
 }
 
 // ---------------------------------------------------------------------------
+// Audio settings handler
+// ---------------------------------------------------------------------------
+
+const AUDIO_SETTINGS_COLS: Record<string, string> = {
+  synthVolume: 'synth_volume',
+  synthAttack: 'synth_attack',
+  synthDecay: 'synth_decay',
+  synthSustain: 'synth_sustain',
+  synthRelease: 'synth_release',
+  reverbWet: 'reverb_wet',
+  reverbDecay: 'reverb_decay',
+  delayWet: 'delay_wet',
+  delayTime: 'delay_time',
+  delayFeedback: 'delay_feedback',
+  chorusWet: 'chorus_wet',
+  chorusFrequency: 'chorus_frequency',
+  chorusDepth: 'chorus_depth',
+  chorusSpread: 'chorus_spread',
+  eqLow: 'eq_low',
+  eqMid: 'eq_mid',
+  eqHigh: 'eq_high',
+};
+
+function audioSettingsRowToJson(r: AudioSettingsRow) {
+  const result: Record<string, number> = {};
+  for (const [jsKey, dbCol] of Object.entries(AUDIO_SETTINGS_COLS)) {
+    result[jsKey] = (r as any)[dbCol];
+  }
+  return result;
+}
+
+function handleAudioSettings(method: string, body: unknown): Response {
+  if (method === 'GET') {
+    const row = db.query('SELECT * FROM audio_settings WHERE id = 1').get() as AudioSettingsRow | null;
+    if (!row) return jsonResponse({});
+    return jsonResponse(audioSettingsRowToJson(row));
+  }
+
+  if (method === 'PUT') {
+    const b = body as Record<string, unknown>;
+    const fields: string[] = [];
+    const values: number[] = [];
+
+    for (const [jsKey, dbCol] of Object.entries(AUDIO_SETTINGS_COLS)) {
+      if (b[jsKey] !== undefined) {
+        fields.push(`${dbCol} = ?`);
+        values.push(b[jsKey] as number);
+      }
+    }
+
+    if (fields.length > 0) {
+      db.run(`UPDATE audio_settings SET ${fields.join(', ')} WHERE id = 1`, values);
+    }
+
+    const row = db.query('SELECT * FROM audio_settings WHERE id = 1').get() as AudioSettingsRow;
+    return jsonResponse(audioSettingsRowToJson(row));
+  }
+
+  return errorResponse('Method not allowed', 405);
+}
+
+// ---------------------------------------------------------------------------
 // Combined data endpoint
 // ---------------------------------------------------------------------------
 
@@ -533,6 +640,7 @@ function handleData(): Response {
   const parts = db.query('SELECT * FROM highway_parts ORDER BY road_id, start_t').all() as PartRow[];
   const songs = db.query('SELECT * FROM midi_songs').all() as SongRow[];
   const partSongs = db.query('SELECT * FROM part_songs').all() as PartSongRow[];
+  const audioSettings = db.query('SELECT * FROM audio_settings WHERE id = 1').get() as AudioSettingsRow | null;
 
   return jsonResponse({
     roadNetwork: {
@@ -544,6 +652,7 @@ function handleData(): Response {
     parts: parts.map(partRowToJson),
     songs: songs.map(songRowToJson),
     partSongs: partSongs.map(partSongRowToJson),
+    audioSettings: audioSettings ? audioSettingsRowToJson(audioSettings) : null,
   });
 }
 
@@ -583,7 +692,7 @@ Bun.serve({
       }
 
       // Match: /api/{resource}, /api/{resource}/{id}, /api/{resource}/{id}/{sub...}
-      const apiMatch = path.match(/^\/api\/(\w+)(?:\/([^/]+)(?:\/(.+))?)?$/);
+      const apiMatch = path.match(/^\/api\/([\w-]+)(?:\/([^/]+)(?:\/(.+))?)?$/);
 
       if (apiMatch) {
         const [, resource, id, subPath] = apiMatch;
@@ -604,7 +713,9 @@ Bun.serve({
           case 'parts':
             return handleParts(method, id ?? null, body, subPath ?? null);
           case 'songs':
-            return handleSongs(method, id ?? null);
+            return handleSongs(method, id ?? null, body);
+          case 'audio-settings':
+            return handleAudioSettings(method, body);
           case 'data':
             return handleData();
           case 'export':
