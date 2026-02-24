@@ -36,9 +36,9 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 .vite
 
 # SQLite database (regenerate with: bun run seed)
-data/*.sqlite
-data/*.sqlite-wal
-data/*.sqlite-shm
+# data/*.sqlite
+# data/*.sqlite-wal
+# data/*.sqlite-shm
 
 # Generated build data (regenerate with: bun run extract)
 generated/*.json
