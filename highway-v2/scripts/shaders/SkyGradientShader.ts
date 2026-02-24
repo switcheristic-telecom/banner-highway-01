@@ -143,7 +143,7 @@ export const SkyGradientShader = {
       vec3 nebulaPos = pos * 3.0;
       nebulaPos += vec3(fbm3D(nebulaPos + t * 0.02), fbm3D(nebulaPos + 50.0), fbm3D(nebulaPos + 100.0)) * 0.5;
       float nebula = fbm3D(nebulaPos);
-      nebula = smoothstep(0.3, 0.7, nebula) * 0.15;
+      nebula = smoothstep(0.3, 0.7, nebula) * 0.01;
 
       return vec3(star + nebula);
     }

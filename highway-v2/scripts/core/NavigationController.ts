@@ -12,7 +12,6 @@ const CAR_X_OFFSET = -1.4;
 const ATTENTION_RADIUS = 40;
 const DOLLY_AMOUNT = 3.0;
 const LOOK_STIFFNESS = 4.0;
-const CAMERA_STIFFNESS = 6.0;
 const DOLLY_STIFFNESS = 3.0;
 
 interface BannerAttentionZone {
@@ -20,6 +19,7 @@ interface BannerAttentionZone {
   roadId: string;
   t: number;
   worldCenter: THREE.Vector3;
+  faceNormal: THREE.Vector3;
   worldRadius: number;
   tRadius: number;
 }
@@ -55,7 +55,6 @@ export class NavigationController {
   zonesBuilt: boolean;
   firstFrame: boolean;
   smoothLookTarget: THREE.Vector3;
-  smoothCameraPos: THREE.Vector3;
   smoothDollyOffset: THREE.Vector3;
 
   constructor(roadSystem: RoadSystem, camera: THREE.PerspectiveCamera) {
@@ -94,9 +93,7 @@ export class NavigationController {
     this.zonesBuilt = false;
     this.firstFrame = true;
     this.smoothLookTarget = new THREE.Vector3();
-    this.smoothCameraPos = new THREE.Vector3();
     this.smoothDollyOffset = new THREE.Vector3();
-
     this.setupEventListeners();
   }
 
@@ -368,11 +365,17 @@ export class NavigationController {
       const roadLen = road.getLength();
       const tRadius = roadLen > 0 ? ATTENTION_RADIUS / roadLen : 0.05;
 
+      // Face normal: direction the billboard faces (local +Z in world space)
+      const faceNormal = new THREE.Vector3(
+        Math.sin(geo.rotationY), 0, Math.cos(geo.rotationY),
+      );
+
       this.attentionZones.push({
         id: banner.id,
         roadId: banner.roadId,
         t: banner.t,
         worldCenter: new THREE.Vector3(geo.pivotX, geo.elevation, geo.pivotZ),
+        faceNormal,
         worldRadius: ATTENTION_RADIUS,
         tRadius,
       });
@@ -450,33 +453,28 @@ export class NavigationController {
       const blendAlpha = (1 - this.smoothstep(nearestDist / nearestZone.worldRadius)) * dirWeight;
       rawLookTarget = defaultLookTarget.clone().lerp(nearestZone.worldCenter, blendAlpha);
 
-      // Dolly: shift camera toward the banner side
-      const normal = this.toVec3(road.getNormal(this.currentT));
-      const toBanner = nearestZone.worldCenter.clone().sub(currentPos);
-      const side = Math.sign(toBanner.dot(normal)) || 1;
-      rawDollyOffset = normal.multiplyScalar(side * DOLLY_AMOUNT * blendAlpha);
+      // Dolly: shift camera along the banner's face normal for a face-on view
+      // This handles sharp-angled banners naturally
+      rawDollyOffset = nearestZone.faceNormal.clone().multiplyScalar(DOLLY_AMOUNT * blendAlpha);
     } else {
       rawLookTarget = defaultLookTarget;
       rawDollyOffset = new THREE.Vector3();
     }
 
-    // Temporal damping (frame-rate independent)
+    // Smooth only look target & dolly (banner transitions), not camera position
     if (this.firstFrame) {
       this.smoothLookTarget.copy(rawLookTarget);
-      this.smoothCameraPos.copy(rawCameraPos);
       this.smoothDollyOffset.copy(rawDollyOffset);
       this.firstFrame = false;
     } else {
       const lookAlpha = 1 - Math.exp(-LOOK_STIFFNESS * deltaTime);
-      const camAlpha = 1 - Math.exp(-CAMERA_STIFFNESS * deltaTime);
       const dollyAlpha = 1 - Math.exp(-DOLLY_STIFFNESS * deltaTime);
       this.smoothLookTarget.lerp(rawLookTarget, lookAlpha);
-      this.smoothCameraPos.lerp(rawCameraPos, camAlpha);
       this.smoothDollyOffset.lerp(rawDollyOffset, dollyAlpha);
     }
 
-    // Apply
-    this.camera.position.copy(this.smoothCameraPos).add(this.smoothDollyOffset);
+    // Camera position rigidly follows the car, no damping
+    this.camera.position.copy(rawCameraPos).add(this.smoothDollyOffset);
     this.camera.lookAt(this.smoothLookTarget);
   }
 
