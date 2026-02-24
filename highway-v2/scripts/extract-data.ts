@@ -39,6 +39,7 @@ const banners = db.query('SELECT * FROM banners ORDER BY t').all() as Array<{
   size: number;
   elevation: number;
   emissive_intensity: number;
+  caption: string | null;
 }>;
 
 const assets = db.query('SELECT * FROM banner_assets').all() as Array<{
@@ -47,6 +48,7 @@ const assets = db.query('SELECT * FROM banner_assets').all() as Array<{
   file_path: string;
   width: number | null;
   height: number | null;
+  caption: string | null;
 }>;
 
 const parts = db.query('SELECT * FROM highway_parts ORDER BY road_id, start_t').all() as Array<{
@@ -100,6 +102,7 @@ const data = {
     size: b.size,
     elevation: b.elevation,
     emissiveIntensity: b.emissive_intensity,
+    caption: b.caption ?? '',
   })),
   assets: assets.map((a) => ({
     id: a.id,
@@ -107,6 +110,7 @@ const data = {
     filePath: a.file_path,
     width: a.width,
     height: a.height,
+    caption: a.caption,
   })),
   parts: parts.map((p) => ({
     id: p.id,

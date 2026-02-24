@@ -55,7 +55,7 @@ export class AssetLoader {
     }
 
     return new Promise<THREE.Texture>((resolve, reject) => {
-      const fullPath = path.startsWith('http') ? path : `banners/${path}`;
+      const fullPath = path.startsWith('http') ? path : `/assets/banners/${path}`;
 
       this.textureLoader.load(
         fullPath,
@@ -86,7 +86,7 @@ export class AssetLoader {
 
     return new Promise<HTMLVideoElement>((resolve, reject) => {
       const video = document.createElement('video');
-      const fullPath = path.startsWith('http') ? path : `banners/${path}`;
+      const fullPath = path.startsWith('http') ? path : `/assets/banners/${path}`;
 
       video.src = fullPath;
       video.loop = true;

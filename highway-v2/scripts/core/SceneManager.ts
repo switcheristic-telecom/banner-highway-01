@@ -46,9 +46,16 @@ export class SceneManager {
     this.renderer.toneMappingExposure = 1;
   }
 
+  private responsiveFov(): number {
+    const w = window.innerWidth;
+    // 90° on desktop (>=1024), up to 110° on narrow mobile (<=480)
+    const t = Math.max(0, Math.min(1, (1024 - w) / (1024 - 480)));
+    return 90 + t * 20;
+  }
+
   setupCamera() {
     const aspect = window.innerWidth / window.innerHeight;
-    this.camera = new THREE.PerspectiveCamera(90, aspect, 0.1, 1000);
+    this.camera = new THREE.PerspectiveCamera(this.responsiveFov(), aspect, 0.1, 1000);
     this.camera.position.set(0, 5, -10);
     this.camera.lookAt(0, 0, 0);
 
@@ -194,6 +201,7 @@ export class SceneManager {
   handleResize() {
     const width = window.innerWidth;
     const height = window.innerHeight;
+    this.camera.fov = this.responsiveFov();
     this.camera.aspect = width / height;
     this.camera.updateProjectionMatrix();
     this.renderer.setSize(width, height);

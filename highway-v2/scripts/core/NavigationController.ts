@@ -4,8 +4,25 @@ import { LineSegmentsGeometry } from 'three/examples/jsm/lines/LineSegmentsGeome
 import { LineMaterial } from 'three/examples/jsm/lines/LineMaterial.js';
 
 import { RoadSystem } from '../road/RoadSystem';
+import { computeBannerGeometry } from '../../shared/banner-geometry';
+import type { BannerRenderData } from '../../shared/types';
 
 const CAR_X_OFFSET = -1.4;
+
+const ATTENTION_RADIUS = 40;
+const DOLLY_AMOUNT = 3.0;
+const LOOK_STIFFNESS = 4.0;
+const CAMERA_STIFFNESS = 6.0;
+const DOLLY_STIFFNESS = 3.0;
+
+interface BannerAttentionZone {
+  id: string;
+  roadId: string;
+  t: number;
+  worldCenter: THREE.Vector3;
+  worldRadius: number;
+  tRadius: number;
+}
 
 export class NavigationController {
   roadSystem: RoadSystem;
@@ -34,8 +51,12 @@ export class NavigationController {
   instructionsHidden: boolean;
   instructionsHideThreshold: number;
 
-  bannerLookThreshold: number;
-  bannerLookInterpolation: number;
+  attentionZones: BannerAttentionZone[];
+  zonesBuilt: boolean;
+  firstFrame: boolean;
+  smoothLookTarget: THREE.Vector3;
+  smoothCameraPos: THREE.Vector3;
+  smoothDollyOffset: THREE.Vector3;
 
   constructor(roadSystem: RoadSystem, camera: THREE.PerspectiveCamera) {
     this.roadSystem = roadSystem;
@@ -69,8 +90,12 @@ export class NavigationController {
     this.instructionsHidden = false;
     this.instructionsHideThreshold = 0.01;
 
-    this.bannerLookThreshold = 0.02;
-    this.bannerLookInterpolation = 0.5;
+    this.attentionZones = [];
+    this.zonesBuilt = false;
+    this.firstFrame = true;
+    this.smoothLookTarget = new THREE.Vector3();
+    this.smoothCameraPos = new THREE.Vector3();
+    this.smoothDollyOffset = new THREE.Vector3();
 
     this.setupEventListeners();
   }
@@ -214,7 +239,7 @@ export class NavigationController {
       this.currentT += delta * this.linearScrollSensitivity;
       this.wrapOrClampT();
       this.updateCarPosition();
-      this.updateCameraPosition();
+      this.updateCameraPosition(1 / 60);
     } else {
       this.scrollAccumulator += delta * this.scrollSensitivity;
       this.isScrolling = true;
@@ -257,7 +282,7 @@ export class NavigationController {
 
     this.wrapOrClampT();
     this.updateCarPosition();
-    this.updateCameraPosition();
+    this.updateCameraPosition(deltaTime);
     this.updateInstructionsVisibility();
   }
 
@@ -319,75 +344,140 @@ export class NavigationController {
     }
   }
 
-  updateCameraPosition() {
+  private buildAttentionZones(): void {
+    const app = (window as any).app;
+    if (!app?.bannerManager) return;
+
+    const bannerData: BannerRenderData[] = app.bannerManager.bannerData;
+    this.attentionZones = [];
+
+    for (const banner of bannerData) {
+      const road = this.roadSystem.getRoad(banner.roadId);
+      if (!road) continue;
+
+      const pt = road.getPoint(banner.t);
+      const tan = road.getTangent(banner.t);
+      const geo = computeBannerGeometry(pt, tan, {
+        distance: banner.distance,
+        elevation: banner.elevation,
+        angle: banner.angle,
+        size: banner.size,
+        aspectRatio: banner.aspectRatio,
+      });
+
+      const roadLen = road.getLength();
+      const tRadius = roadLen > 0 ? ATTENTION_RADIUS / roadLen : 0.05;
+
+      this.attentionZones.push({
+        id: banner.id,
+        roadId: banner.roadId,
+        t: banner.t,
+        worldCenter: new THREE.Vector3(geo.pivotX, geo.elevation, geo.pivotZ),
+        worldRadius: ATTENTION_RADIUS,
+        tRadius,
+      });
+    }
+
+    this.zonesBuilt = true;
+  }
+
+  private tDistanceCyclic(a: number, b: number, isCyclic: boolean): number {
+    const d = Math.abs(a - b);
+    return isCyclic ? Math.min(d, 1 - d) : d;
+  }
+
+  private smoothstep(x: number): number {
+    const t = Math.max(0, Math.min(1, x));
+    return t * t * (3 - 2 * t);
+  }
+
+  updateCameraPosition(deltaTime: number) {
     const road = this.roadSystem.getRoad(this.currentRoadId);
     if (!road) return;
 
+    // Lazy pre-computation
+    if (!this.zonesBuilt) this.buildAttentionZones();
+
+    // Raw camera position (same formula as before)
     const currentPt = road.getPoint(this.currentT);
     const currentPos = this.toVec3(currentPt);
+    const tan = road.getTangent(this.currentT);
+    const tangent = this.toVec3(tan);
 
+    const cameraOffset = tangent.clone().multiplyScalar(-this.cameraDistance);
+    cameraOffset.y = this.cameraHeight;
+    const rawCameraPos = currentPos.clone().add(cameraOffset);
+
+    // Default look-ahead target
     let lookAheadT = this.currentT + this.cameraLookAhead;
     if (road.isCyclic) {
       lookAheadT = ((lookAheadT % 1) + 1) % 1;
     } else {
       lookAheadT = Math.min(lookAheadT, 1);
     }
-    const lookAheadPt = road.getPoint(lookAheadT);
-    const lookAheadPos = this.toVec3(lookAheadPt);
+    const defaultLookTarget = this.toVec3(road.getPoint(lookAheadT));
 
-    const tan = road.getTangent(this.currentT);
-    const tangent = this.toVec3(tan);
+    // Find nearest banner attention zone
+    let nearestZone: BannerAttentionZone | null = null;
+    let nearestDist = Infinity;
 
-    const cameraOffset = tangent.clone().multiplyScalar(-this.cameraDistance);
-    cameraOffset.y = this.cameraHeight;
-
-    const targetCameraPos = currentPos.clone().add(cameraOffset);
-    this.camera.position.copy(targetCameraPos);
-
-    let lookTarget = lookAheadPos.clone();
-
-    // Banner camera pivot
-    const app = (window as any).app;
-    if (app?.bannerManager) {
-      const nearbyBanners = app.bannerManager.getBannersAtPosition(
-        this.currentRoadId,
-        this.currentT,
-        this.bannerLookThreshold,
-      );
-
-      if (nearbyBanners.length > 0) {
-        let closestBanner = nearbyBanners[0];
-        let minDistance = Math.abs(closestBanner.t - this.currentT);
-
-        for (const banner of nearbyBanners) {
-          const distance = Math.abs(banner.t - this.currentT);
-          if (distance < minDistance) {
-            minDistance = distance;
-            closestBanner = banner;
-          }
-        }
-
-        const bannerRoadPt = road.getPoint(closestBanner.t);
-        const bannerPosition = new THREE.Vector3(
-          bannerRoadPt.x,
-          closestBanner.elevation,
-          bannerRoadPt.z,
-        );
-
-        const normalizedDistance = minDistance / this.bannerLookThreshold;
-        let interpolationFactor = 1 - normalizedDistance;
-        interpolationFactor = interpolationFactor < 0.5
-          ? 4 * interpolationFactor * interpolationFactor * interpolationFactor
-          : 1 - Math.pow(-2 * interpolationFactor + 2, 3) / 2;
-
-        lookTarget.lerp(
-          bannerPosition,
-          interpolationFactor * this.bannerLookInterpolation,
-        );
+    for (const zone of this.attentionZones) {
+      if (zone.roadId !== this.currentRoadId) continue;
+      const tDist = this.tDistanceCyclic(this.currentT, zone.t, road.isCyclic);
+      if (tDist > zone.tRadius * 1.5) continue;
+      const d = rawCameraPos.distanceTo(zone.worldCenter);
+      if (d < zone.worldRadius && d < nearestDist) {
+        nearestDist = d;
+        nearestZone = zone;
       }
     }
 
-    this.camera.lookAt(lookTarget);
+    // Compute raw targets
+    let rawLookTarget: THREE.Vector3;
+    let rawDollyOffset: THREE.Vector3;
+
+    if (nearestZone) {
+      // Directional bias: only look at banners ahead, not behind
+      const toCenterXZ = new THREE.Vector3(
+        nearestZone.worldCenter.x - currentPos.x, 0,
+        nearestZone.worldCenter.z - currentPos.z,
+      ).normalize();
+      const forwardDot = toCenterXZ.dot(tangent);
+      // forwardDot >= 0.15: full attention (ahead)
+      // forwardDot <= -0.15: zero (behind)
+      const dirWeight = this.smoothstep((forwardDot + 0.15) / 0.3);
+
+      const blendAlpha = (1 - this.smoothstep(nearestDist / nearestZone.worldRadius)) * dirWeight;
+      rawLookTarget = defaultLookTarget.clone().lerp(nearestZone.worldCenter, blendAlpha);
+
+      // Dolly: shift camera toward the banner side
+      const normal = this.toVec3(road.getNormal(this.currentT));
+      const toBanner = nearestZone.worldCenter.clone().sub(currentPos);
+      const side = Math.sign(toBanner.dot(normal)) || 1;
+      rawDollyOffset = normal.multiplyScalar(side * DOLLY_AMOUNT * blendAlpha);
+    } else {
+      rawLookTarget = defaultLookTarget;
+      rawDollyOffset = new THREE.Vector3();
+    }
+
+    // Temporal damping (frame-rate independent)
+    if (this.firstFrame) {
+      this.smoothLookTarget.copy(rawLookTarget);
+      this.smoothCameraPos.copy(rawCameraPos);
+      this.smoothDollyOffset.copy(rawDollyOffset);
+      this.firstFrame = false;
+    } else {
+      const lookAlpha = 1 - Math.exp(-LOOK_STIFFNESS * deltaTime);
+      const camAlpha = 1 - Math.exp(-CAMERA_STIFFNESS * deltaTime);
+      const dollyAlpha = 1 - Math.exp(-DOLLY_STIFFNESS * deltaTime);
+      this.smoothLookTarget.lerp(rawLookTarget, lookAlpha);
+      this.smoothCameraPos.lerp(rawCameraPos, camAlpha);
+      this.smoothDollyOffset.lerp(rawDollyOffset, dollyAlpha);
+    }
+
+    // Apply
+    this.camera.position.copy(this.smoothCameraPos).add(this.smoothDollyOffset);
+    this.camera.lookAt(this.smoothLookTarget);
   }
 
   getCurrentPosition() {

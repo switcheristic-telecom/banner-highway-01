@@ -1,10 +1,24 @@
 import { defineConfig } from 'vite';
 import path from 'path';
+import fs from 'fs';
+
+function copyDirSync(src: string, dest: string) {
+  fs.mkdirSync(dest, { recursive: true });
+  for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
+    const srcPath = path.join(src, entry.name);
+    const destPath = path.join(dest, entry.name);
+    if (entry.isDirectory()) {
+      copyDirSync(srcPath, destPath);
+    } else {
+      fs.copyFileSync(srcPath, destPath);
+    }
+  }
+}
 
 export default defineConfig({
   root: '.',
   base: '/',
-  publicDir: 'assets',
+  publicDir: false,
   server: {
     port: 3000,
     open: true,
@@ -23,10 +37,20 @@ export default defineConfig({
       },
     },
   },
+  plugins: [
+    {
+      name: 'copy-assets',
+      closeBundle() {
+        // Copy assets/ → dist/assets/ preserving the /assets/ URL prefix
+        const src = path.resolve(__dirname, 'assets');
+        const dest = path.resolve(__dirname, 'dist', 'assets');
+        copyDirSync(src, dest);
+      },
+    },
+  ],
   build: {
     outDir: 'dist',
     assetsDir: 'vite-assets',
-    copyPublicDir: true,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),

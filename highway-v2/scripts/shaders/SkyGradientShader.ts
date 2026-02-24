@@ -148,52 +148,24 @@ export const SkyGradientShader = {
       return vec3(star + nebula);
     }
 
-    // ─── Effect 2: Voronoi Cells ───
+    // ─── Effect 2: Lightning / Cracks ───
 
-    vec3 effectCellular(vec3 pos, float t) {
-      vec3 cellPos = pos * 4.0;
-      cellPos.y += t * 0.03;
+    vec3 effectLightning(vec3 pos, float t) {
+      // Ridged noise: abs(fbm) inverted creates sharp valley lines
+      vec3 p1 = pos * 6.0 + t * 0.08;
+      vec3 p2 = pos * 6.0 + vec3(50.0) + t * 0.05;
+      float n1 = 1.0 - abs(fbm3D(p1) * 2.0 - 1.0);
+      float n2 = 1.0 - abs(fbm3D(p2) * 2.0 - 1.0);
 
-      vec3 i = floor(cellPos);
-      vec3 f = fract(cellPos);
+      // Sharpen the ridges into thin bright lines
+      float crack1 = pow(n1, 12.0);
+      float crack2 = pow(n2, 12.0);
+      float cracks = max(crack1, crack2);
 
-      float minDist = 10.0;
-      float secondDist = 10.0;
-      vec3 closestCell = vec3(0.0);
+      // Occasional flash: pulse brightness over time
+      float flash = pow(sin(t * 0.4) * 0.5 + 0.5, 8.0) * 0.3;
 
-      for (int x = -1; x <= 1; x++) {
-        for (int y = -1; y <= 1; y++) {
-          for (int z = -1; z <= 1; z++) {
-            vec3 neighbor = vec3(float(x), float(y), float(z));
-            vec3 cellCenter = neighbor + vec3(
-              hash3D(i + neighbor),
-              hash3D(i + neighbor + 31.0),
-              hash3D(i + neighbor + 57.0)
-            );
-            float d = length(f - cellCenter);
-            if (d < minDist) {
-              secondDist = minDist;
-              minDist = d;
-              closestCell = i + neighbor;
-            } else if (d < secondDist) {
-              secondDist = d;
-            }
-          }
-        }
-      }
-
-      float edge = secondDist - minDist;
-      float isEdge = 1.0 - step(0.08, edge);
-      // Crush darks before binning so most cells round to black
-      float raw = pow(hash3D(closestCell), 4.0);
-      float cellVal = floor(raw * 3.0) / 2.0;
-      float val = max(isEdge, cellVal) * 0.15;
-
-      // Multiply by bright high-frequency noise for texture
-      float grain = fbm3D(pos * 20.0 + t * 0.1) * 0.6 + 0.7;
-      val *= grain;
-
-      return vec3(val);
+      return vec3(cracks * 0.2 + flash * cracks);
     }
 
     // ─── Effect 3: Aurora Waves ───
@@ -238,7 +210,7 @@ export const SkyGradientShader = {
       // Current effect
       if (current == 0) currentEffect = effectBlockyClouds(pos, time);
       else if (current == 1) currentEffect = effectStarfield(pos, time);
-      else if (current == 2) currentEffect = effectCellular(pos, time);
+      else if (current == 2) currentEffect = effectLightning(pos, time);
       else currentEffect = effectAurora(pos, time);
 
       vec3 effect;
@@ -247,7 +219,7 @@ export const SkyGradientShader = {
         // In transition zone: blend with previous part
         if (prev == 0) prevEffect = effectBlockyClouds(pos, time);
         else if (prev == 1) prevEffect = effectStarfield(pos, time);
-        else if (prev == 2) prevEffect = effectCellular(pos, time);
+        else if (prev == 2) prevEffect = effectLightning(pos, time);
         else prevEffect = effectAurora(pos, time);
 
         float blend = smoothstep(0.0, transitionInterval, localT);
