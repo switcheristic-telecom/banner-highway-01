@@ -13,9 +13,11 @@
     "start": "serve -s dist -l 3000"
   },
   "dependencies": {
+    "@tonejs/midi": "^2.0.28",
     "postprocessing": "^6.37.8",
     "serve": "^14.2.4",
     "three": "^0.181.0",
+    "tone": "^15.1.22",
     "vite": "^7.1.12"
   },
   "devDependencies": {

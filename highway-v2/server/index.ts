@@ -7,8 +7,10 @@ const db = getDb();
 const PORT = 4000;
 const EDITOR_DIR = join(import.meta.dir, '..', 'editor');
 const ASSETS_DIR = join(import.meta.dir, '..', 'assets', 'banners');
+const MIDI_DIR = join(import.meta.dir, '..', 'assets', 'midi');
 
 mkdirSync(ASSETS_DIR, { recursive: true });
+mkdirSync(MIDI_DIR, { recursive: true });
 
 const MIME_TYPES: Record<string, string> = {
   '.html': 'text/html',
@@ -20,6 +22,8 @@ const MIME_TYPES: Record<string, string> = {
   '.jpeg': 'image/jpeg',
   '.gif': 'image/gif',
   '.svg': 'image/svg+xml',
+  '.mid': 'audio/midi',
+  '.midi': 'audio/midi',
 };
 
 function jsonResponse(data: unknown, status = 200): Response {
@@ -74,6 +78,44 @@ interface JunctionRow {
   from_t: number;
   to_road: string;
   to_t: number;
+}
+
+interface PartRow {
+  id: string;
+  road_id: string;
+  start_t: number;
+}
+
+interface SongRow {
+  id: string;
+  name: string;
+  file_path: string;
+  source_url: string;
+  language: string;
+  created_at: string;
+}
+
+interface PartSongRow {
+  part_id: string;
+  song_id: string;
+}
+
+function partRowToJson(r: PartRow) {
+  return { id: r.id, roadId: r.road_id, startT: r.start_t };
+}
+
+function songRowToJson(r: SongRow) {
+  return {
+    id: r.id,
+    name: r.name,
+    filePath: r.file_path,
+    sourceUrl: r.source_url,
+    language: r.language,
+  };
+}
+
+function partSongRowToJson(r: PartSongRow) {
+  return { partId: r.part_id, songId: r.song_id };
 }
 
 function roadRowToJson(r: RoadRow) {
@@ -279,6 +321,133 @@ function handleJunctions(method: string, id: string | null, body: unknown): Resp
 }
 
 // ---------------------------------------------------------------------------
+// Parts handlers
+// ---------------------------------------------------------------------------
+
+function handleParts(method: string, id: string | null, body: unknown, subPath: string | null): Response {
+  // Sub-resource: /api/parts/{id}/songs/{songId}
+  if (id && subPath) {
+    const songsMatch = subPath.match(/^songs(?:\/(.+))?$/);
+    if (!songsMatch) return errorResponse('Unknown sub-resource', 404);
+    const songId = songsMatch[1] ?? null;
+
+    if (method === 'GET') {
+      const rows = db.query('SELECT * FROM part_songs WHERE part_id = ?').all(id) as PartSongRow[];
+      return jsonResponse(rows.map(partSongRowToJson));
+    }
+    if (method === 'POST') {
+      const b = body as { songId?: string };
+      if (!b?.songId) return errorResponse('Missing songId');
+      db.run('INSERT OR IGNORE INTO part_songs (part_id, song_id) VALUES (?, ?)', [id, b.songId]);
+      return jsonResponse({ ok: true }, 201);
+    }
+    if (method === 'DELETE' && songId) {
+      db.run('DELETE FROM part_songs WHERE part_id = ? AND song_id = ?', [id, songId]);
+      return jsonResponse({ ok: true });
+    }
+    return errorResponse('Method not allowed', 405);
+  }
+
+  if (method === 'GET' && !id) {
+    const rows = db.query('SELECT * FROM highway_parts ORDER BY road_id, start_t').all() as PartRow[];
+    return jsonResponse(rows.map(partRowToJson));
+  }
+
+  if (method === 'GET' && id) {
+    const r = db.query('SELECT * FROM highway_parts WHERE id = ?').get(id) as PartRow | null;
+    if (!r) return errorResponse('Part not found', 404);
+    return jsonResponse(partRowToJson(r));
+  }
+
+  if (method === 'POST') {
+    const b = body as { id: string; roadId: string; startT: number };
+    if (!b.id || !b.roadId || b.startT === undefined) {
+      return errorResponse('Missing required fields: id, roadId, startT');
+    }
+    db.run('INSERT INTO highway_parts (id, road_id, start_t) VALUES (?, ?, ?)', [b.id, b.roadId, b.startT]);
+    return jsonResponse({ ok: true }, 201);
+  }
+
+  if (method === 'PUT' && id) {
+    const existing = db.query('SELECT * FROM highway_parts WHERE id = ?').get(id);
+    if (!existing) return errorResponse('Part not found', 404);
+    const b = body as { startT?: number };
+    if (b.startT !== undefined) {
+      db.run('UPDATE highway_parts SET start_t = ? WHERE id = ?', [b.startT, id]);
+    }
+    return jsonResponse({ ok: true });
+  }
+
+  if (method === 'DELETE' && id) {
+    db.run('DELETE FROM part_songs WHERE part_id = ?', [id]);
+    db.run('DELETE FROM highway_parts WHERE id = ?', [id]);
+    return jsonResponse({ ok: true });
+  }
+
+  return errorResponse('Method not allowed', 405);
+}
+
+// ---------------------------------------------------------------------------
+// Songs handlers
+// ---------------------------------------------------------------------------
+
+function handleSongs(method: string, id: string | null): Response {
+  if (method === 'GET' && !id) {
+    const rows = db.query('SELECT * FROM midi_songs ORDER BY created_at DESC').all() as SongRow[];
+    return jsonResponse(rows.map(songRowToJson));
+  }
+
+  if (method === 'GET' && id) {
+    const r = db.query('SELECT * FROM midi_songs WHERE id = ?').get(id) as SongRow | null;
+    if (!r) return errorResponse('Song not found', 404);
+    return jsonResponse(songRowToJson(r));
+  }
+
+  if (method === 'DELETE' && id) {
+    const row = db.query('SELECT * FROM midi_songs WHERE id = ?').get(id) as SongRow | null;
+    if (!row) return errorResponse('Song not found', 404);
+
+    db.run('DELETE FROM part_songs WHERE song_id = ?', [id]);
+    db.run('DELETE FROM midi_songs WHERE id = ?', [id]);
+
+    const filePath = join(MIDI_DIR, row.file_path);
+    try { if (existsSync(filePath)) unlinkSync(filePath); } catch { /* ok */ }
+
+    return jsonResponse({ ok: true });
+  }
+
+  return errorResponse('Method not allowed', 405);
+}
+
+async function handleSongUpload(req: Request): Promise<Response> {
+  const formData = await req.formData();
+  const file = formData.get('file') as File | null;
+  const name = (formData.get('name') as string) || '';
+  const sourceUrl = (formData.get('sourceUrl') as string) || '';
+  const language = (formData.get('language') as string) || '';
+
+  if (!file) return errorResponse('No file provided');
+
+  const ext = file.name.substring(file.name.lastIndexOf('.'));
+  const id = randomUUID();
+  const filename = `${id}${ext}`;
+  const targetPath = join(MIDI_DIR, filename);
+
+  const buffer = await file.arrayBuffer();
+  await Bun.write(targetPath, buffer);
+
+  const displayName = name || file.name.replace(/\.[^.]+$/, '');
+
+  db.run(
+    'INSERT INTO midi_songs (id, name, file_path, source_url, language) VALUES (?, ?, ?, ?, ?)',
+    [id, displayName, filename, sourceUrl, language],
+  );
+
+  const row = db.query('SELECT * FROM midi_songs WHERE id = ?').get(id) as SongRow;
+  return jsonResponse(songRowToJson(row), 201);
+}
+
+// ---------------------------------------------------------------------------
 // Asset handlers
 // ---------------------------------------------------------------------------
 
@@ -361,6 +530,9 @@ function handleData(): Response {
   const banners = db.query('SELECT * FROM banners ORDER BY t').all() as BannerRow[];
   const junctions = db.query('SELECT * FROM road_junctions').all() as JunctionRow[];
   const assets = db.query('SELECT * FROM banner_assets').all() as AssetRow[];
+  const parts = db.query('SELECT * FROM highway_parts ORDER BY road_id, start_t').all() as PartRow[];
+  const songs = db.query('SELECT * FROM midi_songs').all() as SongRow[];
+  const partSongs = db.query('SELECT * FROM part_songs').all() as PartSongRow[];
 
   return jsonResponse({
     roadNetwork: {
@@ -369,6 +541,9 @@ function handleData(): Response {
     },
     banners: banners.map(bannerRowToJson),
     assets: assets.map(assetRowToJson),
+    parts: parts.map(partRowToJson),
+    songs: songs.map(songRowToJson),
+    partSongs: partSongs.map(partSongRowToJson),
   });
 }
 
@@ -384,21 +559,34 @@ Bun.serve({
     const path = url.pathname;
 
     try {
-      // Serve asset files at /assets/banners/...
-      const assetFileMatch = path.match(/^\/assets\/banners\/(.+)$/);
-      if (assetFileMatch) {
-        return serveAssetFile(assetFileMatch[1]);
+      // Serve asset files at /assets/banners/... and /assets/midi/...
+      const bannerFileMatch = path.match(/^\/assets\/banners\/(.+)$/);
+      if (bannerFileMatch) {
+        return serveAssetFile(bannerFileMatch[1]);
+      }
+      const midiFileMatch = path.match(/^\/assets\/midi\/(.+)$/);
+      if (midiFileMatch) {
+        const fullPath = join(MIDI_DIR, midiFileMatch[1]);
+        if (!existsSync(fullPath)) return new Response('Not Found', { status: 404 });
+        const ext = midiFileMatch[1].substring(midiFileMatch[1].lastIndexOf('.'));
+        return new Response(Bun.file(fullPath), {
+          headers: { 'Content-Type': MIME_TYPES[ext] || 'application/octet-stream' },
+        });
       }
 
-      // Asset upload (multipart) needs special handling before JSON parsing
+      // Multipart uploads need special handling before JSON parsing
       if (path === '/api/assets' && method === 'POST') {
         return handleAssetUpload(req);
       }
+      if (path === '/api/songs' && method === 'POST') {
+        return handleSongUpload(req);
+      }
 
-      const apiMatch = path.match(/^\/api\/(\w+)(?:\/(.+))?$/);
+      // Match: /api/{resource}, /api/{resource}/{id}, /api/{resource}/{id}/{sub...}
+      const apiMatch = path.match(/^\/api\/(\w+)(?:\/([^/]+)(?:\/(.+))?)?$/);
 
       if (apiMatch) {
-        const [, resource, id] = apiMatch;
+        const [, resource, id, subPath] = apiMatch;
         const body =
           method === 'POST' || method === 'PUT'
             ? await req.json().catch(() => null)
@@ -413,6 +601,10 @@ Bun.serve({
             return handleJunctions(method, id ?? null, body);
           case 'assets':
             return handleAssets(method, id ?? null);
+          case 'parts':
+            return handleParts(method, id ?? null, body, subPath ?? null);
+          case 'songs':
+            return handleSongs(method, id ?? null);
           case 'data':
             return handleData();
           case 'export':

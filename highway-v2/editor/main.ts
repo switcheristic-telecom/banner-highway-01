@@ -1,7 +1,7 @@
 import { RoadSpline } from '../shared/road-spline';
 import { computeBannerGeometry, type BannerGeometryResult } from '../shared/banner-geometry';
 import { BANNER_DEFAULTS } from '../shared/defaults';
-import type { Road, BannerPlacement, BannerAsset } from '../shared/types';
+import type { Road, BannerPlacement, BannerAsset, HighwayPart, MidiSong, PartSongAssignment } from '../shared/types';
 
 // ===========================================================================
 // API Client
@@ -61,6 +61,60 @@ const API = {
   async deleteAsset(id: string) {
     return (await fetch(`/api/assets/${id}`, { method: 'DELETE' })).json();
   },
+
+  // Parts
+  async getParts(): Promise<HighwayPart[]> {
+    return (await fetch('/api/parts')).json();
+  },
+  async createPart(data: { id: string; roadId: string; startT: number }) {
+    return (await fetch('/api/parts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })).json();
+  },
+  async updatePart(id: string, data: Partial<HighwayPart>) {
+    return (await fetch(`/api/parts/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    })).json();
+  },
+  async deletePart(id: string) {
+    return (await fetch(`/api/parts/${id}`, { method: 'DELETE' })).json();
+  },
+
+  // Songs
+  async getSongs(): Promise<MidiSong[]> {
+    return (await fetch('/api/songs')).json();
+  },
+  async uploadSong(file: File, name?: string, sourceUrl?: string, language?: string): Promise<MidiSong> {
+    const fd = new FormData();
+    fd.append('file', file);
+    if (name) fd.append('name', name);
+    if (sourceUrl) fd.append('sourceUrl', sourceUrl);
+    if (language) fd.append('language', language);
+    return (await fetch('/api/songs', { method: 'POST', body: fd })).json();
+  },
+  async deleteSong(id: string) {
+    return (await fetch(`/api/songs/${id}`, { method: 'DELETE' })).json();
+  },
+
+  // Part-Song assignments
+  async getPartSongs(): Promise<PartSongAssignment[]> {
+    const data = await (await fetch('/api/data')).json();
+    return data.partSongs ?? [];
+  },
+  async assignSong(partId: string, songId: string) {
+    return (await fetch(`/api/parts/${partId}/songs`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ songId }),
+    })).json();
+  },
+  async unassignSong(partId: string, songId: string) {
+    return (await fetch(`/api/parts/${partId}/songs/${songId}`, { method: 'DELETE' })).json();
+  },
 };
 
 // ===========================================================================
@@ -74,10 +128,16 @@ let activeRoadIdx = 0;
 let selectedNodeIdx = -1;
 let selectedBannerId: string | null = null;
 let pickingAssetForBanner: string | null = null;
-let dragTarget: { type: string; bannerId?: string; nodeIdx?: number } | null = null;
+let dragTarget: { type: string; bannerId?: string; nodeIdx?: number; partId?: string } | null = null;
 let addingNode = false;
 let addingBanner = false;
+let addingPart = false;
 let spline: RoadSpline | null = null;
+
+let parts: HighwayPart[] = [];
+let songs: MidiSong[] = [];
+let partSongs: PartSongAssignment[] = [];
+let selectedPartId: string | null = null;
 
 const vp = { cx: 228, cz: 530, scale: 3, dragging: false, lastX: 0, lastY: 0 };
 
@@ -261,13 +321,17 @@ function render() {
     ctx.fill();
   }
 
+  // Draw parts as markers on the road
+  drawParts(road);
+
   // Draw waypoints with heading arrows
   drawWaypoints(road);
 
   $('canvas-info').textContent =
-    `zoom: ${vp.scale.toFixed(1)}x | waypoints: ${road.waypoints.length} | banners: ${banners.filter(b => b.roadId === road.id).length} | ${road.isCyclic ? 'cyclic' : 'open'}`;
+    `zoom: ${vp.scale.toFixed(1)}x | waypoints: ${road.waypoints.length} | banners: ${banners.filter(b => b.roadId === road.id).length} | parts: ${parts.filter(p => p.roadId === road.id).length} | ${road.isCyclic ? 'cyclic' : 'open'}`;
 
   positionTooltip();
+  positionPartTooltip();
 }
 
 function drawSelectedBannerHandles(
@@ -329,6 +393,52 @@ function drawSelectedBannerHandles(
   ctx.closePath();
   ctx.fillStyle = 'rgba(255,180,0,0.5)';
   ctx.fill();
+}
+
+const PART_COLORS = ['#e0a020', '#20a0e0', '#e04080', '#80e040', '#a060e0', '#e08020'];
+
+function drawParts(road: Road) {
+  if (!spline) return;
+  const roadParts = parts.filter(p => p.roadId === road.id).sort((a, b) => a.startT - b.startT);
+  if (roadParts.length === 0) return;
+
+  const halfW = road.width / 2;
+
+  for (let i = 0; i < roadParts.length; i++) {
+    const part = roadParts[i];
+    const color = PART_COLORS[i % PART_COLORS.length];
+    const isSelected = part.id === selectedPartId;
+
+    // Draw a cross-road marker at the part's start_t
+    const pt = spline!.getPoint(part.startT);
+    const n = spline!.getNormal(part.startT);
+    const s1 = w2s(pt.x + n.x * halfW * 1.3, pt.z + n.z * halfW * 1.3);
+    const s2 = w2s(pt.x - n.x * halfW * 1.3, pt.z - n.z * halfW * 1.3);
+
+    ctx.beginPath();
+    ctx.moveTo(s1.x, s1.y);
+    ctx.lineTo(s2.x, s2.y);
+    ctx.strokeStyle = color;
+    ctx.lineWidth = isSelected ? 3 : 2;
+    ctx.setLineDash([5, 3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Draw a label dot at the center of the marker
+    const sc = w2s(pt.x, pt.z);
+    ctx.beginPath();
+    ctx.arc(sc.x, sc.y, isSelected ? 7 : 5, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.strokeStyle = isSelected ? '#fff' : '#000';
+    ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.stroke();
+
+    // Label
+    ctx.fillStyle = '#888';
+    ctx.font = '9px monospace';
+    ctx.fillText(`P${i}`, sc.x + 10, sc.y - 8);
+  }
 }
 
 function drawWaypoints(road: Road) {
@@ -451,6 +561,40 @@ function positionTooltip() {
   tooltip.style.top = `${top}px`;
 }
 
+function positionPartTooltip() {
+  const tooltip = $('part-tooltip');
+  if (!selectedPartId) {
+    tooltip.classList.remove('active');
+    return;
+  }
+
+  const part = parts.find(p => p.id === selectedPartId);
+  if (!part || !spline) {
+    tooltip.classList.remove('active');
+    return;
+  }
+
+  tooltip.classList.add('active');
+
+  const pt = spline.getPoint(part.startT);
+  const sc = w2s(pt.x, pt.z);
+  const wrap = $('canvas-wrap');
+  const wrapRect = wrap.getBoundingClientRect();
+
+  let left = sc.x + 15;
+  let top = sc.y + 15;
+  const ttWidth = 220;
+  const ttHeight = tooltip.offsetHeight || 200;
+
+  if (left + ttWidth > wrapRect.width - 10) left = sc.x - ttWidth - 15;
+  if (top + ttHeight > wrapRect.height - 10) top = sc.y - ttHeight - 15;
+  if (left < 10) left = 10;
+  if (top < 10) top = 10;
+
+  tooltip.style.left = `${left}px`;
+  tooltip.style.top = `${top}px`;
+}
+
 // ===========================================================================
 // Hit Testing
 // ===========================================================================
@@ -487,6 +631,18 @@ function hitTest(sx: number, sy: number) {
     const sp = w2s(geo.poleX, geo.poleZ);
     if (Math.hypot(sp.x - sx, sp.y - sy) < hitRadius) {
       return { type: 'banner', bannerId: b.id };
+    }
+  }
+
+  // Parts (clickable markers on road)
+  if (spline) {
+    for (const p of parts) {
+      if (p.roadId !== road.id) continue;
+      const pt = spline.getPoint(p.startT);
+      const sp = w2s(pt.x, pt.z);
+      if (Math.hypot(sp.x - sx, sp.y - sy) < hitRadius) {
+        return { type: 'part', partId: p.id };
+      }
     }
   }
 
@@ -544,6 +700,16 @@ canvas.addEventListener('mousedown', (e) => {
     return;
   }
 
+  // Add part mode
+  if (addingPart) {
+    placePartAtClick(sx, sy);
+    addingPart = false;
+    $('btn-add-part').textContent = '+ Part';
+    canvas.style.cursor = 'crosshair';
+    render();
+    return;
+  }
+
   const hit = hitTest(sx, sy);
 
   if (hit && (hit.type === 'banner-drag' || hit.type === 'banner-rotate')) {
@@ -555,9 +721,23 @@ canvas.addEventListener('mousedown', (e) => {
 
   if (hit && hit.type === 'banner') {
     selectedBannerId = hit.bannerId!;
+    selectedPartId = null;
     selectedNodeIdx = -1;
     updateNodePanel();
     updateTooltipFields();
+    renderBannerList();
+    renderPartList();
+    render();
+    return;
+  }
+
+  if (hit && hit.type === 'part') {
+    selectedPartId = hit.partId!;
+    selectedBannerId = null;
+    selectedNodeIdx = -1;
+    updateNodePanel();
+    updatePartTooltipFields();
+    renderPartList();
     renderBannerList();
     render();
     return;
@@ -567,8 +747,10 @@ canvas.addEventListener('mousedown', (e) => {
     dragTarget = hit;
     selectedNodeIdx = hit.nodeIdx!;
     selectedBannerId = null;
+    selectedPartId = null;
     updateNodePanel();
     renderBannerList();
+    renderPartList();
     render();
     return;
   }
@@ -580,8 +762,10 @@ canvas.addEventListener('mousedown', (e) => {
   canvas.style.cursor = 'grabbing';
   selectedNodeIdx = -1;
   selectedBannerId = null;
+  selectedPartId = null;
   updateNodePanel();
   renderBannerList();
+  renderPartList();
   render();
 });
 
@@ -680,11 +864,11 @@ canvas.addEventListener('mousemove', (e) => {
   }
 
   // Hover cursor
-  if (!addingNode && !addingBanner) {
+  if (!addingNode && !addingBanner && !addingPart) {
     const hit = hitTest(sx, sy);
     if (hit?.type === 'banner-drag') canvas.style.cursor = 'grab';
     else if (hit?.type === 'banner-rotate') canvas.style.cursor = 'alias';
-    else if (hit?.type === 'banner' || hit?.type === 'waypoint') canvas.style.cursor = 'pointer';
+    else if (hit?.type === 'banner' || hit?.type === 'waypoint' || hit?.type === 'part') canvas.style.cursor = 'pointer';
     else canvas.style.cursor = 'crosshair';
   }
 });
@@ -692,7 +876,7 @@ canvas.addEventListener('mousemove', (e) => {
 canvas.addEventListener('mouseup', () => {
   if (vp.dragging) vp.dragging = false;
   dragTarget = null;
-  canvas.style.cursor = (addingNode || addingBanner) ? 'copy' : 'crosshair';
+  canvas.style.cursor = (addingNode || addingBanner || addingPart) ? 'copy' : 'crosshair';
 });
 
 canvas.addEventListener('wheel', (e) => {
@@ -724,7 +908,11 @@ document.addEventListener('keydown', (e) => {
     deleteSelectedNode();
   }
   if (e.key === 'Escape') {
-    if (addingBanner) {
+    if (addingPart) {
+      addingPart = false;
+      $('btn-add-part').textContent = '+ Part';
+      canvas.style.cursor = 'crosshair';
+    } else if (addingBanner) {
       addingBanner = false;
       $('btn-add-banner').textContent = '+ Banner';
       canvas.style.cursor = 'crosshair';
@@ -734,9 +922,11 @@ document.addEventListener('keydown', (e) => {
       canvas.style.cursor = 'crosshair';
     } else {
       selectedBannerId = null;
+      selectedPartId = null;
       selectedNodeIdx = -1;
       updateNodePanel();
       renderBannerList();
+      renderPartList();
       render();
     }
   }
@@ -1043,6 +1233,45 @@ function placeBannerAtClick(sx: number, sy: number) {
   API.createBanner(newBanner).catch(console.error);
 }
 
+// Add Part
+$('btn-add-part').addEventListener('click', () => {
+  const road = roads[activeRoadIdx];
+  if (!road) return;
+  addingPart = !addingPart;
+  addingNode = false;
+  addingBanner = false;
+  $('btn-add-part').textContent = addingPart ? 'Click road...' : '+ Part';
+  $('btn-add-node').textContent = '+ Waypoint';
+  $('btn-add-banner').textContent = '+ Banner';
+  canvas.style.cursor = addingPart ? 'copy' : 'crosshair';
+});
+
+function placePartAtClick(sx: number, sy: number) {
+  const road = roads[activeRoadIdx];
+  if (!road || !spline) return;
+
+  const w = s2w(sx, sy);
+  const closest = spline.getClosestT(w.x, w.z, 800);
+
+  const id = `part_${road.id}_${Date.now()}`;
+  const newPart: HighwayPart = {
+    id,
+    roadId: road.id,
+    startT: Math.round(closest.t * 1000) / 1000,
+  };
+
+  parts.push(newPart);
+  selectedPartId = id;
+  selectedBannerId = null;
+  selectedNodeIdx = -1;
+  updateNodePanel();
+  updatePartTooltipFields();
+  renderPartList();
+  renderBannerList();
+  render();
+  API.createPart(newPart).catch(console.error);
+}
+
 // Toggle cyclic
 $<HTMLInputElement>('chk-cyclic').addEventListener('change', (e) => {
   const road = roads[activeRoadIdx];
@@ -1173,14 +1402,189 @@ $('tt-asset-clear').addEventListener('click', () => {
 });
 
 // ===========================================================================
+// Part List
+// ===========================================================================
+
+function renderPartList() {
+  const list = $('part-list');
+  const road = roads[activeRoadIdx];
+  if (!road) { list.innerHTML = ''; return; }
+
+  const roadParts = parts.filter(p => p.roadId === road.id).sort((a, b) => a.startT - b.startT);
+
+  list.innerHTML = roadParts.map((p, i) => `
+    <div class="part-item ${p.id === selectedPartId ? 'selected' : ''}" data-id="${p.id}">
+      <div class="part-dot" style="background:${PART_COLORS[i % PART_COLORS.length]}"></div>
+      <span class="part-name">${p.id}</span>
+      <span class="part-t">t=${p.startT.toFixed(3)}</span>
+    </div>
+  `).join('');
+
+  for (const item of list.querySelectorAll<HTMLElement>('.part-item')) {
+    item.addEventListener('click', () => {
+      selectedPartId = item.dataset.id!;
+      selectedBannerId = null;
+      selectedNodeIdx = -1;
+      updateNodePanel();
+      updatePartTooltipFields();
+      renderPartList();
+      renderBannerList();
+      render();
+    });
+  }
+}
+
+// ===========================================================================
+// Part Tooltip
+// ===========================================================================
+
+function updatePartTooltipFields() {
+  const tooltip = $('part-tooltip');
+  if (!selectedPartId) {
+    tooltip.classList.remove('active');
+    return;
+  }
+
+  const part = parts.find(p => p.id === selectedPartId);
+  if (!part) {
+    tooltip.classList.remove('active');
+    return;
+  }
+
+  $('pt-title').textContent = part.id;
+  $<HTMLInputElement>('pt-start-t').value = String(part.startT);
+
+  // Build song checklist
+  const songList = $('pt-song-list');
+  const assignedSongIds = new Set(
+    partSongs.filter(ps => ps.partId === part.id).map(ps => ps.songId)
+  );
+
+  songList.innerHTML = songs.map(s => `
+    <label class="pt-song-item">
+      <input type="checkbox" data-song-id="${s.id}" ${assignedSongIds.has(s.id) ? 'checked' : ''} />
+      ${s.name} ${s.language ? `<span style="color:#666">[${s.language}]</span>` : ''}
+    </label>
+  `).join('');
+
+  if (songs.length === 0) {
+    songList.innerHTML = '<div style="color:#666;font-size:10px;padding:4px">No songs uploaded yet</div>';
+  }
+
+  // Wire checkbox events
+  for (const cb of songList.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) {
+    cb.addEventListener('change', async () => {
+      const songId = cb.dataset.songId!;
+      if (cb.checked) {
+        partSongs.push({ partId: part.id, songId });
+        await API.assignSong(part.id, songId).catch(console.error);
+      } else {
+        partSongs = partSongs.filter(ps => !(ps.partId === part.id && ps.songId === songId));
+        await API.unassignSong(part.id, songId).catch(console.error);
+      }
+    });
+  }
+}
+
+// Save part
+$('pt-save').addEventListener('click', async () => {
+  const part = parts.find(p => p.id === selectedPartId);
+  if (!part) return;
+
+  part.startT = parseFloat($<HTMLInputElement>('pt-start-t').value) || 0;
+
+  await API.updatePart(part.id, { startT: part.startT });
+  renderPartList();
+  render();
+  $('status').textContent = 'Part saved!';
+  setTimeout(() => { $('status').textContent = 'Ready'; }, 1500);
+});
+
+// Delete part
+$('pt-delete').addEventListener('click', async () => {
+  if (!selectedPartId) return;
+  if (!confirm(`Delete part "${selectedPartId}"?`)) return;
+
+  await API.deletePart(selectedPartId);
+  parts = parts.filter(p => p.id !== selectedPartId);
+  partSongs = partSongs.filter(ps => ps.partId !== selectedPartId);
+  selectedPartId = null;
+  renderPartList();
+  render();
+});
+
+// ===========================================================================
+// Song List
+// ===========================================================================
+
+function renderSongList() {
+  const list = $('song-list');
+
+  list.innerHTML = songs.map(s => `
+    <div class="song-item" data-id="${s.id}">
+      <span class="song-name">${s.name}</span>
+      ${s.language ? `<span class="song-lang">${s.language}</span>` : ''}
+      <button class="song-del" data-id="${s.id}" title="Delete song">&times;</button>
+    </div>
+  `).join('');
+
+  if (songs.length === 0) {
+    list.innerHTML = '<div style="color:#666;font-size:10px;padding:4px">No songs uploaded</div>';
+  }
+
+  for (const btn of list.querySelectorAll<HTMLElement>('.song-del')) {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id!;
+      const song = songs.find(s => s.id === id);
+      if (!song || !confirm(`Delete song "${song.name}"?`)) return;
+      await API.deleteSong(id);
+      songs = songs.filter(s => s.id !== id);
+      partSongs = partSongs.filter(ps => ps.songId !== id);
+      renderSongList();
+      updatePartTooltipFields();
+    });
+  }
+}
+
+$('song-upload-btn').addEventListener('click', () => {
+  $<HTMLInputElement>('song-upload-input').click();
+});
+
+$('song-upload-input').addEventListener('change', async (e) => {
+  const file = (e.target as HTMLInputElement).files?.[0];
+  if (!file) return;
+  const status = $('status');
+  status.textContent = 'Uploading MIDI...';
+  try {
+    const name = file.name.replace(/\.(mid|midi)$/i, '');
+    const newSong = await API.uploadSong(file, name);
+    songs.push(newSong);
+    renderSongList();
+    updatePartTooltipFields();
+    status.textContent = 'Song uploaded!';
+    setTimeout(() => { status.textContent = 'Ready'; }, 1500);
+  } catch (err) {
+    status.textContent = `Upload error: ${(err as Error).message}`;
+    console.error(err);
+  }
+  (e.target as HTMLInputElement).value = '';
+});
+
+// ===========================================================================
 // Init
 // ===========================================================================
 
 async function init() {
   try {
-    roads = await API.getRoads();
-    banners = await API.getBanners();
-    assets = await API.getAssets();
+    [roads, banners, assets, parts, songs, partSongs] = await Promise.all([
+      API.getRoads(),
+      API.getBanners(),
+      API.getAssets(),
+      API.getParts(),
+      API.getSongs(),
+      API.getPartSongs(),
+    ]);
 
     const road = roads[activeRoadIdx];
     if (road) {
@@ -1193,6 +1597,8 @@ async function init() {
     fitView();
     renderBannerList();
     renderAssetGrid();
+    renderPartList();
+    renderSongList();
   } catch (err) {
     $('status').textContent = `Failed to load: ${(err as Error).message}`;
     console.error(err);

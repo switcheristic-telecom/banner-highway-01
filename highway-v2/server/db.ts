@@ -57,10 +57,37 @@ export function getDb(): Database {
     FOREIGN KEY (asset_id) REFERENCES banner_assets(id) ON DELETE SET NULL
   )`);
 
+  db.run(`CREATE TABLE IF NOT EXISTS highway_parts (
+    id TEXT PRIMARY KEY,
+    road_id TEXT NOT NULL,
+    start_t REAL NOT NULL,
+    FOREIGN KEY (road_id) REFERENCES roads(id)
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS midi_songs (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    source_url TEXT DEFAULT '',
+    language TEXT DEFAULT '',
+    created_at TEXT DEFAULT (datetime('now'))
+  )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS part_songs (
+    part_id TEXT NOT NULL,
+    song_id TEXT NOT NULL,
+    PRIMARY KEY (part_id, song_id),
+    FOREIGN KEY (part_id) REFERENCES highway_parts(id) ON DELETE CASCADE,
+    FOREIGN KEY (song_id) REFERENCES midi_songs(id) ON DELETE CASCADE
+  )`);
+
   // Migrations: add columns to existing tables
   try { db.run('ALTER TABLE banner_assets ADD COLUMN caption TEXT'); } catch { /* already exists */ }
   try { db.run('ALTER TABLE banners ADD COLUMN caption TEXT'); } catch { /* already exists */ }
   db.run('UPDATE roads SET segment_count = 2000 WHERE segment_count <= 100');
+
+  // Ensure asset directories exist
+  mkdirSync(join(import.meta.dir, '..', 'assets', 'midi'), { recursive: true });
 
   _db = db;
   return db;

@@ -49,6 +49,25 @@ const assets = db.query('SELECT * FROM banner_assets').all() as Array<{
   height: number | null;
 }>;
 
+const parts = db.query('SELECT * FROM highway_parts ORDER BY road_id, start_t').all() as Array<{
+  id: string;
+  road_id: string;
+  start_t: number;
+}>;
+
+const songs = db.query('SELECT * FROM midi_songs').all() as Array<{
+  id: string;
+  name: string;
+  file_path: string;
+  source_url: string;
+  language: string;
+}>;
+
+const partSongs = db.query('SELECT * FROM part_songs').all() as Array<{
+  part_id: string;
+  song_id: string;
+}>;
+
 const data = {
   roadNetwork: {
     roads: roads.map((r) => ({
@@ -83,6 +102,22 @@ const data = {
     width: a.width,
     height: a.height,
   })),
+  parts: parts.map((p) => ({
+    id: p.id,
+    roadId: p.road_id,
+    startT: p.start_t,
+  })),
+  songs: songs.map((s) => ({
+    id: s.id,
+    name: s.name,
+    filePath: s.file_path,
+    sourceUrl: s.source_url,
+    language: s.language,
+  })),
+  partSongs: partSongs.map((ps) => ({
+    partId: ps.part_id,
+    songId: ps.song_id,
+  })),
 };
 
 writeFileSync(
@@ -95,6 +130,8 @@ console.log(`  ${roads.length} roads`);
 console.log(`  ${banners.length} banners`);
 console.log(`  ${assets.length} assets`);
 console.log(`  ${junctions.length} junctions`);
+console.log(`  ${parts.length} highway parts`);
+console.log(`  ${songs.length} MIDI songs`);
 console.log(`  Output: ${GENERATED_DIR}/data.json`);
 
 db.close();

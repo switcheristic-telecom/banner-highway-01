@@ -6,6 +6,9 @@ import { NavigationController } from './core/NavigationController';
 import { RenderPipeline } from './core/RenderPipeline';
 import { loadingManager } from './utils/LoadingManager';
 import { loadSceneData } from './data/DataProvider';
+import { MusicManager } from './audio/MusicManager';
+import { createMusicPanel, togglePanel as toggleMusicPanel } from './audio/MusicControls';
+import { reverbReady } from './audio/AudioEngine';
 
 class BannerHighwayApp {
   canvas: HTMLCanvasElement;
@@ -17,6 +20,7 @@ class BannerHighwayApp {
   bannerManager!: BannerManager;
   navigationController!: NavigationController;
   renderPipeline!: RenderPipeline;
+  musicManager!: MusicManager;
 
   constructor() {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -57,6 +61,17 @@ class BannerHighwayApp {
         this.roadSystem,
         this.sceneManager.camera,
       );
+
+      loadingManager.setStatus('Initializing music...');
+      this.musicManager = new MusicManager(
+        sceneData.parts,
+        sceneData.songs,
+        sceneData.partSongs,
+        this.roadSystem,
+      );
+      createMusicPanel();
+      reverbReady.then(() => console.log('Reverb IR ready'));
+
       loadingManager.updateProgress('init', 100);
 
       loadingManager.complete();
@@ -85,7 +100,15 @@ class BannerHighwayApp {
       if (e.key === 'b' || e.key === 'B') {
         this.roadSystem.toggleBlocks();
       }
+      if (e.key === 'm' || e.key === 'M') {
+        toggleMusicPanel();
+      }
     });
+
+    const musicToggle = document.getElementById('music-toggle');
+    if (musicToggle) {
+      musicToggle.addEventListener('click', () => toggleMusicPanel());
+    }
   }
 
   handleResize() {
@@ -106,6 +129,8 @@ class BannerHighwayApp {
 
     const currentPosition = this.navigationController.getCurrentPosition();
     this.bannerManager.update(deltaTime, currentPosition);
+    this.musicManager.update(currentPosition);
+    this.musicManager.tick(deltaTime);
 
     this.renderPipeline.render();
   }
@@ -126,6 +151,7 @@ class BannerHighwayApp {
 
   dispose() {
     if (this.animationId) cancelAnimationFrame(this.animationId);
+    this.musicManager?.dispose();
     this.bannerManager?.dispose();
     this.roadSystem?.dispose();
     this.renderPipeline?.dispose();

@@ -34,5 +34,8 @@ export async function loadSceneData(): Promise<SceneData> {
   return {
     roadNetwork: raw.roadNetwork,
     banners: raw.banners.map((b) => resolveForRender(b, assetMap)),
+    parts: raw.parts ?? [],
+    songs: raw.songs ?? [],
+    partSongs: raw.partSongs ?? [],
   };
 }

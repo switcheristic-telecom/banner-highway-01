@@ -351,3 +351,140 @@ body {
   font-family: inherit;
 }
 .tt-asset-btns button:hover { background: #2a2a2a; color: #fff; }
+
+/* Part tooltip */
+#part-tooltip {
+  display: none;
+  position: absolute;
+  z-index: 10;
+  background: #141414;
+  border: 1px solid #e0a020;
+  border-radius: 6px;
+  padding: 10px 12px;
+  width: 220px;
+  pointer-events: auto;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6);
+}
+#part-tooltip.active { display: block; }
+#part-tooltip h4 {
+  font-size: 11px;
+  color: #e0a020;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+#part-tooltip label {
+  display: block;
+  font-size: 10px;
+  color: #888;
+  margin-bottom: 1px;
+  margin-top: 6px;
+}
+#part-tooltip input {
+  width: 100%;
+  padding: 3px 6px;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 3px;
+  color: #ddd;
+  font-family: inherit;
+  font-size: 11px;
+}
+#part-tooltip .tt-btn-row {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+#part-tooltip .tt-btn-row button {
+  flex: 1;
+  padding: 4px;
+  background: #1e1e1e;
+  color: #ccc;
+  border: 1px solid #333;
+  border-radius: 3px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 10px;
+}
+#part-tooltip .tt-btn-row button.save { background: #e0a020; color: #000; border-color: #e0a020; }
+#part-tooltip .tt-btn-row button.del { border-color: #a03030; }
+#part-tooltip .tt-btn-row button.del:hover { background: #a03030; color: #fff; }
+
+/* Part song checklist */
+.pt-song-list {
+  max-height: 120px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+.pt-song-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  padding: 2px 0;
+  color: #ccc;
+}
+.pt-song-item input[type="checkbox"] { cursor: pointer; }
+
+/* Part list in sidebar */
+.part-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: #1a1a1a;
+  border: 1px solid #222;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+}
+.part-item:hover { border-color: #444; }
+.part-item.selected { border-color: #e0a020; background: #1f1a0d; }
+.part-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.part-item .part-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.part-item .part-t { color: #666; font-size: 10px; }
+
+/* Song list in sidebar */
+.song-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  margin-bottom: 4px;
+  background: #1a1a1a;
+  border: 1px solid #222;
+  border-radius: 4px;
+  font-size: 11px;
+}
+.song-item .song-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #ccc; }
+.song-item .song-lang { color: #666; font-size: 9px; }
+.song-item .song-del {
+  background: none;
+  border: none;
+  color: #666;
+  cursor: pointer;
+  font-size: 12px;
+  padding: 0 2px;
+}
+.song-item .song-del:hover { color: #a03030; }
+
+#song-upload-btn {
+  display: block;
+  width: 100%;
+  padding: 6px;
+  margin-top: 8px;
+  background: #1e1e1e;
+  color: #ccc;
+  border: 1px dashed #444;
+  border-radius: 4px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 11px;
+  text-align: center;
+}
+#song-upload-btn:hover { border-color: #e0a020; color: #fff; }

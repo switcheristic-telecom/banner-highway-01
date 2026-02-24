@@ -53,13 +53,38 @@ export interface BannerRenderData extends BannerPlacement {
   caption: string;
 }
 
+export interface HighwayPart {
+  id: string;
+  roadId: string;
+  startT: number;
+}
+
+export interface MidiSong {
+  id: string;
+  name: string;
+  filePath: string;
+  sourceUrl: string;
+  language: string;
+}
+
+export interface PartSongAssignment {
+  partId: string;
+  songId: string;
+}
+
 export interface RawSceneData {
   roadNetwork: RoadNetwork;
   banners: BannerPlacement[];
   assets: BannerAsset[];
+  parts: HighwayPart[];
+  songs: MidiSong[];
+  partSongs: PartSongAssignment[];
 }
 
 export interface SceneData {
   roadNetwork: RoadNetwork;
   banners: BannerRenderData[];
+  parts: HighwayPart[];
+  songs: MidiSong[];
+  partSongs: PartSongAssignment[];
 }
