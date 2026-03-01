@@ -329,17 +329,17 @@ body {
 }
 
 .rotate-icon {
-  width: 80px;
-  height: 64px;
+  width: 40px;
+  height: 56px;
   color: #03a062;
   margin-bottom: 20px;
-  animation: rock 2.5s ease-in-out infinite;
+  animation: rock 3s ease-in-out infinite;
 }
 
 @keyframes rock {
-  0%, 100% { transform: rotate(0deg); }
-  40% { transform: rotate(-90deg); }
-  60% { transform: rotate(-90deg); }
+  0%, 20% { transform: rotate(0deg); }
+  40%, 70% { transform: rotate(90deg); }
+  90%, 100% { transform: rotate(0deg); }
 }
 
 .rotate-text {
