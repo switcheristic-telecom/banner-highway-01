@@ -1,0 +1,10 @@
+{
+  "name": "Banner Highway",
+  "short_name": "Banner Highway",
+  "description": "A browser-based visual poetry project reimagining Burma-Shave for the Information Superhighway.",
+  "start_url": "/",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#000000",
+  "theme_color": "#000000"
+}

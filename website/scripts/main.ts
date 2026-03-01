@@ -109,6 +109,9 @@ class BannerHighwayApp {
 
   setupEventListeners() {
     window.addEventListener('resize', () => this.handleResize());
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', () => this.handleResize());
+    }
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'c' || e.key === 'C') {
@@ -196,10 +199,44 @@ class BannerHighwayApp {
       if (progress) progress.style.display = 'none';
       if (loadingScreen) loadingScreen.classList.add('enter-ready');
       btn.addEventListener('click', async () => {
+        await this.enterImmersive();
         await ensureAudioStarted();
         this.hideLoadingScreen();
+        this.setupOrientationGate();
       }, { once: true });
     }
+  }
+
+  private isMobile() {
+    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  }
+
+  async enterImmersive() {
+    if (!this.isMobile()) return;
+
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch (_) { /* iOS / unsupported — expected */ }
+
+    try {
+      await screen.orientation.lock('landscape');
+    } catch (_) { /* iOS / non-fullscreen context — expected */ }
+  }
+
+  private setupOrientationGate() {
+    const overlay = document.getElementById('rotate-overlay');
+    if (!overlay) return;
+
+    if (!this.isMobile()) return;
+
+    const mql = window.matchMedia('(orientation: portrait)');
+
+    const update = (portrait: boolean) => {
+      overlay.classList.toggle('visible', portrait);
+    };
+
+    update(mql.matches);
+    mql.addEventListener('change', (e) => update(e.matches));
   }
 
   hideLoadingScreen() {

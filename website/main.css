@@ -29,7 +29,13 @@ body {
 #app {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   position: relative;
+  padding:
+    env(safe-area-inset-top, 0px)
+    env(safe-area-inset-right, 0px)
+    env(safe-area-inset-bottom, 0px)
+    env(safe-area-inset-left, 0px);
 }
 
 #canvas {
@@ -277,11 +283,44 @@ body {
   contain: layout style paint;
 }
 
-@media (max-width: 768px) {
+@media (pointer: coarse) {
+  body {
+    font-size: 16px;
+  }
+
+  .title-en {
+    font-size: 14px;
+  }
+
+  .title-zh {
+    font-size: 18px;
+  }
+
+  #enter-btn {
+    padding: 10px 30px;
+    font-size: 13px;
+  }
+
+  .series-label {
+    font-size: 9px;
+    margin-top: 20px;
+  }
+
+  .loading-status {
+    font-size: 12px;
+  }
+
   #banner-caption {
     font-size: 14px;
     padding: 6px 14px;
-    bottom: 40px;
+    bottom: 30px;
+  }
+
+  #instructions-panel {
+    bottom: 12px;
+    left: 12px;
+    padding: 10px 14px;
+    font-size: 12px;
   }
 }
 
@@ -313,5 +352,44 @@ body {
 #instructions-panel strong {
   color: #03a062;
   font-weight: bold;
+}
+
+/* Rotate device overlay — hidden by default, shown via JS in portrait on mobile */
+#rotate-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+#rotate-overlay.visible {
+  display: flex;
+}
+
+.rotate-content {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rotate-icon {
+  width: 80px;
+  height: 64px;
+  color: #03a062;
+  margin-bottom: 20px;
+  animation: rock 2.5s ease-in-out infinite;
+}
+
+@keyframes rock {
+  0%, 100% { transform: rotate(0deg); }
+  40% { transform: rotate(-90deg); }
+  60% { transform: rotate(-90deg); }
+}
+
+.rotate-text {
+  font-size: 14px;
+  letter-spacing: 1px;
 }
 
