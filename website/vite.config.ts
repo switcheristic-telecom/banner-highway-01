@@ -21,6 +21,7 @@ export default defineConfig({
   publicDir: false,
   server: {
     port: 3000,
+    host: true,
     open: true,
     proxy: {
       '/api': {
@@ -41,10 +42,13 @@ export default defineConfig({
     {
       name: 'copy-assets',
       closeBundle() {
-        // Copy assets/ → dist/assets/ preserving the /assets/ URL prefix
         const src = path.resolve(__dirname, 'assets');
         const dest = path.resolve(__dirname, 'dist', 'assets');
         copyDirSync(src, dest);
+        const manifest = path.resolve(__dirname, 'manifest.json');
+        if (fs.existsSync(manifest)) {
+          fs.copyFileSync(manifest, path.resolve(__dirname, 'dist', 'manifest.json'));
+        }
       },
     },
   ],

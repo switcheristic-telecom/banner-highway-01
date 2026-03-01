@@ -14,6 +14,7 @@ class BannerHighwayApp {
   canvas: HTMLCanvasElement;
   isInitialized: boolean;
   animationId: number | null;
+  private resizeTimer: ReturnType<typeof setTimeout> | null = null;
   sceneManager!: SceneManager;
   assetLoader!: AssetLoader;
   roadSystem!: RoadSystem;
@@ -108,7 +109,14 @@ class BannerHighwayApp {
   }
 
   setupEventListeners() {
-    window.addEventListener('resize', () => this.handleResize());
+    const debouncedResize = () => {
+      if (this.resizeTimer) clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => this.handleResize(), 100);
+    };
+    window.addEventListener('resize', debouncedResize);
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', debouncedResize);
+    }
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'c' || e.key === 'C') {
@@ -196,10 +204,46 @@ class BannerHighwayApp {
       if (progress) progress.style.display = 'none';
       if (loadingScreen) loadingScreen.classList.add('enter-ready');
       btn.addEventListener('click', async () => {
+        await this.enterImmersive();
         await ensureAudioStarted();
         this.hideLoadingScreen();
+        this.navigationController.inputEnabled = true;
+        this.setupOrientationGate();
       }, { once: true });
     }
+  }
+
+  private isTouchDevice() {
+    return window.matchMedia('(pointer: coarse)').matches;
+  }
+
+  async enterImmersive() {
+    if (!this.isTouchDevice()) return;
+
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch (_) { /* iOS / unsupported — expected */ }
+
+    try {
+      await screen.orientation.lock('landscape');
+    } catch (_) { /* iOS / non-fullscreen context — expected */ }
+  }
+
+  private setupOrientationGate() {
+    const overlay = document.getElementById('rotate-overlay');
+    if (!overlay) return;
+
+    if (!this.isTouchDevice()) return;
+
+    const mql = window.matchMedia('(orientation: portrait)');
+
+    const update = (portrait: boolean) => {
+      overlay.classList.toggle('visible', portrait);
+      this.navigationController.inputEnabled = !portrait;
+    };
+
+    update(mql.matches);
+    mql.addEventListener('change', (e) => update(e.matches));
   }
 
   hideLoadingScreen() {

@@ -29,6 +29,7 @@ body {
 #app {
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   position: relative;
 }
 
@@ -262,7 +263,7 @@ body {
 
 #banner-caption {
   position: fixed;
-  bottom: 60px;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.85);
@@ -277,18 +278,10 @@ body {
   contain: layout style paint;
 }
 
-@media (max-width: 768px) {
-  #banner-caption {
-    font-size: 14px;
-    padding: 6px 14px;
-    bottom: 40px;
-  }
-}
-
 #instructions-panel {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: calc(20px + env(safe-area-inset-left, 0px));
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
   padding: 15px 20px;
@@ -313,5 +306,85 @@ body {
 #instructions-panel strong {
   color: #03a062;
   font-weight: bold;
+}
+
+/* Rotate device overlay — hidden by default, shown via JS in portrait on mobile */
+#rotate-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+}
+
+#rotate-overlay.visible {
+  display: flex;
+}
+
+.rotate-content {
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.rotate-icon {
+  width: 40px;
+  height: 56px;
+  color: #03a062;
+  margin-bottom: 20px;
+  animation: rock 3s ease-in-out infinite;
+}
+
+@keyframes rock {
+  0%, 20% { transform: rotate(0deg); }
+  40%, 70% { transform: rotate(90deg); }
+  90%, 100% { transform: rotate(0deg); }
+}
+
+.rotate-text {
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+@media (pointer: coarse) {
+  body {
+    font-size: 16px;
+  }
+
+  .title-en {
+    font-size: 14px;
+  }
+
+  .title-zh {
+    font-size: 18px;
+  }
+
+  #enter-btn {
+    padding: 10px 30px;
+    font-size: 13px;
+  }
+
+  .series-label {
+    font-size: 9px;
+    margin-top: 20px;
+  }
+
+  .loading-status {
+    font-size: 12px;
+  }
+
+  #banner-caption {
+    font-size: 14px;
+    padding: 6px 14px;
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #instructions-panel {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    padding: 10px 14px;
+    font-size: 12px;
+  }
 }
 

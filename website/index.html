@@ -2,8 +2,18 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover"
+    />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
+    <meta name="mobile-web-app-capable" content="yes" />
     <title>Get on the fast lane, 汽车是旅行的工具</title>
+    <link rel="manifest" href="/manifest.json" />
     <link rel="stylesheet" href="main.css" />
   </head>
   <body>
@@ -37,6 +47,29 @@
           <strong>Arrow</strong> or <strong>scroll up/down</strong> to move
           back/forward
         </div>
+      </div>
+    </div>
+
+    <!-- Rotate device overlay (shown in portrait on mobile) -->
+    <div id="rotate-overlay">
+      <div class="rotate-content">
+        <svg
+          class="rotate-icon"
+          viewBox="0 0 50 70"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <rect
+            x="8"
+            y="5"
+            width="34"
+            height="60"
+            rx="0"
+            stroke="currentColor"
+            stroke-width="2.5"
+          />
+        </svg>
+        <p class="rotate-text">Rotate your device to landscape</p>
       </div>
     </div>
 
