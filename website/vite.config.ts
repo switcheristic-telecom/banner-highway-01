@@ -45,10 +45,10 @@ export default defineConfig({
         const src = path.resolve(__dirname, 'assets');
         const dest = path.resolve(__dirname, 'dist', 'assets');
         copyDirSync(src, dest);
-        fs.copyFileSync(
-          path.resolve(__dirname, 'manifest.json'),
-          path.resolve(__dirname, 'dist', 'manifest.json'),
-        );
+        const manifest = path.resolve(__dirname, 'manifest.json');
+        if (fs.existsSync(manifest)) {
+          fs.copyFileSync(manifest, path.resolve(__dirname, 'dist', 'manifest.json'));
+        }
       },
     },
   ],

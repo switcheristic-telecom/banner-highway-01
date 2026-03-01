@@ -31,11 +31,6 @@ body {
   height: 100vh;
   height: 100dvh;
   position: relative;
-  padding:
-    env(safe-area-inset-top, 0px)
-    env(safe-area-inset-right, 0px)
-    env(safe-area-inset-bottom, 0px)
-    env(safe-area-inset-left, 0px);
 }
 
 #canvas {
@@ -268,7 +263,7 @@ body {
 
 #banner-caption {
   position: fixed;
-  bottom: 60px;
+  bottom: calc(60px + env(safe-area-inset-bottom, 0px));
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.85);
@@ -283,51 +278,10 @@ body {
   contain: layout style paint;
 }
 
-@media (pointer: coarse) {
-  body {
-    font-size: 16px;
-  }
-
-  .title-en {
-    font-size: 14px;
-  }
-
-  .title-zh {
-    font-size: 18px;
-  }
-
-  #enter-btn {
-    padding: 10px 30px;
-    font-size: 13px;
-  }
-
-  .series-label {
-    font-size: 9px;
-    margin-top: 20px;
-  }
-
-  .loading-status {
-    font-size: 12px;
-  }
-
-  #banner-caption {
-    font-size: 14px;
-    padding: 6px 14px;
-    bottom: 30px;
-  }
-
-  #instructions-panel {
-    bottom: 12px;
-    left: 12px;
-    padding: 10px 14px;
-    font-size: 12px;
-  }
-}
-
 #instructions-panel {
   position: fixed;
-  bottom: 20px;
-  left: 20px;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: calc(20px + env(safe-area-inset-left, 0px));
   background: rgba(0, 0, 0, 0.8);
   color: #fff;
   padding: 15px 20px;
@@ -391,5 +345,46 @@ body {
 .rotate-text {
   font-size: 14px;
   letter-spacing: 1px;
+}
+
+@media (pointer: coarse) {
+  body {
+    font-size: 16px;
+  }
+
+  .title-en {
+    font-size: 14px;
+  }
+
+  .title-zh {
+    font-size: 18px;
+  }
+
+  #enter-btn {
+    padding: 10px 30px;
+    font-size: 13px;
+  }
+
+  .series-label {
+    font-size: 9px;
+    margin-top: 20px;
+  }
+
+  .loading-status {
+    font-size: 12px;
+  }
+
+  #banner-caption {
+    font-size: 14px;
+    padding: 6px 14px;
+    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+  }
+
+  #instructions-panel {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    padding: 10px 14px;
+    font-size: 12px;
+  }
 }
 

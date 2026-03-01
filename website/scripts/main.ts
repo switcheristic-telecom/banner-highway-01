@@ -14,6 +14,7 @@ class BannerHighwayApp {
   canvas: HTMLCanvasElement;
   isInitialized: boolean;
   animationId: number | null;
+  private resizeTimer: ReturnType<typeof setTimeout> | null = null;
   sceneManager!: SceneManager;
   assetLoader!: AssetLoader;
   roadSystem!: RoadSystem;
@@ -108,9 +109,13 @@ class BannerHighwayApp {
   }
 
   setupEventListeners() {
-    window.addEventListener('resize', () => this.handleResize());
+    const debouncedResize = () => {
+      if (this.resizeTimer) clearTimeout(this.resizeTimer);
+      this.resizeTimer = setTimeout(() => this.handleResize(), 100);
+    };
+    window.addEventListener('resize', debouncedResize);
     if (window.visualViewport) {
-      window.visualViewport.addEventListener('resize', () => this.handleResize());
+      window.visualViewport.addEventListener('resize', debouncedResize);
     }
 
     window.addEventListener('keydown', (e) => {
@@ -207,12 +212,12 @@ class BannerHighwayApp {
     }
   }
 
-  private isMobile() {
-    return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  private isTouchDevice() {
+    return window.matchMedia('(pointer: coarse)').matches;
   }
 
   async enterImmersive() {
-    if (!this.isMobile()) return;
+    if (!this.isTouchDevice()) return;
 
     try {
       await document.documentElement.requestFullscreen();
@@ -227,7 +232,7 @@ class BannerHighwayApp {
     const overlay = document.getElementById('rotate-overlay');
     if (!overlay) return;
 
-    if (!this.isMobile()) return;
+    if (!this.isTouchDevice()) return;
 
     const mql = window.matchMedia('(orientation: portrait)');
 
