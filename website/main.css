@@ -313,7 +313,7 @@ body {
   display: none;
   position: fixed;
   inset: 0;
-  background: #000;
+  background: rgba(0, 0, 0, 0.65);
   z-index: 200;
   align-items: center;
   justify-content: center;
