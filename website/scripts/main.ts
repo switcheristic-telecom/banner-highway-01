@@ -207,6 +207,7 @@ class BannerHighwayApp {
         await this.enterImmersive();
         await ensureAudioStarted();
         this.hideLoadingScreen();
+        this.navigationController.inputEnabled = true;
         this.setupOrientationGate();
       }, { once: true });
     }
@@ -238,6 +239,7 @@ class BannerHighwayApp {
 
     const update = (portrait: boolean) => {
       overlay.classList.toggle('visible', portrait);
+      this.navigationController.inputEnabled = !portrait;
     };
 
     update(mql.matches);

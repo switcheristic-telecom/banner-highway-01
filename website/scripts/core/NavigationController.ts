@@ -51,6 +51,7 @@ export class NavigationController {
   instructionsHidden: boolean;
   instructionsHideThreshold: number;
 
+  inputEnabled: boolean;
   attentionZones: BannerAttentionZone[];
   zonesBuilt: boolean;
   firstFrame: boolean;
@@ -89,6 +90,7 @@ export class NavigationController {
     this.instructionsHidden = false;
     this.instructionsHideThreshold = 0.01;
 
+    this.inputEnabled = false;
     this.attentionZones = [];
     this.zonesBuilt = false;
     this.firstFrame = true;
@@ -165,14 +167,21 @@ export class NavigationController {
   }
 
   setupEventListeners() {
-    window.addEventListener('keydown', (e) => this.handleKeyDown(e));
-    window.addEventListener('keyup', (e) => this.handleKeyUp(e));
-    window.addEventListener('wheel', (e) => this.handleWheel(e), { passive: false });
+    window.addEventListener('keydown', (e) => {
+      if (this.inputEnabled) this.handleKeyDown(e);
+    });
+    window.addEventListener('keyup', (e) => {
+      if (this.inputEnabled) this.handleKeyUp(e);
+    });
+    window.addEventListener('wheel', (e) => {
+      if (this.inputEnabled) this.handleWheel(e);
+    }, { passive: false });
 
     let touchStartY = 0;
     let isTouchScrolling = false;
 
     window.addEventListener('touchstart', (e) => {
+      if (!this.inputEnabled) return;
       if (e.touches.length === 1) {
         touchStartY = e.touches[0].clientY;
         isTouchScrolling = true;
@@ -183,7 +192,7 @@ export class NavigationController {
     });
 
     window.addEventListener('touchmove', (e) => {
-      if (!isTouchScrolling) return;
+      if (!this.inputEnabled || !isTouchScrolling) return;
       if (e.touches.length === 1) {
         e.preventDefault();
         const currentY = e.touches[0].clientY;
