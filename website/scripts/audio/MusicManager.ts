@@ -16,7 +16,7 @@ export class MusicManager {
 
   private currentPartId: string | null = null;
   private currentSongId: string | null = null;
-  private audioStarted = false;
+  private enabled = false;
   private loading = false;
 
   // Fade state
@@ -105,11 +105,11 @@ export class MusicManager {
 
   /** Call after user gesture has started the AudioContext. */
   enable() {
-    this.audioStarted = true;
+    this.enabled = true;
   }
 
   async update(currentPosition: { roadId: string; t: number }) {
-    if (!this.audioStarted) return;
+    if (!this.enabled) return;
     const part = this.findPartAtPosition(currentPosition.roadId, currentPosition.t);
     const partId = part?.id ?? null;
 

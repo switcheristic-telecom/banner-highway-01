@@ -36,10 +36,7 @@ function disposeTrackSynths() {
   trackSynths = [];
 }
 
-function createSynthForTrack(channel: number, program: number): Tone.PolySynth | null {
-  // Skip drum channel (MIDI channel 10 = index 9)
-  if (channel === 9) return null;
-
+function createSynthForTrack(program: number): Tone.PolySynth {
   let synth: Tone.PolySynth;
 
   if (program <= 7) {
@@ -197,10 +194,8 @@ function scheduleMidi(): void {
     : 0;
 
   for (const track of activeTracks) {
-    const channel = track.channel;
     const program = track.instrument?.number ?? 0;
-    const synth = createSynthForTrack(channel, program);
-    if (!synth) continue;
+    const synth = createSynthForTrack(program);
 
     synth.volume.value += trackGainOffset;
     trackSynths.push(synth);
@@ -217,6 +212,11 @@ function scheduleMidi(): void {
 export function play(): void {
   if (!currentMidi) return;
   scheduleMidi();
+
+  // Auto-stop when the MIDI reaches its end so isPlaying stays accurate.
+  const duration = currentMidi.duration;
+  transport.schedule(() => { stop(); }, duration + 0.5);
+
   transport.start(undefined, 0);
   isPlaying = true;
 }

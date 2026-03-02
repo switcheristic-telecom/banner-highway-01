@@ -13,7 +13,7 @@ const synth = new Tone.PolySynth({
 // --- Effects chain: Chorus → FeedbackDelay → Reverb → EQ3 → Limiter → Destination ---
 const chorus = new Tone.Chorus({ frequency: 4, delayTime: 2.5, depth: 0.5, wet: 0 });
 const feedbackDelay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.4, wet: 0 });
-const reverb = new Tone.Reverb({ decay: 2, preDelay: 0.01, wet: 0.35 });
+const reverb = new Tone.Reverb({ decay: 2, preDelay: 0.01, wet: 0 });
 const eq3 = new Tone.EQ3({ low: 0, mid: 0, high: 0 });
 const limiter = new Tone.Limiter(-1);
 
@@ -77,11 +77,15 @@ export function getTransport(): ReturnType<typeof Tone.getTransport> { return To
 export function getBpm(): number { return Tone.getTransport().bpm.value; }
 export function setBpm(v: number): void { Tone.getTransport().bpm.value = v; }
 
+let chorusStarted = false;
 export async function ensureAudioStarted(): Promise<void> {
   if (Tone.getContext().state !== 'running') {
     await Tone.start();
   }
-  chorus.start();
+  if (!chorusStarted) {
+    chorus.start();
+    chorusStarted = true;
+  }
 }
 
 export function applySettings(s: {
