@@ -74,6 +74,7 @@ export default defineConfig(() => ({
     },
   ],
   build: {
+    chunkSizeWarningLimit: 1000,
     outDir: 'dist',
     assetsDir: 'vite-assets',
     rollupOptions: {
