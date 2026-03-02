@@ -108,6 +108,20 @@ export class MusicManager {
     this.enabled = true;
   }
 
+  disable() {
+    this.enabled = false;
+    this.pendingSongUrl = null;
+    if (MidiPlayer.getIsPlaying()) {
+      this.fadeOutAndStop();
+    }
+    this.currentPartId = null;
+    this.currentSongId = null;
+  }
+
+  isEnabled(): boolean {
+    return this.enabled;
+  }
+
   async update(currentPosition: { roadId: string; t: number }) {
     if (!this.enabled) return;
     const part = this.findPartAtPosition(currentPosition.roadId, currentPosition.t);

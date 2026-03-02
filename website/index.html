@@ -12,7 +12,36 @@
       content="black-translucent"
     />
     <meta name="mobile-web-app-capable" content="yes" />
-    <title>Get on the fast lane, 汽车是旅行的工具</title>
+    <meta
+      name="description"
+      content="Banner Highway 01: Get on the fast lane, 汽车是旅行的工具. A browser-based visual poetry series reimagining classic Burma-Shave roadside advertisement-poems for the Information Superhighway."
+    />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta
+      property="og:title"
+      content="Banner Highway 01"
+    />
+    <meta
+      property="og:description"
+      content="Banner Highway 01: Get on the fast lane, 汽车是旅行的工具. A browser-based visual poetry series reimagining classic Burma-Shave roadside advertisement-poems for the Information Superhighway."
+    />
+    <meta property="og:image" content="/assets/BannerHighway01Opengraph.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta
+      name="twitter:title"
+      content="Banner Highway 01"
+    />
+    <meta
+      name="twitter:description"
+      content="Banner Highway 01: Get on the fast lane, 汽车是旅行的工具. A browser-based visual poetry series reimagining classic Burma-Shave roadside advertisement-poems for the Information Superhighway."
+    />
+    <meta name="twitter:image" content="/assets/BannerHighway01Opengraph.png" />
+
+    <title>Banner Highway 01</title>
     <link
       rel="icon"
       type="image/png"
@@ -53,7 +82,7 @@
         </div>
         <div class="loading-status" id="loading-status">Initializing...</div>
 
-        <button id="enter-btn" style="display: none">Enter</button>
+        <button id="start-btn" style="display: none">Start</button>
       </div>
     </div>
 
@@ -73,6 +102,19 @@
 
       <!-- About -->
       <button id="about-btn" title="About">i</button>
+      <button id="music-btn" title="Toggle music">
+        <svg class="music-icon music-off" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="7" width="4" height="6" />
+          <path d="M7 8l6-3v10l-6-3" />
+          <line x1="3" y1="17" x2="17" y2="3" />
+        </svg>
+        <svg class="music-icon music-on" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="7" width="4" height="6" />
+          <path d="M7 8l6-3v10l-6-3" />
+          <path d="M16 6c1.5 1.5 1.5 6.5 0 8" />
+          <path d="M18 4c2.5 3 2.5 9 0 12" />
+        </svg>
+      </button>
       <div id="about-modal">
         <div class="about-backdrop"></div>
         <div class="about-content">
@@ -100,7 +142,7 @@
               <a href="https://swtch.tel" target="_blank" rel="noopener"
                 >Switcheristic Telecommunications</a
               >
-              &mdash;
+              :
               <a href="https://lewei.me/" target="_blank" rel="noopener"
                 >Richard Lewei Huang</a
               >
@@ -123,7 +165,7 @@
                   rel="noopener"
                   >bossa.mid</a
                 >
-                &mdash; An Invitation to Roland World of Music
+                , An Invitation to Roland World of Music
               </li>
               <li>
                 <a
@@ -132,7 +174,7 @@
                   rel="noopener"
                   >poprock.mid</a
                 >
-                &mdash; An Invitation to Roland World of Music
+                , An Invitation to Roland World of Music
               </li>
               <li>
                 <a
@@ -141,7 +183,7 @@
                   rel="noopener"
                   >demo0004.mid</a
                 >
-                &mdash; Monster Media No. 12
+                , Monster Media No. 12
               </li>
               <li>
                 <a
@@ -150,7 +192,7 @@
                   rel="noopener"
                   >dreamy.mid</a
                 >
-                &mdash; Microsoft Multimedia Development Kit 0.9 Beta
+                , Microsoft Multimedia Development Kit 0.9 Beta
               </li>
             </ul>
           </section>

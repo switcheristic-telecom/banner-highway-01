@@ -116,8 +116,8 @@ class BannerHighwayApp {
       this.animate();
       this.setupEventListeners();
 
-      // Show "Enter Experience" button — user gesture needed for Web Audio
-      this.showEnterButton();
+      // Show "Start" button — user gesture needed for Web Audio
+      this.showStartButton();
     } catch (error: any) {
       console.error('Failed to initialize Banner Highway:', error);
       this.showError(error.message);
@@ -149,6 +149,21 @@ class BannerHighwayApp {
       aboutBtn.addEventListener('click', openAbout);
       aboutModal.querySelector('.about-backdrop')?.addEventListener('click', closeAbout);
       aboutModal.querySelector('.about-close')?.addEventListener('click', closeAbout);
+    }
+
+    // Music toggle
+    const musicBtn = document.getElementById('music-btn');
+    if (musicBtn) {
+      musicBtn.addEventListener('click', async () => {
+        if (this.musicManager.isEnabled()) {
+          this.musicManager.disable();
+          musicBtn.classList.remove('music-on');
+        } else {
+          await ensureAudioStarted();
+          this.musicManager.enable();
+          musicBtn.classList.add('music-on');
+        }
+      });
     }
 
     window.addEventListener('keydown', (e) => {
@@ -274,8 +289,8 @@ class BannerHighwayApp {
     this.sceneManager.updateSkyPrevEffect(prev.skyEffect);
   }
 
-  showEnterButton() {
-    const btn = document.getElementById('enter-btn');
+  showStartButton() {
+    const btn = document.getElementById('start-btn');
     const status = document.getElementById('loading-status');
     const progress = document.querySelector(
       '.progress-container',
@@ -285,7 +300,7 @@ class BannerHighwayApp {
       btn.style.display = '';
       if (status) status.style.display = 'none';
       if (progress) progress.style.display = 'none';
-      if (loadingScreen) loadingScreen.classList.add('enter-ready');
+      if (loadingScreen) loadingScreen.classList.add('start-ready');
       btn.addEventListener(
         'click',
         async () => {
@@ -295,6 +310,9 @@ class BannerHighwayApp {
           this.hideLoadingScreen();
           this.navigationController.inputEnabled = true;
           this.setupOrientationGate();
+          // Reflect that music is now on
+          const musicBtn = document.getElementById('music-btn');
+          if (musicBtn) musicBtn.classList.add('music-on');
         },
         { once: true },
       );
