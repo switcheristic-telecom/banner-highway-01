@@ -63,8 +63,6 @@ export class AssetLoader {
           texture.colorSpace = THREE.SRGBColorSpace;
           texture.generateMipmaps = true;
           this.textureCache.set(path, texture);
-          this.loadedAssets++;
-          this.updateProgress(this.loadedAssets, this.totalAssets);
           resolve(texture);
         },
         (progress: ProgressEvent) => {

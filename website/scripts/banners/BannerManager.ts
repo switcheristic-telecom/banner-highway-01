@@ -3,6 +3,7 @@ import { Billboard } from './Billboard';
 import type { AssetLoader } from '../utils/AssetLoader';
 import type { RoadSystem } from '../road/RoadSystem';
 import type { BannerRenderData } from '../../shared/types';
+import { loadingManager } from '../utils/LoadingManager';
 
 interface CaptionRange {
   bannerId: string;
@@ -72,11 +73,26 @@ export class BannerManager {
 
     const bannersByRoad = this.groupBannersByRoad(bannerInfos);
 
+    const allBanners: BannerRenderData[] = [];
     for (const [_roadId, banners] of bannersByRoad) {
       for (const banner of banners) {
-        await this.createBillboard(banner);
+        allBanners.push(banner);
       }
     }
+
+    let loaded = 0;
+    const total = allBanners.length;
+    loadingManager.updateProgress('banners', 0);
+
+    await Promise.all(
+      allBanners.map((banner) =>
+        this.createBillboard(banner).then((billboard) => {
+          loaded++;
+          loadingManager.updateProgress('banners', (loaded / total) * 100);
+          return billboard;
+        }),
+      ),
+    );
   }
 
   // ---------------------------------------------------------------------------

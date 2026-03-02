@@ -66,7 +66,6 @@ class BannerHighwayApp {
         this.roadSystem,
       );
       await this.bannerManager.loadBanners(sceneData.banners);
-      loadingManager.updateProgress('banners', 100);
 
       loadingManager.setStatus('Setting up navigation...');
       this.navigationController = new NavigationController(
