@@ -1,13 +1,14 @@
 import { Midi } from '@tonejs/midi';
 import * as Tone from 'tone';
 import { getEffectsInput, getTransport } from './AudioEngine';
+import { MASTER_VOLUME_DB, MAX_TRACKS, DRUM_CHANNEL, SKIP_LEAD_IN } from './constants';
 
 let currentMidi: Midi | null = null;
 let isPlaying = false;
 let trackSynths: Tone.PolySynth[] = [];
 
 /** Master volume for all MidiPlayer synths — used for fading */
-const volume = new Tone.Volume(0);
+const volume = new Tone.Volume(MASTER_VOLUME_DB);
 
 const transport = getTransport();
 
@@ -183,9 +184,8 @@ function scheduleMidi(): number {
 
   // Keep only non-drum, non-empty tracks; cap at MAX_TRACKS to avoid
   // overwhelming the Web Audio thread (which fails silently).
-  const MAX_TRACKS = 5;
   const activeTracks = currentMidi.tracks
-    .filter((t) => t.notes.length > 0 && t.channel !== 9)
+    .filter((t) => t.notes.length > 0 && t.channel !== DRUM_CHANNEL)
     .sort((a, b) => b.notes.length - a.notes.length)
     .slice(0, MAX_TRACKS);
 
@@ -224,7 +224,7 @@ export function play(): void {
   transport.schedule(() => { stop(); }, duration + 0.5);
 
   // Skip leading silence — jump to just before the first note.
-  const startOffset = Math.max(0, firstNoteTime - 0.05);
+  const startOffset = Math.max(0, firstNoteTime - SKIP_LEAD_IN);
   transport.start(undefined, startOffset);
   isPlaying = true;
 }
