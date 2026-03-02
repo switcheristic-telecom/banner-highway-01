@@ -1,6 +1,7 @@
 import type { HighwayPart, MidiSong, PartSongAssignment } from '../../shared/types';
 import type { RoadSystem } from '../road/RoadSystem';
 import * as MidiPlayer from './MidiPlayer';
+import { MASTER_VOLUME_DB, FADE_SPEED, FADE_OUT_TARGET, FADE_OUT_THRESHOLD } from './constants';
 
 interface ResolvedPart {
   id: string;
@@ -21,8 +22,8 @@ export class MusicManager {
 
   // Fade state
   private fadingOut = false;
-  private fadeVolume = -6;
-  private targetVolume = -6;
+  private fadeVolume = MASTER_VOLUME_DB;
+  private targetVolume = MASTER_VOLUME_DB;
   private pendingSongUrl: string | null = null;
 
   constructor(
@@ -159,7 +160,7 @@ export class MusicManager {
 
   private fadeOutAndStop() {
     this.fadingOut = true;
-    this.targetVolume = -60;
+    this.targetVolume = FADE_OUT_TARGET;
   }
 
   private async startSong(url: string) {
@@ -168,8 +169,8 @@ export class MusicManager {
 
     try {
       await MidiPlayer.loadMidi(url);
-      this.fadeVolume = -6;
-      this.targetVolume = -6;
+      this.fadeVolume = MASTER_VOLUME_DB;
+      this.targetVolume = MASTER_VOLUME_DB;
       MidiPlayer.setVolume(this.fadeVolume);
       MidiPlayer.play();
     } catch (err) {
@@ -183,14 +184,13 @@ export class MusicManager {
   tick(dt: number) {
     if (!this.fadingOut) return;
 
-    const FADE_SPEED = 30; // dB per second
     this.fadeVolume = Math.max(this.targetVolume, this.fadeVolume - FADE_SPEED * dt);
     MidiPlayer.setVolume(this.fadeVolume);
 
-    if (this.fadeVolume <= -59) {
+    if (this.fadeVolume <= FADE_OUT_THRESHOLD) {
       MidiPlayer.stop();
       this.fadingOut = false;
-      this.fadeVolume = -6;
+      this.fadeVolume = MASTER_VOLUME_DB;
       MidiPlayer.setVolume(this.fadeVolume);
 
       // If there's a pending song, start it

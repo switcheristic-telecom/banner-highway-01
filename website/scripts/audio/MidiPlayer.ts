@@ -1,13 +1,14 @@
 import { Midi } from '@tonejs/midi';
 import * as Tone from 'tone';
 import { getEffectsInput, getTransport } from './AudioEngine';
+import { MASTER_VOLUME_DB, MAX_TRACKS, DRUM_CHANNEL, SKIP_LEAD_IN } from './constants';
 
 let currentMidi: Midi | null = null;
 let isPlaying = false;
 let trackSynths: Tone.PolySynth[] = [];
 
 /** Master volume for all MidiPlayer synths — used for fading */
-const volume = new Tone.Volume(-6);
+const volume = new Tone.Volume(MASTER_VOLUME_DB);
 
 const transport = getTransport();
 
@@ -171,8 +172,9 @@ function createSynthForTrack(program: number): Tone.PolySynth {
   return synth;
 }
 
-function scheduleMidi(): void {
-  if (!currentMidi) return;
+/** Schedule all MIDI notes and return the time of the earliest note. */
+function scheduleMidi(): number {
+  if (!currentMidi) return 0;
   transport.cancel();
   disposeTrackSynths();
   ensureConnected();
@@ -182,9 +184,8 @@ function scheduleMidi(): void {
 
   // Keep only non-drum, non-empty tracks; cap at MAX_TRACKS to avoid
   // overwhelming the Web Audio thread (which fails silently).
-  const MAX_TRACKS = 5;
   const activeTracks = currentMidi.tracks
-    .filter((t) => t.notes.length > 0 && t.channel !== 9)
+    .filter((t) => t.notes.length > 0 && t.channel !== DRUM_CHANNEL)
     .sort((a, b) => b.notes.length - a.notes.length)
     .slice(0, MAX_TRACKS);
 
@@ -192,6 +193,8 @@ function scheduleMidi(): void {
   const trackGainOffset = activeTracks.length > 1
     ? -10 * Math.log10(activeTracks.length)
     : 0;
+
+  let firstNoteTime = Infinity;
 
   for (const track of activeTracks) {
     const program = track.instrument?.number ?? 0;
@@ -205,19 +208,24 @@ function scheduleMidi(): void {
       transport.schedule((t: number) => {
         synth.triggerAttackRelease(note.name, duration, t, note.velocity);
       }, note.time);
+      if (note.time < firstNoteTime) firstNoteTime = note.time;
     }
   }
+
+  return firstNoteTime === Infinity ? 0 : firstNoteTime;
 }
 
 export function play(): void {
   if (!currentMidi) return;
-  scheduleMidi();
+  const firstNoteTime = scheduleMidi();
 
   // Auto-stop when the MIDI reaches its end so isPlaying stays accurate.
   const duration = currentMidi.duration;
   transport.schedule(() => { stop(); }, duration + 0.5);
 
-  transport.start(undefined, 0);
+  // Skip leading silence — jump to just before the first note.
+  const startOffset = Math.max(0, firstNoteTime - SKIP_LEAD_IN);
+  transport.start(undefined, startOffset);
   isPlaying = true;
 }
 
