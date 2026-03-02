@@ -151,6 +151,21 @@ class BannerHighwayApp {
       aboutModal.querySelector('.about-close')?.addEventListener('click', closeAbout);
     }
 
+    // Music toggle
+    const musicBtn = document.getElementById('music-btn');
+    if (musicBtn) {
+      musicBtn.addEventListener('click', async () => {
+        if (this.musicManager.isEnabled()) {
+          this.musicManager.disable();
+          musicBtn.classList.remove('music-on');
+        } else {
+          await ensureAudioStarted();
+          this.musicManager.enable();
+          musicBtn.classList.add('music-on');
+        }
+      });
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (aboutModal?.classList.contains('visible')) closeAbout();
@@ -295,6 +310,9 @@ class BannerHighwayApp {
           this.hideLoadingScreen();
           this.navigationController.inputEnabled = true;
           this.setupOrientationGate();
+          // Reflect that music is now on
+          const musicBtn = document.getElementById('music-btn');
+          if (musicBtn) musicBtn.classList.add('music-on');
         },
         { once: true },
       );

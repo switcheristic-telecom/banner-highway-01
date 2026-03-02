@@ -160,7 +160,7 @@ body {
 
 .series-banner {
   /* margin-top: 30px; */
-  height: 60px;
+  height: 80px;
   width: auto;
   image-rendering: pixelated;
 }
@@ -363,6 +363,50 @@ body {
   color: #000;
 }
 
+/* Music toggle button */
+#music-btn {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: calc(62px + env(safe-area-inset-left, 0px));
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #03a062;
+  color: #03a062;
+  cursor: pointer;
+  z-index: 50;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition:
+    background 0.2s,
+    color 0.2s;
+}
+
+#music-btn:hover {
+  background: #03a062;
+  color: #000;
+}
+
+#music-btn .music-icon {
+  width: 16px;
+  height: 16px;
+  display: none;
+}
+
+#music-btn .music-off {
+  display: block;
+}
+
+#music-btn.music-on .music-off {
+  display: none;
+}
+
+#music-btn.music-on .music-on {
+  display: block;
+}
+
 /* About modal */
 #about-modal {
   display: none;
@@ -557,6 +601,18 @@ body {
     width: 28px;
     height: 28px;
     font-size: 16px;
+  }
+
+  #music-btn {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: calc(48px + env(safe-area-inset-left, 0px));
+    width: 28px;
+    height: 28px;
+  }
+
+  #music-btn .music-icon {
+    width: 14px;
+    height: 14px;
   }
 
   .about-content {
