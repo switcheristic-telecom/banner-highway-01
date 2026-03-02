@@ -45,12 +45,12 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   if (program <= 7) {
     // Piano
     synth = new Tone.PolySynth({
-      maxPolyphony: 16,
+      maxPolyphony: 48,
       voice: Tone.FMSynth,
       options: {
         harmonicity: 3,
         modulationIndex: 1,
-        envelope: { attack: 0.005, decay: 0.4, sustain: 0.2, release: 0.8 },
+        envelope: { attack: 0.005, decay: 0.4, sustain: 0.2, release: 0.4 },
         modulationEnvelope: { attack: 0.01, decay: 0.2, sustain: 0.3, release: 0.3 },
         volume: -8,
       },
@@ -58,12 +58,12 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   } else if (program >= 8 && program <= 15) {
     // Chromatic Percussion (celesta, glockenspiel, music box, vibraphone, etc.)
     synth = new Tone.PolySynth({
-      maxPolyphony: 12,
+      maxPolyphony: 32,
       voice: Tone.FMSynth,
       options: {
         harmonicity: 6,
         modulationIndex: 2,
-        envelope: { attack: 0.001, decay: 0.6, sustain: 0.05, release: 1.0 },
+        envelope: { attack: 0.001, decay: 0.6, sustain: 0.05, release: 0.5 },
         modulationEnvelope: { attack: 0.001, decay: 0.3, sustain: 0.1, release: 0.5 },
         volume: -10,
       },
@@ -71,7 +71,7 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   } else if (program >= 16 && program <= 23) {
     // Organ
     synth = new Tone.PolySynth({
-      maxPolyphony: 12,
+      maxPolyphony: 32,
       voice: Tone.AMSynth,
       options: {
         harmonicity: 2,
@@ -83,12 +83,12 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   } else if (program >= 24 && program <= 31) {
     // Guitar
     synth = new Tone.PolySynth({
-      maxPolyphony: 12,
+      maxPolyphony: 32,
       voice: Tone.FMSynth,
       options: {
         harmonicity: 2,
         modulationIndex: 3,
-        envelope: { attack: 0.002, decay: 0.3, sustain: 0.1, release: 0.5 },
+        envelope: { attack: 0.002, decay: 0.3, sustain: 0.1, release: 0.3 },
         modulationEnvelope: { attack: 0.01, decay: 0.1, sustain: 0.2, release: 0.3 },
         volume: -10,
       },
@@ -96,12 +96,12 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   } else if (program >= 32 && program <= 39) {
     // Bass
     synth = new Tone.PolySynth({
-      maxPolyphony: 8,
+      maxPolyphony: 16,
       voice: Tone.FMSynth,
       options: {
         harmonicity: 1,
         modulationIndex: 2,
-        envelope: { attack: 0.01, decay: 0.3, sustain: 0.6, release: 0.3 },
+        envelope: { attack: 0.01, decay: 0.3, sustain: 0.6, release: 0.2 },
         modulationEnvelope: { attack: 0.05, decay: 0.2, sustain: 0.5, release: 0.2 },
         volume: -6,
       },
@@ -109,23 +109,23 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   } else if (program >= 40 && program <= 55) {
     // Strings / Ensemble
     synth = new Tone.PolySynth({
-      maxPolyphony: 16,
+      maxPolyphony: 32,
       voice: Tone.AMSynth,
       options: {
         harmonicity: 2,
-        envelope: { attack: 0.3, decay: 0.5, sustain: 0.8, release: 1.0 },
-        modulationEnvelope: { attack: 0.5, decay: 0.3, sustain: 0.8, release: 0.8 },
+        envelope: { attack: 0.3, decay: 0.5, sustain: 0.8, release: 0.5 },
+        modulationEnvelope: { attack: 0.5, decay: 0.3, sustain: 0.8, release: 0.5 },
         volume: -12,
       },
     });
   } else if (program >= 56 && program <= 63) {
     // Brass
     synth = new Tone.PolySynth({
-      maxPolyphony: 12,
+      maxPolyphony: 32,
       voice: Tone.AMSynth,
       options: {
         harmonicity: 1.5,
-        envelope: { attack: 0.05, decay: 0.3, sustain: 0.7, release: 0.4 },
+        envelope: { attack: 0.05, decay: 0.3, sustain: 0.7, release: 0.3 },
         modulationEnvelope: { attack: 0.1, decay: 0.2, sustain: 0.5, release: 0.3 },
         volume: -10,
       },
@@ -133,12 +133,12 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   } else if (program >= 64 && program <= 79) {
     // Reed / Pipe (woodwinds)
     synth = new Tone.PolySynth({
-      maxPolyphony: 12,
+      maxPolyphony: 32,
       voice: Tone.FMSynth,
       options: {
         harmonicity: 2,
         modulationIndex: 1,
-        envelope: { attack: 0.03, decay: 0.2, sustain: 0.7, release: 0.4 },
+        envelope: { attack: 0.03, decay: 0.2, sustain: 0.7, release: 0.3 },
         modulationEnvelope: { attack: 0.05, decay: 0.15, sustain: 0.6, release: 0.3 },
         volume: -10,
       },
@@ -146,24 +146,24 @@ function createSynthForTrack(channel: number, program: number): Tone.PolySynth |
   } else if (program >= 88 && program <= 95) {
     // Synth Pad
     synth = new Tone.PolySynth({
-      maxPolyphony: 16,
+      maxPolyphony: 32,
       voice: Tone.AMSynth,
       options: {
         harmonicity: 2,
-        envelope: { attack: 0.4, decay: 0.5, sustain: 0.8, release: 1.2 },
-        modulationEnvelope: { attack: 0.6, decay: 0.4, sustain: 0.7, release: 1.0 },
+        envelope: { attack: 0.4, decay: 0.5, sustain: 0.8, release: 0.6 },
+        modulationEnvelope: { attack: 0.6, decay: 0.4, sustain: 0.7, release: 0.5 },
         volume: -14,
       },
     });
   } else {
     // Default / Synth Lead / Other
     synth = new Tone.PolySynth({
-      maxPolyphony: 16,
+      maxPolyphony: 32,
       voice: Tone.FMSynth,
       options: {
         harmonicity: 2,
         modulationIndex: 1.5,
-        envelope: { attack: 0.01, decay: 0.3, sustain: 0.5, release: 0.5 },
+        envelope: { attack: 0.01, decay: 0.3, sustain: 0.5, release: 0.3 },
         modulationEnvelope: { attack: 0.02, decay: 0.2, sustain: 0.4, release: 0.3 },
         volume: -8,
       },
@@ -183,12 +183,15 @@ function scheduleMidi(): void {
   const bpm = currentMidi.header.tempos[0]?.bpm ?? 120;
   transport.bpm.value = bpm;
 
-  // Count active (non-drum, non-empty) tracks to scale volumes
-  const activeTracks = currentMidi.tracks.filter(
-    (t) => t.notes.length > 0 && t.channel !== 9,
-  );
+  // Keep only non-drum, non-empty tracks; cap at MAX_TRACKS to avoid
+  // overwhelming the Web Audio thread (which fails silently).
+  const MAX_TRACKS = 5;
+  const activeTracks = currentMidi.tracks
+    .filter((t) => t.notes.length > 0 && t.channel !== 9)
+    .sort((a, b) => b.notes.length - a.notes.length)
+    .slice(0, MAX_TRACKS);
+
   // Reduce volume proportional to track count so summed output stays stable.
-  // For 1 track: 0 dB offset. For 8 tracks: ~-9 dB offset.
   const trackGainOffset = activeTracks.length > 1
     ? -10 * Math.log10(activeTracks.length)
     : 0;

@@ -220,6 +220,7 @@ class BannerHighwayApp {
         async () => {
           await this.enterImmersive();
           await ensureAudioStarted();
+          this.musicManager.enable();
           this.hideLoadingScreen();
           this.navigationController.inputEnabled = true;
           this.setupOrientationGate();

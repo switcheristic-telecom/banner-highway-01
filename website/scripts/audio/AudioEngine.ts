@@ -11,7 +11,7 @@ const synth = new Tone.PolySynth({
 }).toDestination();
 
 // --- Effects chain: Chorus → FeedbackDelay → Reverb → EQ3 → Limiter → Destination ---
-const chorus = new Tone.Chorus({ frequency: 4, delayTime: 2.5, depth: 0.5, wet: 0 }).start();
+const chorus = new Tone.Chorus({ frequency: 4, delayTime: 2.5, depth: 0.5, wet: 0 });
 const feedbackDelay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.4, wet: 0 });
 const reverb = new Tone.Reverb({ decay: 2, preDelay: 0.01, wet: 0.35 });
 const eq3 = new Tone.EQ3({ low: 0, mid: 0, high: 0 });
@@ -81,6 +81,7 @@ export async function ensureAudioStarted(): Promise<void> {
   if (Tone.getContext().state !== 'running') {
     await Tone.start();
   }
+  chorus.start();
 }
 
 export function applySettings(s: {

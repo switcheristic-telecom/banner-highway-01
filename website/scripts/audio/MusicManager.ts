@@ -1,7 +1,6 @@
 import type { HighwayPart, MidiSong, PartSongAssignment } from '../../shared/types';
 import type { RoadSystem } from '../road/RoadSystem';
 import * as MidiPlayer from './MidiPlayer';
-import { ensureAudioStarted } from './AudioEngine';
 
 interface ResolvedPart {
   id: string;
@@ -104,7 +103,13 @@ export class MusicManager {
     return available[Math.floor(Math.random() * available.length)];
   }
 
+  /** Call after user gesture has started the AudioContext. */
+  enable() {
+    this.audioStarted = true;
+  }
+
   async update(currentPosition: { roadId: string; t: number }) {
+    if (!this.audioStarted) return;
     const part = this.findPartAtPosition(currentPosition.roadId, currentPosition.t);
     const partId = part?.id ?? null;
 
@@ -148,11 +153,6 @@ export class MusicManager {
     this.loading = true;
 
     try {
-      if (!this.audioStarted) {
-        await ensureAudioStarted();
-        this.audioStarted = true;
-      }
-
       await MidiPlayer.loadMidi(url);
       this.fadeVolume = -6;
       this.targetVolume = -6;
