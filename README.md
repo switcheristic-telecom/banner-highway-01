@@ -1,4 +1,4 @@
-# Banner Highway
+# Banner Highway 01
 
 This is the repository for Banner Highway 01: Get on the Fast Lane, 汽车是旅行的工具, as featured in the HTML Review, March 2026 issue.
 
