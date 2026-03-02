@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { RoadSystem } from './road/RoadSystem';
 import { BannerManager } from './banners/BannerManager';
+import type { Billboard } from './banners/Billboard';
 import { AssetLoader } from './utils/AssetLoader';
 import { SceneManager } from './core/SceneManager';
 import { NavigationController } from './core/NavigationController';
@@ -30,6 +31,8 @@ class BannerHighwayApp {
   skyPartsByRoad: Map<string, HighwayPart[]> = new Map();
   private raycaster = new THREE.Raycaster();
   private pointerNdc = new THREE.Vector2();
+  private raycastMeshes: THREE.Object3D[] = [];
+  private meshToBillboard = new Map<THREE.Object3D, Billboard>();
 
   constructor() {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -165,22 +168,28 @@ class BannerHighwayApp {
     this.raycaster.setFromCamera(this.pointerNdc, this.sceneManager.camera);
     this.raycaster.layers.set(2); // BANNERS layer only
 
-    const meshes: THREE.Object3D[] = [];
+    // Reuse arrays — only include visible billboards that have a URL
+    this.raycastMeshes.length = 0;
+    this.meshToBillboard.clear();
     for (const billboard of this.bannerManager.billboards.values()) {
-      if (billboard.bannerMesh && billboard.group.visible) {
-        meshes.push(billboard.bannerMesh);
+      if (billboard.bannerMesh && billboard.group.visible && billboard.info.url) {
+        this.raycastMeshes.push(billboard.bannerMesh);
+        this.meshToBillboard.set(billboard.bannerMesh, billboard);
       }
     }
+    if (this.raycastMeshes.length === 0) return null;
 
-    const hits = this.raycaster.intersectObjects(meshes);
+    const hits = this.raycaster.intersectObjects(this.raycastMeshes);
     if (hits.length === 0) return null;
 
-    const hitMesh = hits[0].object;
-    for (const billboard of this.bannerManager.billboards.values()) {
-      if (billboard.bannerMesh === hitMesh && billboard.info.url) {
-        return billboard.info.url;
-      }
-    }
+    const billboard = this.meshToBillboard.get(hits[0].object);
+    if (!billboard) return null;
+
+    const url = billboard.info.url!;
+    try {
+      const protocol = new URL(url).protocol;
+      if (protocol === 'http:' || protocol === 'https:') return url;
+    } catch { /* malformed URL */ }
     return null;
   }
 
