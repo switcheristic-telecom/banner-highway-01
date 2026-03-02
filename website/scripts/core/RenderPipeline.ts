@@ -69,7 +69,6 @@ export class RenderPipeline {
     copyCPass.texture.format = THREE.RGBAFormat;
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const scanlineDensity = isMobile ? 2 : 1;
-    console.log(`Using scanline density: ${scanlineDensity}`);
     const passAEffect = new ScanlineEffect({ density: scanlineDensity });
     const pixelEffect = new PixelationEffect(2);
 
