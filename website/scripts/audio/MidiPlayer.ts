@@ -183,14 +183,23 @@ function scheduleMidi(): void {
   const bpm = currentMidi.header.tempos[0]?.bpm ?? 120;
   transport.bpm.value = bpm;
 
-  for (const track of currentMidi.tracks) {
-    if (!track.notes.length) continue;
+  // Count active (non-drum, non-empty) tracks to scale volumes
+  const activeTracks = currentMidi.tracks.filter(
+    (t) => t.notes.length > 0 && t.channel !== 9,
+  );
+  // Reduce volume proportional to track count so summed output stays stable.
+  // For 1 track: 0 dB offset. For 8 tracks: ~-9 dB offset.
+  const trackGainOffset = activeTracks.length > 1
+    ? -10 * Math.log10(activeTracks.length)
+    : 0;
 
+  for (const track of activeTracks) {
     const channel = track.channel;
     const program = track.instrument?.number ?? 0;
     const synth = createSynthForTrack(channel, program);
     if (!synth) continue;
 
+    synth.volume.value += trackGainOffset;
     trackSynths.push(synth);
 
     for (const note of track.notes) {
