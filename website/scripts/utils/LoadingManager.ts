@@ -52,7 +52,7 @@ export class LoadingProgressManager {
   reset() {
     this.loadingStages.clear();
     this.setProgress(0);
-    this.setStatus('Initializing...');
+    this.setStatus('Loading core system...');
   }
 
   complete() {

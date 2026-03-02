@@ -7,6 +7,13 @@ let currentMidi: Midi | null = null;
 let isPlaying = false;
 let trackSynths: Tone.PolySynth[] = [];
 
+/** Pre-fetched MIDI ArrayBuffers keyed by URL */
+const midiCache = new Map<string, ArrayBuffer>();
+
+export function cacheMidiData(url: string, data: ArrayBuffer) {
+  midiCache.set(url, data);
+}
+
 /** Master volume for all MidiPlayer synths — used for fading */
 const volume = new Tone.Volume(MASTER_VOLUME_DB);
 
@@ -24,7 +31,8 @@ export function setVolume(v: number) { volume.volume.value = v; }
 export function getVolumeValue(): number { return volume.volume.value; }
 
 export async function loadMidi(url: string): Promise<Midi> {
-  const data = await (await fetch(url)).arrayBuffer();
+  const cached = midiCache.get(url);
+  const data = cached ?? await (await fetch(url)).arrayBuffer();
   currentMidi = new Midi(data);
   return currentMidi;
 }

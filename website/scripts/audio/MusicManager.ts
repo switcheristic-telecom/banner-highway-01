@@ -2,6 +2,7 @@ import type { HighwayPart, MidiSong, PartSongAssignment } from '../../shared/typ
 import type { RoadSystem } from '../road/RoadSystem';
 import * as MidiPlayer from './MidiPlayer';
 import { MASTER_VOLUME_DB, FADE_SPEED, FADE_OUT_TARGET, FADE_OUT_THRESHOLD } from './constants';
+import { loadingManager } from '../utils/LoadingManager';
 
 interface ResolvedPart {
   id: string;
@@ -56,6 +57,28 @@ export class MusicManager {
     for (const [, roadParts] of this.partsByRoad) {
       roadParts.sort((a, b) => a.startT - b.startT);
     }
+  }
+
+  async preloadAllMidi() {
+    const songs = [...this.songsById.values()];
+    if (songs.length === 0) {
+      loadingManager.updateProgress('midi', 100);
+      return;
+    }
+    let loaded = 0;
+    await Promise.all(
+      songs.map(async (song) => {
+        try {
+          const url = `/assets/midi/${song.filePath}`;
+          const data = await (await fetch(url)).arrayBuffer();
+          MidiPlayer.cacheMidiData(url, data);
+        } catch (err) {
+          console.warn(`Failed to preload MIDI: ${song.filePath}`, err);
+        }
+        loaded++;
+        loadingManager.updateProgress('midi', (loaded / songs.length) * 100);
+      }),
+    );
   }
 
   private findPartAtPosition(roadId: string, t: number): ResolvedPart | null {

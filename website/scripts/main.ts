@@ -42,8 +42,9 @@ class BannerHighwayApp {
 
   async init() {
     try {
-      loadingManager.setStatus('Initializing core systems...');
+      loadingManager.setStatus('Loading core system...');
       loadingManager.updateProgress('init', 10);
+      loadingManager.updateProgress('midi', 0);
 
       this.sceneManager = new SceneManager(this.canvas);
       this.renderPipeline = new RenderPipeline(this.sceneManager);
@@ -59,7 +60,7 @@ class BannerHighwayApp {
       this.roadSystem.loadNetwork(sceneData.roadNetwork);
       loadingManager.updateProgress('road', 100);
 
-      loadingManager.setStatus('Loading banners...');
+      loadingManager.setStatus('Loading banner ads...');
       this.bannerManager = new BannerManager(
         this.sceneManager.scene,
         this.assetLoader,
@@ -93,6 +94,9 @@ class BannerHighwayApp {
         applySettings(sceneData.audioSettings);
       }
       reverbReady.then(() => console.log('Reverb IR ready'));
+
+      loadingManager.setStatus('Loading midi music...');
+      await this.musicManager.preloadAllMidi();
 
       // Build sorted parts per road for sky effect lookup
       for (const part of sceneData.parts) {
