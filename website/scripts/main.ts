@@ -135,6 +135,12 @@ class BannerHighwayApp {
     }
 
     window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        const aboutModal = document.getElementById('about-modal');
+        if (aboutModal?.classList.contains('visible')) {
+          aboutModal.classList.remove('visible');
+        }
+      }
       if (e.key === 'c' || e.key === 'C') {
         const controlsPanel = document.getElementById('controls-panel');
         if (controlsPanel) controlsPanel.classList.toggle('hidden');
@@ -146,6 +152,21 @@ class BannerHighwayApp {
         this.roadSystem.toggleBlocks();
       }
     });
+
+    // About modal
+    const aboutBtn = document.getElementById('about-btn');
+    const aboutModal = document.getElementById('about-modal');
+    if (aboutBtn && aboutModal) {
+      aboutBtn.addEventListener('click', () => {
+        aboutModal.classList.add('visible');
+      });
+      aboutModal.querySelector('.about-backdrop')?.addEventListener('click', () => {
+        aboutModal.classList.remove('visible');
+      });
+      aboutModal.querySelector('.about-close')?.addEventListener('click', () => {
+        aboutModal.classList.remove('visible');
+      });
+    }
 
     // Billboard click → open URL in new tab
     this.canvas.addEventListener('click', (e) => {

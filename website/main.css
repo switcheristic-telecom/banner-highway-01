@@ -337,6 +337,125 @@ body {
   font-weight: bold;
 }
 
+/* About button */
+#about-btn {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: calc(20px + env(safe-area-inset-left, 0px));
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #03a062;
+  color: #03a062;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 50;
+  padding: 0;
+  transition: background 0.2s, color 0.2s;
+}
+
+#about-btn:hover {
+  background: #03a062;
+  color: #000;
+}
+
+/* About modal */
+#about-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  align-items: center;
+  justify-content: center;
+}
+
+#about-modal.visible {
+  display: flex;
+}
+
+.about-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+}
+
+.about-content {
+  position: relative;
+  background: rgba(0, 0, 0, 0.92);
+  border: 1px solid #03a062;
+  color: #fff;
+  padding: 30px;
+  max-width: 480px;
+  width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.about-content h2 {
+  color: #03a062;
+  font-size: 18px;
+  margin-bottom: 16px;
+}
+
+.about-content p {
+  margin-bottom: 16px;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.about-content h3 {
+  color: #03a062;
+  font-size: 14px;
+  margin-bottom: 8px;
+  margin-top: 4px;
+}
+
+.about-content ul {
+  list-style: none;
+  margin-bottom: 16px;
+}
+
+.about-content li {
+  color: rgba(255, 255, 255, 0.7);
+  margin-bottom: 4px;
+}
+
+.about-content a {
+  color: #86c0a8;
+  text-decoration: none;
+}
+
+.about-content a:hover {
+  text-decoration: underline;
+}
+
+.about-close {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  background: none;
+  border: none;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  font-family: inherit;
+}
+
+.about-close:hover {
+  color: #fff;
+}
+
+.about-byline {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
 /* Rotate device overlay — hidden by default, shown via JS in portrait on mobile */
 #rotate-overlay {
   display: none;
@@ -423,5 +542,22 @@ body {
     left: calc(12px + env(safe-area-inset-left, 0px));
     padding: 10px 14px;
     font-size: 12px;
+  }
+
+  #about-btn {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: calc(12px + env(safe-area-inset-left, 0px));
+    width: 28px;
+    height: 28px;
+    font-size: 16px;
+  }
+
+  .about-content {
+    padding: 24px;
+    font-size: 12px;
+  }
+
+  .about-content h2 {
+    font-size: 16px;
   }
 }
