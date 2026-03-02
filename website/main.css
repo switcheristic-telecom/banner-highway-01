@@ -143,7 +143,7 @@ body {
     background 1s ease-out;
 }
 
-#loading-screen.enter-ready {
+#loading-screen.start-ready {
   background: rgba(0, 0, 0, 0.65);
 }
 
@@ -183,7 +183,7 @@ body {
 }
 
 .progress-container {
-  margin-top: 15px;
+  margin-top: 20px;
 }
 
 .progress-bar {
@@ -204,7 +204,7 @@ body {
 }
 
 .progress-percentage {
-  margin-top: 15px;
+  margin-top: 20px;
   font-size: 24px;
   font-weight: bold;
   color: #00ffff;
@@ -261,28 +261,60 @@ body {
   }
 }
 
-#enter-btn {
+#start-btn {
   margin-top: 30px;
   padding: 14px 40px;
+  font-family: inherit;
   font-size: 16px;
-  color: #fff;
+  color: #03a062;
   background: transparent;
   border: 1px solid #03a062;
   cursor: pointer;
   letter-spacing: 2px;
+  text-shadow:
+    0 0 6px rgba(3, 160, 98, 0.8),
+    0 0 14px rgba(3, 160, 98, 0.5),
+    0 0 30px rgba(3, 160, 98, 0.3);
+  box-shadow:
+    0 0 8px rgba(3, 160, 98, 0.4),
+    0 0 20px rgba(3, 160, 98, 0.2),
+    inset 0 0 8px rgba(3, 160, 98, 0.1);
+  animation: start-glow 1s ease-in-out infinite alternate;
   transition:
     background 0.2s,
     color 0.2s,
-    border-color 0.2s;
+    box-shadow 0.2s,
+    text-shadow 0.2s;
 }
 
-.enter-ready #enter-btn {
+@keyframes start-glow {
+  from {
+    box-shadow:
+      0 0 8px rgba(3, 160, 98, 0.4),
+      0 0 20px rgba(3, 160, 98, 0.2),
+      inset 0 0 8px rgba(3, 160, 98, 0.1);
+  }
+  to {
+    box-shadow:
+      0 0 12px rgba(3, 160, 98, 0.6),
+      0 0 30px rgba(3, 160, 98, 0.35),
+      0 0 50px rgba(3, 160, 98, 0.15),
+      inset 0 0 12px rgba(3, 160, 98, 0.15);
+  }
+}
+
+.start-ready #start-btn {
   backdrop-filter: blur(2px);
 }
 
-#enter-btn:hover {
+#start-btn:hover {
   background: #03a062;
   color: #000;
+  text-shadow: none;
+  box-shadow:
+    0 0 15px rgba(3, 160, 98, 0.7),
+    0 0 35px rgba(3, 160, 98, 0.4),
+    0 0 60px rgba(3, 160, 98, 0.2);
 }
 
 #banner-caption {
@@ -568,7 +600,7 @@ body {
     font-size: 18px;
   }
 
-  #enter-btn {
+  #start-btn {
     padding: 10px 30px;
     font-size: 13px;
   }
