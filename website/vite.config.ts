@@ -15,10 +15,12 @@ function copyDirSync(src: string, dest: string) {
   }
 }
 
-export default defineConfig({
+export default defineConfig(() => ({
   root: '.',
   base: '/',
   publicDir: false,
+  // Disable SPA fallback so /editor doesn't serve root index.html
+  appType: 'mpa',
   server: {
     port: 3000,
     host: true,
@@ -40,6 +42,22 @@ export default defineConfig({
   },
   plugins: [
     {
+      // Vite MPA mode doesn't resolve /editor to /editor/index.html.
+      // Redirect to add trailing slash so relative asset paths resolve correctly.
+      name: 'mpa-fallback',
+      configureServer(server) {
+        server.middlewares.use((req, res, next) => {
+          if (req.url === '/editor') {
+            res.writeHead(301, { Location: '/editor/' });
+            res.end();
+            return;
+          }
+          next();
+        });
+      },
+    },
+    {
+      // Copy runtime assets and manifest into dist/ after Vite build
       name: 'copy-assets',
       closeBundle() {
         const src = path.resolve(__dirname, 'assets');
@@ -47,7 +65,10 @@ export default defineConfig({
         copyDirSync(src, dest);
         const manifest = path.resolve(__dirname, 'manifest.json');
         if (fs.existsSync(manifest)) {
-          fs.copyFileSync(manifest, path.resolve(__dirname, 'dist', 'manifest.json'));
+          fs.copyFileSync(
+            manifest,
+            path.resolve(__dirname, 'dist', 'manifest.json'),
+          );
         }
       },
     },
@@ -56,9 +77,9 @@ export default defineConfig({
     outDir: 'dist',
     assetsDir: 'vite-assets',
     rollupOptions: {
+      // Editor is excluded — only the main app is built for production
       input: {
         main: path.resolve(__dirname, 'index.html'),
-        editor: path.resolve(__dirname, 'editor/index.html'),
       },
     },
   },
@@ -69,4 +90,4 @@ export default defineConfig({
     },
   },
   assetsInclude: ['**/*.png', '**/*.jpg', '**/*.jpeg', '**/*.gif', '**/*.mp4'],
-});
+}));
