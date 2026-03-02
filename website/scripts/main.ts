@@ -8,7 +8,11 @@ import { loadingManager } from './utils/LoadingManager';
 import { loadSceneData } from './data/DataProvider';
 import type { HighwayPart } from '../shared/types';
 import { MusicManager } from './audio/MusicManager';
-import { reverbReady, applySettings, ensureAudioStarted } from './audio/AudioEngine';
+import {
+  reverbReady,
+  applySettings,
+  ensureAudioStarted,
+} from './audio/AudioEngine';
 
 class BannerHighwayApp {
   canvas: HTMLCanvasElement;
@@ -66,8 +70,11 @@ class BannerHighwayApp {
 
       // Start at a random part's starting point
       if (sceneData.parts.length > 0) {
-        const randomPart = sceneData.parts[Math.floor(Math.random() * sceneData.parts.length)];
-        this.navigationController.setPosition(randomPart.roadId, randomPart.startT);
+        const randomPart =
+          sceneData.parts[Math.floor(Math.random() * sceneData.parts.length)];
+        const offsetT = 0.014; // small offset to avoid potential edge cases at t=0
+        const startT = (randomPart.startT + offsetT) % 1.0;
+        this.navigationController.setPosition(randomPart.roadId, startT);
       }
 
       loadingManager.setStatus('Initializing music...');
@@ -85,7 +92,10 @@ class BannerHighwayApp {
       // Build sorted parts per road for sky effect lookup
       for (const part of sceneData.parts) {
         let arr = this.skyPartsByRoad.get(part.roadId);
-        if (!arr) { arr = []; this.skyPartsByRoad.set(part.roadId, arr); }
+        if (!arr) {
+          arr = [];
+          this.skyPartsByRoad.set(part.roadId, arr);
+        }
         arr.push(part);
       }
       for (const arr of this.skyPartsByRoad.values()) {
@@ -130,7 +140,6 @@ class BannerHighwayApp {
         this.roadSystem.toggleBlocks();
       }
     });
-
   }
 
   handleResize() {
@@ -183,33 +192,40 @@ class BannerHighwayApp {
     const prev = parts[prevIdx];
 
     // Compute localT: how far through this part (0→1)
-    const nextStartT = currentIdx < parts.length - 1
-      ? parts[currentIdx + 1].startT
-      : 1.0; // or wraps to first part on cyclic
+    const nextStartT =
+      currentIdx < parts.length - 1 ? parts[currentIdx + 1].startT : 1.0; // or wraps to first part on cyclic
     const partLength = nextStartT - current.startT;
     const localT = partLength > 0 ? (pos.t - current.startT) / partLength : 0;
 
-    this.sceneManager.updateSkyProgress(current.skyEffect + Math.max(0, Math.min(1, localT)));
+    this.sceneManager.updateSkyProgress(
+      current.skyEffect + Math.max(0, Math.min(1, localT)),
+    );
     this.sceneManager.updateSkyPrevEffect(prev.skyEffect);
   }
 
   showEnterButton() {
     const btn = document.getElementById('enter-btn');
     const status = document.getElementById('loading-status');
-    const progress = document.querySelector('.progress-container') as HTMLElement;
+    const progress = document.querySelector(
+      '.progress-container',
+    ) as HTMLElement;
     const loadingScreen = document.getElementById('loading-screen');
     if (btn) {
       btn.style.display = '';
       if (status) status.style.display = 'none';
       if (progress) progress.style.display = 'none';
       if (loadingScreen) loadingScreen.classList.add('enter-ready');
-      btn.addEventListener('click', async () => {
-        await this.enterImmersive();
-        await ensureAudioStarted();
-        this.hideLoadingScreen();
-        this.navigationController.inputEnabled = true;
-        this.setupOrientationGate();
-      }, { once: true });
+      btn.addEventListener(
+        'click',
+        async () => {
+          await this.enterImmersive();
+          await ensureAudioStarted();
+          this.hideLoadingScreen();
+          this.navigationController.inputEnabled = true;
+          this.setupOrientationGate();
+        },
+        { once: true },
+      );
     }
   }
 
@@ -222,11 +238,15 @@ class BannerHighwayApp {
 
     try {
       await document.documentElement.requestFullscreen();
-    } catch (_) { /* iOS / unsupported — expected */ }
+    } catch (_) {
+      /* iOS / unsupported — expected */
+    }
 
     try {
       await screen.orientation.lock('landscape');
-    } catch (_) { /* iOS / non-fullscreen context — expected */ }
+    } catch (_) {
+      /* iOS / non-fullscreen context — expected */
+    }
   }
 
   private setupOrientationGate() {
