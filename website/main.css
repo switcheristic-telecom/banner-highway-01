@@ -1,7 +1,8 @@
 @font-face {
   font-family: 'Fusion Pixel 12px';
   src: url('/assets/fonts/fusion-pixel-12px-mono-zh_hans.woff2') format('woff2');
-  unicode-range: U+4E00-9FFF, U+3400-4DBF, U+3000-303F, U+FF00-FFEF, U+2000-206F;
+  unicode-range:
+    U+4E00-9FFF, U+3400-4DBF, U+3000-303F, U+FF00-FFEF, U+2000-206F;
   font-display: swap;
 }
 
@@ -137,7 +138,9 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 100;
-  transition: opacity 0.5s ease-out, background 1s ease-out;
+  transition:
+    opacity 0.5s ease-out,
+    background 1s ease-out;
 }
 
 #loading-screen.enter-ready {
@@ -217,27 +220,46 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
+  0%,
+  100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
 }
 
 @keyframes glow {
-  0%, 100% {
-    text-shadow: 0 0 20px rgba(0, 255, 255, 0.8), 0 0 40px rgba(0, 255, 255, 0.4);
+  0%,
+  100% {
+    text-shadow:
+      0 0 20px rgba(0, 255, 255, 0.8),
+      0 0 40px rgba(0, 255, 255, 0.4);
   }
   50% {
-    text-shadow: 0 0 30px rgba(0, 255, 255, 1), 0 0 60px rgba(0, 255, 255, 0.6);
+    text-shadow:
+      0 0 30px rgba(0, 255, 255, 1),
+      0 0 60px rgba(0, 255, 255, 0.6);
   }
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
-  100% { background-position: -200% 0; }
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 #enter-btn {
@@ -249,7 +271,10 @@ body {
   border: 1px solid #03a062;
   cursor: pointer;
   letter-spacing: 2px;
-  transition: background 0.2s, color 0.2s, border-color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    border-color 0.2s;
 }
 
 .enter-ready #enter-btn {
@@ -267,7 +292,11 @@ body {
   left: 50%;
   transform: translateX(-50%);
   background: rgba(0, 0, 0, 0.85);
-  color: #fff;
+  color: #86c0a8;
+  text-shadow:
+    0 0 8px rgba(3, 160, 98, 0.9),
+    0 0 20px rgba(3, 160, 98, 0.6),
+    0 0 40px rgba(3, 160, 98, 0.3);
   padding: 10px 24px;
   pointer-events: none;
   z-index: 50;
@@ -337,9 +366,18 @@ body {
 }
 
 @keyframes rock {
-  0%, 20% { transform: rotate(0deg); }
-  40%, 70% { transform: rotate(90deg); }
-  90%, 100% { transform: rotate(0deg); }
+  0%,
+  20% {
+    transform: rotate(0deg);
+  }
+  40%,
+  70% {
+    transform: rotate(90deg);
+  }
+  90%,
+  100% {
+    transform: rotate(0deg);
+  }
 }
 
 .rotate-text {
@@ -387,4 +425,3 @@ body {
     font-size: 12px;
   }
 }
-
