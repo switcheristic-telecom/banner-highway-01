@@ -40,6 +40,7 @@ const banners = db.query('SELECT * FROM banners ORDER BY t').all() as Array<{
   elevation: number;
   emissive_intensity: number;
   caption: string | null;
+  url: string | null;
 }>;
 
 const assets = db.query('SELECT * FROM banner_assets').all() as Array<{
@@ -103,6 +104,7 @@ const data = {
     elevation: b.elevation,
     emissiveIntensity: b.emissive_intensity,
     caption: b.caption ?? '',
+    url: b.url ?? '',
   })),
   assets: assets.map((a) => ({
     id: a.id,

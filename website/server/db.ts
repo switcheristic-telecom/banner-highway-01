@@ -106,6 +106,7 @@ export function getDb(): Database {
   // Migrations: add columns to existing tables
   try { db.run('ALTER TABLE banner_assets ADD COLUMN caption TEXT'); } catch { /* already exists */ }
   try { db.run('ALTER TABLE banners ADD COLUMN caption TEXT'); } catch { /* already exists */ }
+  try { db.run('ALTER TABLE banners ADD COLUMN url TEXT'); } catch { /* already exists */ }
   try { db.run('ALTER TABLE highway_parts ADD COLUMN sky_effect INTEGER DEFAULT 0'); } catch { /* already exists */ }
   db.run('UPDATE roads SET segment_count = 2000 WHERE segment_count <= 100');
 

@@ -43,6 +43,7 @@ export interface BannerPlacement {
   emissiveIntensity: number;
   assetId: string | null;
   caption?: string;
+  url?: string;
 }
 
 export interface BannerRenderData extends BannerPlacement {

@@ -1111,6 +1111,7 @@ function updateTooltipFields() {
   $<HTMLInputElement>('tt-elev').value = String(banner.elevation);
   $<HTMLInputElement>('tt-emissive').value = String(banner.emissiveIntensity);
   $<HTMLInputElement>('tt-caption').value = banner.caption ?? '';
+  $<HTMLInputElement>('tt-url').value = banner.url ?? '';
 
   // Asset preview
   const previewEl = $('tt-asset-preview');
@@ -1154,6 +1155,7 @@ $('tt-save').addEventListener('click', async () => {
   banner.elevation = parseFloat($<HTMLInputElement>('tt-elev').value) || 0;
   banner.emissiveIntensity = parseFloat($<HTMLInputElement>('tt-emissive').value) || 0;
   banner.caption = $<HTMLInputElement>('tt-caption').value;
+  banner.url = $<HTMLInputElement>('tt-url').value;
 
   await API.updateBanner(banner.id, banner);
   renderBannerList();

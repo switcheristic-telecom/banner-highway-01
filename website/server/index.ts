@@ -60,6 +60,7 @@ interface BannerRow {
   elevation: number;
   emissive_intensity: number;
   caption: string | null;
+  url: string | null;
 }
 
 interface AssetRow {
@@ -162,6 +163,7 @@ function bannerRowToJson(r: BannerRow) {
     elevation: r.elevation,
     emissiveIntensity: r.emissive_intensity,
     caption: r.caption ?? '',
+    url: r.url ?? '',
   };
 }
 
@@ -258,8 +260,8 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
       return errorResponse('Missing required fields: id, roadId, t');
     }
     db.run(
-      `INSERT INTO banners (id, road_id, t, angle, asset_id, distance, size, elevation, emissive_intensity, caption)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO banners (id, road_id, t, angle, asset_id, distance, size, elevation, emissive_intensity, caption, url)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         b.id as string,
         b.roadId as string,
@@ -271,6 +273,7 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
         (b.elevation as number) ?? 10,
         (b.emissiveIntensity as number) ?? 0.8,
         (b.caption as string) ?? null,
+        (b.url as string) ?? null,
       ],
     );
     return jsonResponse({ ok: true }, 201);
@@ -294,6 +297,7 @@ function handleBanners(method: string, id: string | null, body: unknown): Respon
       elevation: 'elevation',
       emissiveIntensity: 'emissive_intensity',
       caption: 'caption',
+      url: 'url',
     };
 
     for (const [jsKey, dbCol] of Object.entries(mapping)) {

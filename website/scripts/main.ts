@@ -1,3 +1,4 @@
+import * as THREE from 'three';
 import { RoadSystem } from './road/RoadSystem';
 import { BannerManager } from './banners/BannerManager';
 import { AssetLoader } from './utils/AssetLoader';
@@ -27,6 +28,8 @@ class BannerHighwayApp {
   renderPipeline!: RenderPipeline;
   musicManager!: MusicManager;
   skyPartsByRoad: Map<string, HighwayPart[]> = new Map();
+  private raycaster = new THREE.Raycaster();
+  private pointerNdc = new THREE.Vector2();
 
   constructor() {
     this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -140,6 +143,45 @@ class BannerHighwayApp {
         this.roadSystem.toggleBlocks();
       }
     });
+
+    // Billboard click → open URL in new tab
+    this.canvas.addEventListener('click', (e) => {
+      const url = this.raycastBillboardUrl(e);
+      if (url) window.open(url, '_blank', 'noopener');
+    });
+
+    // Billboard hover → show pointer cursor
+    this.canvas.addEventListener('pointermove', (e) => {
+      const url = this.raycastBillboardUrl(e);
+      this.canvas.style.cursor = url ? 'help' : '';
+    });
+  }
+
+  private raycastBillboardUrl(e: MouseEvent): string | null {
+    const rect = this.canvas.getBoundingClientRect();
+    this.pointerNdc.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    this.pointerNdc.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+
+    this.raycaster.setFromCamera(this.pointerNdc, this.sceneManager.camera);
+    this.raycaster.layers.set(2); // BANNERS layer only
+
+    const meshes: THREE.Object3D[] = [];
+    for (const billboard of this.bannerManager.billboards.values()) {
+      if (billboard.bannerMesh && billboard.group.visible) {
+        meshes.push(billboard.bannerMesh);
+      }
+    }
+
+    const hits = this.raycaster.intersectObjects(meshes);
+    if (hits.length === 0) return null;
+
+    const hitMesh = hits[0].object;
+    for (const billboard of this.bannerManager.billboards.values()) {
+      if (billboard.bannerMesh === hitMesh && billboard.info.url) {
+        return billboard.info.url;
+      }
+    }
+    return null;
   }
 
   handleResize() {
