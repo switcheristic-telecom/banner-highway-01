@@ -134,12 +134,26 @@ class BannerHighwayApp {
       window.visualViewport.addEventListener('resize', debouncedResize);
     }
 
+    // About modal
+    const aboutBtn = document.getElementById('about-btn');
+    const aboutModal = document.getElementById('about-modal');
+    const openAbout = () => {
+      aboutModal?.classList.add('visible');
+      this.navigationController.inputEnabled = false;
+    };
+    const closeAbout = () => {
+      aboutModal?.classList.remove('visible');
+      this.navigationController.inputEnabled = true;
+    };
+    if (aboutBtn && aboutModal) {
+      aboutBtn.addEventListener('click', openAbout);
+      aboutModal.querySelector('.about-backdrop')?.addEventListener('click', closeAbout);
+      aboutModal.querySelector('.about-close')?.addEventListener('click', closeAbout);
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        const aboutModal = document.getElementById('about-modal');
-        if (aboutModal?.classList.contains('visible')) {
-          aboutModal.classList.remove('visible');
-        }
+        if (aboutModal?.classList.contains('visible')) closeAbout();
       }
       if (e.key === 'c' || e.key === 'C') {
         const controlsPanel = document.getElementById('controls-panel');
@@ -152,21 +166,6 @@ class BannerHighwayApp {
         this.roadSystem.toggleBlocks();
       }
     });
-
-    // About modal
-    const aboutBtn = document.getElementById('about-btn');
-    const aboutModal = document.getElementById('about-modal');
-    if (aboutBtn && aboutModal) {
-      aboutBtn.addEventListener('click', () => {
-        aboutModal.classList.add('visible');
-      });
-      aboutModal.querySelector('.about-backdrop')?.addEventListener('click', () => {
-        aboutModal.classList.remove('visible');
-      });
-      aboutModal.querySelector('.about-close')?.addEventListener('click', () => {
-        aboutModal.classList.remove('visible');
-      });
-    }
 
     // Billboard click → open URL in new tab
     this.canvas.addEventListener('click', (e) => {

@@ -158,12 +158,12 @@ body {
   padding: 40px;
 }
 
-.series-label {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  letter-spacing: 3px;
-  text-transform: uppercase;
+.series-banner {
   margin-top: 30px;
+  height: 24px;
+  width: auto;
+  opacity: 0.4;
+  image-rendering: pixelated;
 }
 
 .loading-title {
@@ -354,7 +354,9 @@ body {
   cursor: pointer;
   z-index: 50;
   padding: 0;
-  transition: background 0.2s, color 0.2s;
+  transition:
+    background 0.2s,
+    color 0.2s;
 }
 
 #about-btn:hover {
@@ -451,6 +453,12 @@ body {
   color: #fff;
 }
 
+.zh-inline {
+  font-size: 0.85em;
+  position: relative;
+  top: -0.14em;
+}
+
 .about-byline {
   font-size: 12px;
   color: rgba(255, 255, 255, 0.5);
@@ -522,8 +530,8 @@ body {
     font-size: 13px;
   }
 
-  .series-label {
-    font-size: 9px;
+  .series-banner {
+    height: 18px;
     margin-top: 20px;
   }
 
