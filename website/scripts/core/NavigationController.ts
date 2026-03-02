@@ -11,8 +11,8 @@ const CAR_X_OFFSET = -1.4;
 
 const ATTENTION_RADIUS = 40;
 const DOLLY_AMOUNT = 3.0;
-const LOOK_STIFFNESS = 4.0;
-const DOLLY_STIFFNESS = 3.0;
+const LOOK_STIFFNESS = 1.0;
+const DOLLY_STIFFNESS = 1.0;
 
 interface BannerAttentionZone {
   id: string;
@@ -73,7 +73,7 @@ export class NavigationController {
     this.linearScrollMode = true;
     this.linearScrollSensitivity = 0.00002;
 
-    this.cameraHeight = 10;
+    this.cameraHeight = 8;
     this.cameraDistance = 10;
     this.cameraLookAhead = 0.05;
 
@@ -123,7 +123,10 @@ export class NavigationController {
     // Body
     const bodyGeometry = new THREE.BoxGeometry(2, 0.8, 4);
     const bodyEdges = new THREE.EdgesGeometry(bodyGeometry);
-    const bodyWireframe = new LineSegments2(createLineSegmentsGeometry(bodyEdges), lineMaterial);
+    const bodyWireframe = new LineSegments2(
+      createLineSegmentsGeometry(bodyEdges),
+      lineMaterial,
+    );
     bodyWireframe.position.y = 0.8;
     bodyWireframe.layers.set(1);
     group.add(bodyWireframe);
@@ -131,7 +134,10 @@ export class NavigationController {
     // Cabin
     const cabinGeometry = new THREE.BoxGeometry(1.6, 1, 2.5);
     const cabinEdges = new THREE.EdgesGeometry(cabinGeometry);
-    const cabinWireframe = new LineSegments2(createLineSegmentsGeometry(cabinEdges), lineMaterial);
+    const cabinWireframe = new LineSegments2(
+      createLineSegmentsGeometry(cabinEdges),
+      lineMaterial,
+    );
     cabinWireframe.position.y = 1.7;
     cabinWireframe.position.z = -0.3;
     cabinWireframe.layers.set(1);
@@ -140,7 +146,12 @@ export class NavigationController {
     // Wheels
     const wheelRadius = 0.4;
     const wheelWidth = 0.3;
-    const wheelGeometry = new THREE.CylinderGeometry(wheelRadius, wheelRadius, wheelWidth, 4);
+    const wheelGeometry = new THREE.CylinderGeometry(
+      wheelRadius,
+      wheelRadius,
+      wheelWidth,
+      4,
+    );
     const wheelPositions = [
       { x: -1.1, z: 1.3 },
       { x: 1.1, z: 1.3 },
@@ -150,7 +161,10 @@ export class NavigationController {
 
     wheelPositions.forEach((pos) => {
       const wheelEdges = new THREE.EdgesGeometry(wheelGeometry);
-      const wheelWireframe = new LineSegments2(createLineSegmentsGeometry(wheelEdges), lineMaterial);
+      const wheelWireframe = new LineSegments2(
+        createLineSegmentsGeometry(wheelEdges),
+        lineMaterial,
+      );
       wheelWireframe.position.set(pos.x, wheelRadius, pos.z);
       wheelWireframe.rotation.z = Math.PI / 2;
       wheelWireframe.layers.set(3);
@@ -173,9 +187,13 @@ export class NavigationController {
     window.addEventListener('keyup', (e) => {
       if (this.inputEnabled) this.handleKeyUp(e);
     });
-    window.addEventListener('wheel', (e) => {
-      if (this.inputEnabled) this.handleWheel(e);
-    }, { passive: false });
+    window.addEventListener(
+      'wheel',
+      (e) => {
+        if (this.inputEnabled) this.handleWheel(e);
+      },
+      { passive: false },
+    );
 
     let touchStartY = 0;
     let isTouchScrolling = false;
@@ -191,22 +209,26 @@ export class NavigationController {
       }
     });
 
-    window.addEventListener('touchmove', (e) => {
-      if (!this.inputEnabled || !isTouchScrolling) return;
-      if (e.touches.length === 1) {
-        e.preventDefault();
-        const currentY = e.touches[0].clientY;
-        const delta = touchStartY - currentY;
-        this.handleScroll(delta * 6);
-        touchStartY = currentY;
-      } else if (e.touches.length === 2) {
-        e.preventDefault();
-        const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
-        const delta = touchStartY - currentY;
-        this.handleScroll(delta * 12);
-        touchStartY = currentY;
-      }
-    }, { passive: false });
+    window.addEventListener(
+      'touchmove',
+      (e) => {
+        if (!this.inputEnabled || !isTouchScrolling) return;
+        if (e.touches.length === 1) {
+          e.preventDefault();
+          const currentY = e.touches[0].clientY;
+          const delta = touchStartY - currentY;
+          this.handleScroll(delta * 6);
+          touchStartY = currentY;
+        } else if (e.touches.length === 2) {
+          e.preventDefault();
+          const currentY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+          const delta = touchStartY - currentY;
+          this.handleScroll(delta * 12);
+          touchStartY = currentY;
+        }
+      },
+      { passive: false },
+    );
 
     window.addEventListener('touchend', (e) => {
       if (e.touches.length === 0) isTouchScrolling = false;
@@ -215,23 +237,55 @@ export class NavigationController {
 
   handleKeyDown(event: KeyboardEvent) {
     switch (event.key) {
-      case 'ArrowUp': case 'w': case 'W':
-        this.keys.forward = true; event.preventDefault(); break;
-      case 'ArrowDown': case 's': case 'S':
-        this.keys.backward = true; event.preventDefault(); break;
-      case 'ArrowLeft': case 'a': case 'A':
-        this.keys.left = true; event.preventDefault(); break;
-      case 'ArrowRight': case 'd': case 'D':
-        this.keys.right = true; event.preventDefault(); break;
+      case 'ArrowUp':
+      case 'w':
+      case 'W':
+        this.keys.forward = true;
+        event.preventDefault();
+        break;
+      case 'ArrowDown':
+      case 's':
+      case 'S':
+        this.keys.backward = true;
+        event.preventDefault();
+        break;
+      case 'ArrowLeft':
+      case 'a':
+      case 'A':
+        this.keys.left = true;
+        event.preventDefault();
+        break;
+      case 'ArrowRight':
+      case 'd':
+      case 'D':
+        this.keys.right = true;
+        event.preventDefault();
+        break;
     }
   }
 
   handleKeyUp(event: KeyboardEvent) {
     switch (event.key) {
-      case 'ArrowUp': case 'w': case 'W': this.keys.forward = false; break;
-      case 'ArrowDown': case 's': case 'S': this.keys.backward = false; break;
-      case 'ArrowLeft': case 'a': case 'A': this.keys.left = false; break;
-      case 'ArrowRight': case 'd': case 'D': this.keys.right = false; break;
+      case 'ArrowUp':
+      case 'w':
+      case 'W':
+        this.keys.forward = false;
+        break;
+      case 'ArrowDown':
+      case 's':
+      case 'S':
+        this.keys.backward = false;
+        break;
+      case 'ArrowLeft':
+      case 'a':
+      case 'A':
+        this.keys.left = false;
+        break;
+      case 'ArrowRight':
+      case 'd':
+      case 'D':
+        this.keys.right = false;
+        break;
     }
   }
 
@@ -260,7 +314,8 @@ export class NavigationController {
   update(deltaTime: number) {
     if (this.linearScrollMode) {
       if (this.keys.forward) this.currentT += this.maxSpeed * deltaTime;
-      else if (this.keys.backward) this.currentT -= this.maxSpeed * 0.5 * deltaTime;
+      else if (this.keys.backward)
+        this.currentT -= this.maxSpeed * 0.5 * deltaTime;
     } else {
       if (this.keys.forward || this.scrollAccumulator > 0) {
         this.targetSpeed = this.maxSpeed;
@@ -271,13 +326,15 @@ export class NavigationController {
       }
 
       if (this.isScrolling) {
-        const scrollSpeed = Math.sign(this.scrollAccumulator) *
+        const scrollSpeed =
+          Math.sign(this.scrollAccumulator) *
           Math.min(Math.abs(this.scrollAccumulator), this.maxSpeed);
         this.targetSpeed = scrollSpeed;
       }
 
       if (Math.abs(this.targetSpeed - this.speed) > 0.001) {
-        const accel = this.targetSpeed > this.speed ? this.acceleration : this.deceleration;
+        const accel =
+          this.targetSpeed > this.speed ? this.acceleration : this.deceleration;
         this.speed += (this.targetSpeed - this.speed) * accel;
       } else {
         this.speed = this.targetSpeed;
@@ -303,7 +360,9 @@ export class NavigationController {
     } else {
       if (this.currentT > 1) {
         const junctions = this.roadSystem.getJunctionsAtPosition(
-          this.currentRoadId, 1, 0.1,
+          this.currentRoadId,
+          1,
+          0.1,
         );
         if (junctions.length > 0 && this.keys.right) {
           const jn = junctions[0];
@@ -323,7 +382,10 @@ export class NavigationController {
   }
 
   updateInstructionsVisibility() {
-    if (!this.instructionsHidden && this.currentT >= this.instructionsHideThreshold) {
+    if (
+      !this.instructionsHidden &&
+      this.currentT >= this.instructionsHideThreshold
+    ) {
       if (this.instructionsPanel) {
         this.instructionsPanel.classList.add('hidden');
         this.instructionsHidden = true;
@@ -376,7 +438,9 @@ export class NavigationController {
 
       // Face normal: direction the billboard faces (local +Z in world space)
       const faceNormal = new THREE.Vector3(
-        Math.sin(geo.rotationY), 0, Math.cos(geo.rotationY),
+        Math.sin(geo.rotationY),
+        0,
+        Math.cos(geo.rotationY),
       );
 
       this.attentionZones.push({
@@ -451,7 +515,8 @@ export class NavigationController {
     if (nearestZone) {
       // Directional bias: only look at banners ahead, not behind
       const toCenterXZ = new THREE.Vector3(
-        nearestZone.worldCenter.x - currentPos.x, 0,
+        nearestZone.worldCenter.x - currentPos.x,
+        0,
         nearestZone.worldCenter.z - currentPos.z,
       ).normalize();
       const forwardDot = toCenterXZ.dot(tangent);
@@ -459,12 +524,18 @@ export class NavigationController {
       // forwardDot <= -0.15: zero (behind)
       const dirWeight = this.smoothstep((forwardDot + 0.15) / 0.3);
 
-      const blendAlpha = (1 - this.smoothstep(nearestDist / nearestZone.worldRadius)) * dirWeight;
-      rawLookTarget = defaultLookTarget.clone().lerp(nearestZone.worldCenter, blendAlpha);
+      const blendAlpha =
+        (1 - this.smoothstep(nearestDist / nearestZone.worldRadius)) *
+        dirWeight;
+      rawLookTarget = defaultLookTarget
+        .clone()
+        .lerp(nearestZone.worldCenter, blendAlpha);
 
       // Dolly: shift camera along the banner's face normal for a face-on view
       // This handles sharp-angled banners naturally
-      rawDollyOffset = nearestZone.faceNormal.clone().multiplyScalar(DOLLY_AMOUNT * blendAlpha);
+      rawDollyOffset = nearestZone.faceNormal
+        .clone()
+        .multiplyScalar(DOLLY_AMOUNT * blendAlpha);
     } else {
       rawLookTarget = defaultLookTarget;
       rawDollyOffset = new THREE.Vector3();
@@ -499,7 +570,9 @@ export class NavigationController {
     const road = this.roadSystem.getRoad(roadId);
     if (road) {
       this.currentRoadId = roadId;
-      this.currentT = road.isCyclic ? ((t % 1) + 1) % 1 : Math.max(0, Math.min(1, t));
+      this.currentT = road.isCyclic
+        ? ((t % 1) + 1) % 1
+        : Math.max(0, Math.min(1, t));
       this.speed = 0;
       this.targetSpeed = 0;
       this.scrollAccumulator = 0;
