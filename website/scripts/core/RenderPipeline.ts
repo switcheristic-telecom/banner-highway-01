@@ -15,6 +15,7 @@ import {
 } from 'postprocessing';
 
 import { SceneManager } from './SceneManager';
+import { log } from 'tone/build/esm/core/util/Debug';
 
 export class RenderPipeline {
   sceneManager: SceneManager;
@@ -66,8 +67,10 @@ export class RenderPipeline {
 
     const copyCPass = new CopyPass();
     copyCPass.texture.format = THREE.RGBAFormat;
-
-    const passAEffect = new ScanlineEffect({ density: 1 });
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const scanlineDensity = isMobile ? 2 : 1;
+    console.log(`Using scanline density: ${scanlineDensity}`);
+    const passAEffect = new ScanlineEffect({ density: scanlineDensity });
     const pixelEffect = new PixelationEffect(2);
 
     const envBloomEffect = new BloomEffect({
