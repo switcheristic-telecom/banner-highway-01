@@ -21,8 +21,8 @@ export class MusicManager {
 
   // Fade state
   private fadingOut = false;
-  private fadeVolume = -6;
-  private targetVolume = -6;
+  private fadeVolume = 0;
+  private targetVolume = 0;
   private pendingSongUrl: string | null = null;
 
   constructor(
@@ -168,8 +168,8 @@ export class MusicManager {
 
     try {
       await MidiPlayer.loadMidi(url);
-      this.fadeVolume = -6;
-      this.targetVolume = -6;
+      this.fadeVolume = 0;
+      this.targetVolume = 0;
       MidiPlayer.setVolume(this.fadeVolume);
       MidiPlayer.play();
     } catch (err) {

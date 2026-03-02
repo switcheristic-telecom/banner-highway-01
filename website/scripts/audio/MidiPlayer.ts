@@ -7,7 +7,7 @@ let isPlaying = false;
 let trackSynths: Tone.PolySynth[] = [];
 
 /** Master volume for all MidiPlayer synths — used for fading */
-const volume = new Tone.Volume(-6);
+const volume = new Tone.Volume(0);
 
 const transport = getTransport();
 
