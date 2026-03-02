@@ -171,8 +171,9 @@ function createSynthForTrack(program: number): Tone.PolySynth {
   return synth;
 }
 
-function scheduleMidi(): void {
-  if (!currentMidi) return;
+/** Schedule all MIDI notes and return the time of the earliest note. */
+function scheduleMidi(): number {
+  if (!currentMidi) return 0;
   transport.cancel();
   disposeTrackSynths();
   ensureConnected();
@@ -193,6 +194,8 @@ function scheduleMidi(): void {
     ? -10 * Math.log10(activeTracks.length)
     : 0;
 
+  let firstNoteTime = Infinity;
+
   for (const track of activeTracks) {
     const program = track.instrument?.number ?? 0;
     const synth = createSynthForTrack(program);
@@ -205,19 +208,24 @@ function scheduleMidi(): void {
       transport.schedule((t: number) => {
         synth.triggerAttackRelease(note.name, duration, t, note.velocity);
       }, note.time);
+      if (note.time < firstNoteTime) firstNoteTime = note.time;
     }
   }
+
+  return firstNoteTime === Infinity ? 0 : firstNoteTime;
 }
 
 export function play(): void {
   if (!currentMidi) return;
-  scheduleMidi();
+  const firstNoteTime = scheduleMidi();
 
   // Auto-stop when the MIDI reaches its end so isPlaying stays accurate.
   const duration = currentMidi.duration;
   transport.schedule(() => { stop(); }, duration + 0.5);
 
-  transport.start(undefined, 0);
+  // Skip leading silence — jump to just before the first note.
+  const startOffset = Math.max(0, firstNoteTime - 0.05);
+  transport.start(undefined, startOffset);
   isPlaying = true;
 }
 
