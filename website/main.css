@@ -644,7 +644,7 @@ body {
   #banner-caption {
     font-size: 14px;
     padding: 6px 14px;
-    bottom: calc(30px + env(safe-area-inset-bottom, 0px));
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
   #instructions-panel {
