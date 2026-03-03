@@ -424,7 +424,7 @@ body {
 #music-btn {
   position: fixed;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  left: calc(62px + env(safe-area-inset-left, 0px));
+  right: calc(62px + env(safe-area-inset-right, 0px));
   width: 32px;
   height: 32px;
   background: transparent;
@@ -470,7 +470,7 @@ body {
 #caption-btn {
   position: fixed;
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
-  left: calc(104px + env(safe-area-inset-left, 0px));
+  right: calc(20px + env(safe-area-inset-right, 0px));
   width: 32px;
   height: 32px;
   background: transparent;
@@ -710,7 +710,7 @@ body {
 
   #music-btn {
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    left: calc(48px + env(safe-area-inset-left, 0px));
+    right: calc(48px + env(safe-area-inset-right, 0px));
     width: 28px;
     height: 28px;
   }
@@ -722,7 +722,7 @@ body {
 
   #caption-btn {
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    left: calc(84px + env(safe-area-inset-left, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
     width: 28px;
     height: 28px;
   }

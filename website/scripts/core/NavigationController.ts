@@ -392,6 +392,7 @@ export class NavigationController {
       if (this.instructionsPanel) {
         this.instructionsPanel.classList.add('hidden');
         this.instructionsHidden = true;
+        window.dispatchEvent(new CustomEvent('instructions-hidden'));
       }
     }
   }
@@ -583,6 +584,7 @@ export class NavigationController {
       this.instructionsHidden = false;
       if (this.instructionsPanel) {
         this.instructionsPanel.classList.remove('hidden');
+        window.dispatchEvent(new CustomEvent('instructions-shown'));
       }
     }
   }

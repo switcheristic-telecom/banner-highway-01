@@ -178,6 +178,15 @@ class BannerHighwayApp {
       });
     }
 
+    // Show music/caption buttons when instructions hide, hide when they reappear
+    const toggleBtns = [musicBtn, captionBtn].filter(Boolean) as HTMLElement[];
+    window.addEventListener('instructions-hidden', () => {
+      for (const btn of toggleBtns) btn.style.opacity = '1';
+    });
+    window.addEventListener('instructions-shown', () => {
+      for (const btn of toggleBtns) btn.style.opacity = '0';
+    });
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (aboutModal?.classList.contains('visible')) closeAbout();
@@ -328,8 +337,6 @@ class BannerHighwayApp {
           const captionBtn = document.getElementById('caption-btn');
           const instructionsPanel = document.getElementById('instructions-panel');
           if (aboutBtn) aboutBtn.style.opacity = '1';
-          if (musicBtn) musicBtn.style.opacity = '1';
-          if (captionBtn) captionBtn.style.opacity = '1';
           if (instructionsPanel) instructionsPanel.classList.add('visible');
           // Reflect that music is now on
           if (musicBtn) musicBtn.classList.add('music-on');
