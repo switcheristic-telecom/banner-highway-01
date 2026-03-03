@@ -35,6 +35,7 @@ export class BannerManager {
   captionPendingId: string | null;
   captionPendingText: string;
   captionHoldTime: number;
+  captionEnabled: boolean;
 
   constructor(
     scene: THREE.Scene,
@@ -65,6 +66,7 @@ export class BannerManager {
     this.captionPendingId = null;
     this.captionPendingText = '';
     this.captionHoldTime = 0;
+    this.captionEnabled = true;
   }
 
   async loadBanners(bannerInfos: BannerRenderData[]) {
@@ -265,11 +267,29 @@ export class BannerManager {
   // Caption system — pure JS opacity lerp, zero DOM thrash
   // ---------------------------------------------------------------------------
 
+  toggleCaption(): boolean {
+    this.captionEnabled = !this.captionEnabled;
+    return this.captionEnabled;
+  }
+
   private updateCaption(currentPosition: { roadId: string; t: number }, dt: number) {
     if (!this.captionEl) return;
 
     const FADE_SPEED = 3.0;
     const HOLD_DURATION = 2.0;
+
+    // If captions disabled, fade out and return
+    if (!this.captionEnabled) {
+      if (this.captionOpacity > 0) {
+        this.captionOpacity = Math.max(0, this.captionOpacity - FADE_SPEED * dt);
+        this.captionEl.style.opacity = String(this.captionOpacity);
+        if (this.captionOpacity < 0.01) {
+          this.captionActiveBannerId = null;
+          this.captionPendingId = null;
+        }
+      }
+      return;
+    }
 
     // 1. Find which caption range we're in (cyclic-aware)
     const ranges = this.captionRanges.get(currentPosition.roadId);

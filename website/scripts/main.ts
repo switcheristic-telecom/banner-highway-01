@@ -169,6 +169,15 @@ class BannerHighwayApp {
       });
     }
 
+    // Caption toggle
+    const captionBtn = document.getElementById('caption-btn');
+    if (captionBtn) {
+      captionBtn.addEventListener('click', () => {
+        const enabled = this.bannerManager.toggleCaption();
+        captionBtn.classList.toggle('caption-on', enabled);
+      });
+    }
+
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         if (aboutModal?.classList.contains('visible')) closeAbout();
@@ -316,9 +325,11 @@ class BannerHighwayApp {
           // Show UI controls
           const aboutBtn = document.getElementById('about-btn');
           const musicBtn = document.getElementById('music-btn');
+          const captionBtn = document.getElementById('caption-btn');
           const instructionsPanel = document.getElementById('instructions-panel');
           if (aboutBtn) aboutBtn.style.opacity = '1';
           if (musicBtn) musicBtn.style.opacity = '1';
+          if (captionBtn) captionBtn.style.opacity = '1';
           if (instructionsPanel) instructionsPanel.classList.add('visible');
           // Reflect that music is now on
           if (musicBtn) musicBtn.classList.add('music-on');

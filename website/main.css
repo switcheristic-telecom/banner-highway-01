@@ -466,6 +466,52 @@ body {
   display: block;
 }
 
+/* Caption toggle button */
+#caption-btn {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  left: calc(104px + env(safe-area-inset-left, 0px));
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #03a062;
+  color: #86c0a8;
+  cursor: pointer;
+  z-index: 50;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.5s ease-out,
+    background 0.2s,
+    color 0.2s;
+}
+
+#caption-btn:hover {
+  background: #03a062;
+  color: #000;
+}
+
+#caption-btn .caption-icon {
+  width: 16px;
+  height: 16px;
+  display: none;
+}
+
+#caption-btn .caption-off {
+  display: block;
+}
+
+#caption-btn.caption-on .caption-off {
+  display: none;
+}
+
+#caption-btn.caption-on .caption-on {
+  display: block;
+}
+
 /* About modal */
 #about-modal {
   display: none;
@@ -670,6 +716,18 @@ body {
   }
 
   #music-btn .music-icon {
+    width: 14px;
+    height: 14px;
+  }
+
+  #caption-btn {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    left: calc(84px + env(safe-area-inset-left, 0px));
+    width: 28px;
+    height: 28px;
+  }
+
+  #caption-btn .caption-icon {
     width: 14px;
     height: 14px;
   }
