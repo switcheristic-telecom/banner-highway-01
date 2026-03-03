@@ -345,7 +345,11 @@ body {
   bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   right: calc(20px + env(safe-area-inset-right, 0px));
   background: rgba(0, 0, 0, 0.6);
-  color: #fff;
+  color: #86c0a8;
+  text-shadow:
+    0 0 8px rgba(3, 160, 98, 0.9),
+    0 0 20px rgba(3, 160, 98, 0.6),
+    0 0 40px rgba(3, 160, 98, 0.3);
   padding: 15px 20px;
   font-size: 14px;
   border: 1px solid #03a062;
@@ -383,7 +387,7 @@ body {
   height: 32px;
   background: transparent;
   border: 1px solid #03a062;
-  color: #03a062;
+  color: #86c0a8;
   font-family: Georgia, 'Times New Roman', serif;
   font-style: italic;
   font-size: 20px;
@@ -412,7 +416,7 @@ body {
   height: 32px;
   background: transparent;
   border: 1px solid #03a062;
-  color: #03a062;
+  color: #86c0a8;
   cursor: pointer;
   z-index: 50;
   padding: 0;
