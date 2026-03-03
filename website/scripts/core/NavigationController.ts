@@ -50,6 +50,7 @@ export class NavigationController {
   instructionsPanel: HTMLElement | null;
   instructionsHidden: boolean;
   instructionsHideThreshold: number;
+  private startingT: number;
 
   inputEnabled: boolean;
   attentionZones: BannerAttentionZone[];
@@ -89,6 +90,7 @@ export class NavigationController {
     this.instructionsPanel = document.getElementById('instructions-panel');
     this.instructionsHidden = false;
     this.instructionsHideThreshold = 0.01;
+    this.startingT = this.currentT;
 
     this.inputEnabled = false;
     this.attentionZones = [];
@@ -384,7 +386,8 @@ export class NavigationController {
   updateInstructionsVisibility() {
     if (
       !this.instructionsHidden &&
-      this.currentT >= this.instructionsHideThreshold
+      this.tDistanceCyclic(this.currentT, this.startingT, this.isRoadCyclic()) >=
+        this.instructionsHideThreshold
     ) {
       if (this.instructionsPanel) {
         this.instructionsPanel.classList.add('hidden');
@@ -576,6 +579,11 @@ export class NavigationController {
       this.speed = 0;
       this.targetSpeed = 0;
       this.scrollAccumulator = 0;
+      this.startingT = this.currentT;
+      this.instructionsHidden = false;
+      if (this.instructionsPanel) {
+        this.instructionsPanel.classList.remove('hidden');
+      }
     }
   }
 

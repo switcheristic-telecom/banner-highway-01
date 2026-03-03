@@ -313,8 +313,14 @@ class BannerHighwayApp {
           this.hideLoadingScreen();
           this.navigationController.inputEnabled = true;
           this.setupOrientationGate();
-          // Reflect that music is now on
+          // Show UI controls
+          const aboutBtn = document.getElementById('about-btn');
           const musicBtn = document.getElementById('music-btn');
+          const instructionsPanel = document.getElementById('instructions-panel');
+          if (aboutBtn) aboutBtn.style.opacity = '1';
+          if (musicBtn) musicBtn.style.opacity = '1';
+          if (instructionsPanel) instructionsPanel.classList.add('visible');
+          // Reflect that music is now on
           if (musicBtn) musicBtn.classList.add('music-on');
         },
         { once: true },
