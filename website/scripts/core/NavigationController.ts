@@ -50,6 +50,7 @@ export class NavigationController {
   instructionsPanel: HTMLElement | null;
   instructionsHidden: boolean;
   instructionsHideThreshold: number;
+  onInstructionsVisibilityChange: ((visible: boolean) => void) | null;
   private startingT: number;
 
   inputEnabled: boolean;
@@ -90,6 +91,7 @@ export class NavigationController {
     this.instructionsPanel = document.getElementById('instructions-panel');
     this.instructionsHidden = false;
     this.instructionsHideThreshold = 0.01;
+    this.onInstructionsVisibilityChange = null;
     this.startingT = this.currentT;
 
     this.inputEnabled = false;
@@ -391,8 +393,9 @@ export class NavigationController {
     ) {
       if (this.instructionsPanel) {
         this.instructionsPanel.classList.add('hidden');
+        this.instructionsPanel.classList.remove('visible');
         this.instructionsHidden = true;
-        window.dispatchEvent(new CustomEvent('instructions-hidden'));
+        this.onInstructionsVisibilityChange?.(false);
       }
     }
   }
@@ -581,10 +584,11 @@ export class NavigationController {
       this.targetSpeed = 0;
       this.scrollAccumulator = 0;
       this.startingT = this.currentT;
-      this.instructionsHidden = false;
-      if (this.instructionsPanel) {
+      if (this.instructionsHidden && this.instructionsPanel) {
         this.instructionsPanel.classList.remove('hidden');
-        window.dispatchEvent(new CustomEvent('instructions-shown'));
+        this.instructionsPanel.classList.add('visible');
+        this.instructionsHidden = false;
+        this.onInstructionsVisibilityChange?.(true);
       }
     }
   }

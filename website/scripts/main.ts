@@ -160,11 +160,11 @@ class BannerHighwayApp {
       musicBtn.addEventListener('click', async () => {
         if (this.musicManager.isEnabled()) {
           this.musicManager.disable();
-          musicBtn.classList.remove('music-on');
+          musicBtn.classList.remove('active');
         } else {
           await ensureAudioStarted();
           this.musicManager.enable();
-          musicBtn.classList.add('music-on');
+          musicBtn.classList.add('active');
         }
       });
     }
@@ -174,18 +174,15 @@ class BannerHighwayApp {
     if (captionBtn) {
       captionBtn.addEventListener('click', () => {
         const enabled = this.bannerManager.toggleCaption();
-        captionBtn.classList.toggle('caption-on', enabled);
+        captionBtn.classList.toggle('active', enabled);
       });
     }
 
-    // Show music/caption buttons when instructions hide, hide when they reappear
-    const toggleBtns = [musicBtn, captionBtn].filter(Boolean) as HTMLElement[];
-    window.addEventListener('instructions-hidden', () => {
-      for (const btn of toggleBtns) btn.style.opacity = '1';
-    });
-    window.addEventListener('instructions-shown', () => {
-      for (const btn of toggleBtns) btn.style.opacity = '0';
-    });
+    // Show toggle buttons when instructions hide, hide when they reappear
+    const toggleBtns = document.querySelectorAll<HTMLElement>('.toggle-btn');
+    this.navigationController.onInstructionsVisibilityChange = (visible) => {
+      toggleBtns.forEach((btn) => btn.classList.toggle('visible', !visible));
+    };
 
     window.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
@@ -334,12 +331,11 @@ class BannerHighwayApp {
           // Show UI controls
           const aboutBtn = document.getElementById('about-btn');
           const musicBtn = document.getElementById('music-btn');
-          const captionBtn = document.getElementById('caption-btn');
           const instructionsPanel = document.getElementById('instructions-panel');
-          if (aboutBtn) aboutBtn.style.opacity = '1';
+          if (aboutBtn) aboutBtn.classList.add('visible');
           if (instructionsPanel) instructionsPanel.classList.add('visible');
           // Reflect that music is now on
-          if (musicBtn) musicBtn.classList.add('music-on');
+          if (musicBtn) musicBtn.classList.add('active');
         },
         { once: true },
       );

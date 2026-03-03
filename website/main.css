@@ -415,101 +415,70 @@ body {
     color 0.2s;
 }
 
+#about-btn.visible {
+  opacity: 1;
+}
+
 #about-btn:hover {
   background: #03a062;
   color: #000;
 }
 
-/* Music toggle button */
+/* Toggle buttons (music, caption) */
+.toggle-btn {
+  position: fixed;
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
+  width: 32px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid #03a062;
+  color: #86c0a8;
+  cursor: pointer;
+  z-index: 50;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition:
+    opacity 0.5s ease-out,
+    background 0.2s,
+    color 0.2s;
+}
+
+.toggle-btn:hover {
+  background: #03a062;
+  color: #000;
+}
+
+.toggle-btn.visible {
+  opacity: 1;
+}
+
+.toggle-btn .toggle-icon {
+  width: 16px;
+  height: 16px;
+  display: none;
+}
+
+.toggle-btn .icon-off {
+  display: block;
+}
+
+.toggle-btn.active .icon-off {
+  display: none;
+}
+
+.toggle-btn.active .icon-on {
+  display: block;
+}
+
 #music-btn {
-  position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   right: calc(62px + env(safe-area-inset-right, 0px));
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: 1px solid #03a062;
-  color: #86c0a8;
-  cursor: pointer;
-  z-index: 50;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition:
-    opacity 0.5s ease-out,
-    background 0.2s,
-    color 0.2s;
 }
 
-#music-btn:hover {
-  background: #03a062;
-  color: #000;
-}
-
-#music-btn .music-icon {
-  width: 16px;
-  height: 16px;
-  display: none;
-}
-
-#music-btn .music-off {
-  display: block;
-}
-
-#music-btn.music-on .music-off {
-  display: none;
-}
-
-#music-btn.music-on .music-on {
-  display: block;
-}
-
-/* Caption toggle button */
 #caption-btn {
-  position: fixed;
-  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   right: calc(20px + env(safe-area-inset-right, 0px));
-  width: 32px;
-  height: 32px;
-  background: transparent;
-  border: 1px solid #03a062;
-  color: #86c0a8;
-  cursor: pointer;
-  z-index: 50;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition:
-    opacity 0.5s ease-out,
-    background 0.2s,
-    color 0.2s;
-}
-
-#caption-btn:hover {
-  background: #03a062;
-  color: #000;
-}
-
-#caption-btn .caption-icon {
-  width: 16px;
-  height: 16px;
-  display: none;
-}
-
-#caption-btn .caption-off {
-  display: block;
-}
-
-#caption-btn.caption-on .caption-off {
-  display: none;
-}
-
-#caption-btn.caption-on .caption-on {
-  display: block;
 }
 
 /* About modal */
@@ -708,28 +677,23 @@ body {
     font-size: 16px;
   }
 
-  #music-btn {
+  .toggle-btn {
     bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-    right: calc(48px + env(safe-area-inset-right, 0px));
     width: 28px;
     height: 28px;
   }
 
-  #music-btn .music-icon {
+  .toggle-btn .toggle-icon {
     width: 14px;
     height: 14px;
+  }
+
+  #music-btn {
+    right: calc(48px + env(safe-area-inset-right, 0px));
   }
 
   #caption-btn {
-    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
     right: calc(12px + env(safe-area-inset-right, 0px));
-    width: 28px;
-    height: 28px;
-  }
-
-  #caption-btn .caption-icon {
-    width: 14px;
-    height: 14px;
   }
 
   .about-content {
