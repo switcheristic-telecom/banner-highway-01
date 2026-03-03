@@ -373,6 +373,19 @@ body {
   line-height: 1.6;
 }
 
+.instruction-mobile {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .instruction-desktop {
+    display: none;
+  }
+  .instruction-mobile {
+    display: block;
+  }
+}
+
 #instructions-panel strong {
   color: #03a062;
   font-weight: bold;
