@@ -590,10 +590,16 @@ body {
   z-index: 200;
   align-items: center;
   justify-content: center;
+  opacity: 1;
+  transition: opacity 0.4s ease;
 }
 
 #rotate-overlay.visible {
   display: flex;
+}
+
+#rotate-overlay.fade-out {
+  opacity: 0;
 }
 
 .rotate-content {
@@ -606,19 +612,28 @@ body {
   height: 56px;
   color: #03a062;
   margin-bottom: 20px;
-  animation: rock 3s ease-in-out infinite;
+  animation: rock 4s ease-in-out infinite;
 }
 
 @keyframes rock {
-  0%,
-  20% {
+  0% {
     transform: rotate(0deg);
   }
-  40%,
-  70% {
+  15% {
     transform: rotate(90deg);
   }
-  90%,
+  30% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(0deg);
+  }
+  65% {
+    transform: rotate(-90deg);
+  }
+  80% {
+    transform: rotate(0deg);
+  }
   100% {
     transform: rotate(0deg);
   }
@@ -627,6 +642,39 @@ body {
 .rotate-text {
   font-size: 14px;
   letter-spacing: 1px;
+  line-height: 1.4;
+}
+
+#rotate-dismiss-btn {
+  margin-top: 24px;
+  padding: 8px 24px;
+  font-family: inherit;
+  font-size: 12px;
+  color: #03a062;
+  background: transparent;
+  border: 1px solid #03a062;
+  cursor: pointer;
+  letter-spacing: 2px;
+  text-shadow:
+    0 0 6px rgba(3, 160, 98, 0.8),
+    0 0 14px rgba(3, 160, 98, 0.5),
+    0 0 30px rgba(3, 160, 98, 0.3);
+  box-shadow:
+    0 0 8px rgba(3, 160, 98, 0.4),
+    0 0 20px rgba(3, 160, 98, 0.2),
+    inset 0 0 8px rgba(3, 160, 98, 0.1);
+  animation: start-glow 1s ease-in-out infinite alternate;
+  transition:
+    background 0.2s,
+    color 0.2s,
+    box-shadow 0.2s,
+    text-shadow 0.2s;
+}
+
+#rotate-dismiss-btn:hover {
+  background: #03a062;
+  color: #000;
+  text-shadow: none;
 }
 
 @media (pointer: coarse) {

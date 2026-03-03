@@ -368,15 +368,31 @@ class BannerHighwayApp {
 
     if (!this.isTouchDevice()) return;
 
-    const mql = window.matchMedia('(orientation: portrait)');
+    const isPortrait = window.matchMedia('(orientation: portrait)').matches;
+    if (!isPortrait) return;
 
-    const update = (portrait: boolean) => {
-      overlay.classList.toggle('visible', portrait);
-      this.navigationController.inputEnabled = !portrait;
+    overlay.classList.add('visible');
+
+    const hide = () => {
+      overlay.classList.add('fade-out');
+      overlay.addEventListener('transitionend', () => {
+        overlay.classList.remove('visible', 'fade-out');
+      }, { once: true });
     };
 
-    update(mql.matches);
-    mql.addEventListener('change', (e) => update(e.matches));
+    const dismiss = document.getElementById('rotate-dismiss-btn');
+    if (dismiss) {
+      dismiss.addEventListener('click', hide, { once: true });
+    }
+
+    const mql = window.matchMedia('(orientation: portrait)');
+    const onRotate = (e: MediaQueryListEvent) => {
+      if (!e.matches) {
+        hide();
+        mql.removeEventListener('change', onRotate);
+      }
+    };
+    mql.addEventListener('change', onRotate);
   }
 
   hideLoadingScreen() {
